@@ -1,0 +1,513 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunParis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Sofia+Sans:wght@400;500;600;700;800&family=Sofia+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F5F7F9; --panel:#FFFFFF; --field:#F5F7F9; --ink:#111820; --muted:#5B6672; --line:#DCE1E6; --soft:#EEF1F4;
+  --accent:#0B6FB8; --accent-ink:#FFFFFF; --accent-fill:rgba(11,111,184,.10);
+  --route:#0B6FB8; --route-2:#7B3FD0; --route-casing:#FFFFFF; --tree:#2F8F4E; --metro-bg:#FFFFFF; --metro-ink:#1B2430; --metro-ring:#1B2430;
+  --street:#D3D9DF; --street-major:#AEB7C0; --street-path:#7FB08F; --quart:#C5CCD3;
+  --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.14); --sig:#C27A00; --pin-b:#E0584A;
+  --good:#1E8E4F; --water:#CFE2EE; --green:#DDEBD8; --cem:#D5DCD2; --station:#8A93A0; --station-fill:rgba(110,116,128,.16); --label:#4A5561; --warn:#A86A12;
+  --warn-bg:#FFF6E5; --warn-line:#EBC98A; --err-bg:#FDEDEC; --err-line:#EFB2AC;
+  --map-bg:#EEF1F4; --shadow:0 2px 10px rgba(17,24,32,.10);
+  --f-display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --f-body:"Sofia Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-cond:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+  --f-mono:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+    --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+    --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+    --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+    --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+    --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+    --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+    --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+  --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+  --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+  --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+  --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+  --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+  --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+  --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:400px 1fr;height:100%}
+.panel{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;position:relative;z-index:2}
+.phead{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line)}
+.logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1}
+.logo span{color:var(--accent)}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;display:grid;place-items:center;font-size:16px}
+.themepop{position:absolute;right:20px;top:56px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px;z-index:30;display:flex;flex-direction:column;gap:8px;width:250px}
+.pbody{flex:1;overflow-y:auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.pfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+
+/* ---------- steps ---------- */
+.step{display:flex;flex-direction:column;gap:8px}
+.step h2 .seg{margin-left:auto;width:180px}
+.step h2{margin:0;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800}
+.step h2 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-family:var(--f-cond);font-size:13px;font-weight:700}
+.lbl{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 4px;border-radius:9px;font-weight:600;font-size:14px;white-space:nowrap;color:var(--muted);min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.seg.sm button{padding:6px 4px;font-size:13px;min-height:34px}
+input[type=number],input[type=text],select{border:1px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input[type=number]{font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.link{border:0;background:none;color:var(--accent);padding:4px 0;font-size:14px;font-weight:700}
+
+.startcard{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-cond);font-weight:700;font-size:14px;color:#fff;flex:none}
+.pin.d{background:var(--good);color:#06131C} .pin.a{background:var(--pin-b)}
+.startcard .txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.startcard .name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.startcard small{color:var(--muted);font-size:12.5px}
+.search{position:relative}
+.results{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:20;max-height:260px;overflow:auto}
+.results button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 12px}
+.results button:hover,.results button:focus{background:var(--soft)}
+.results em{font-style:normal;color:var(--muted);font-size:12px;white-space:nowrap}
+.home{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip-btn{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
+.chip-btn::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
+
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--field);font-size:24px;line-height:1;flex:none}
+.bignum{display:flex;align-items:baseline;justify-content:center;gap:4px;flex:1;min-width:0}
+.bignum input{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1;text-align:center;border:0;background:transparent;padding:0;width:104px;-moz-appearance:textfield}
+.bignum input::-webkit-outer-spin-button,.bignum input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.bignum span{font-size:17px;color:var(--muted);font-weight:600}
+.chips{display:flex;gap:6px}
+.chips button{flex:1;border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 0;font-family:var(--f-cond);font-weight:700;font-size:14px;color:var(--muted);min-height:36px}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-fill)}
+.paceline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.paceline input{width:74px;padding:6px 8px;font-family:var(--f-cond);font-weight:700;font-size:15px;text-align:center;color:var(--ink)}
+.paceline b{color:var(--ink);font-family:var(--f-cond)}
+
+.sw{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;min-height:36px;cursor:pointer}
+.sw input{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{left:21px;background:var(--accent-ink)}
+.sub{margin-left:0;padding:8px 0 0}
+
+.avoid{display:flex;flex-wrap:wrap;gap:6px}
+.xchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--avoid);color:var(--avoid);background:var(--avoid-fill);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.xchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xchip select{width:auto;padding:2px 4px;font-size:12.5px;border-radius:8px;background:var(--panel);color:var(--ink)}
+.xchip button{border:0;background:none;color:var(--avoid);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.addbtn{border:1px dashed var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:700}
+.addbox{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.arr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.arr button{border:1px solid var(--line);background:var(--panel);border-radius:9px;height:40px;font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1}
+.arr button sup{font-size:10px}
+.arr button[data-state="all"]{background:var(--avoid);border-color:var(--avoid);color:var(--panel)}
+.arr button[data-state="some"]{border:1px dashed var(--avoid);color:var(--avoid);background:var(--avoid-fill)}
+details.q summary,details.more summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);list-style:none}
+details.q summary::-webkit-details-marker,details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾"} details.more[open] summary::after{content:" ▴"}
+.qlist{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px;font-size:13.5px;max-height:220px;overflow:auto;padding-right:4px}
+.qlist label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.qlist .ah{grid-column:1/-1;font-family:var(--f-cond);font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:6px}
+.moreb{display:flex;flex-direction:column;gap:4px;padding-top:8px}
+
+/* ---------- buttons ---------- */
+.btn{border:0;border-radius:12px;padding:14px 16px;font-weight:800;font-size:16px;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:20px;letter-spacing:.05em;text-transform:uppercase;padding:12px 16px}
+.btn.primary:disabled{opacity:.6;cursor:progress}
+.btn.ghost{background:var(--field);border:1px solid var(--line);color:var(--ink)}
+.btnrow{display:flex;gap:8px}
+.btnrow .btn.primary{flex:1}
+.textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
+
+/* ---------- results ---------- */
+.summary{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.summary .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.summary b{font-size:15px}
+.summary small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.summary{cursor:pointer;transition:border-color .15s}
+.summary:hover{border-color:var(--accent)}
+.editbtn{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent-fill);color:var(--accent);font-family:var(--f-cond);font-weight:800;font-size:15px;letter-spacing:.01em;cursor:pointer}
+.editbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.stale{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:12px;padding:8px 8px 8px 12px;font-size:13.5px}
+.stale button{border:0;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:800;padding:8px 12px;white-space:nowrap}
+.alts{display:flex;flex-direction:column;gap:8px}
+.alt{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.alt[aria-pressed="true"]{border:2px solid var(--accent);padding:9px 11px}
+.alt .k{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.alt[aria-pressed="true"] .k{color:var(--accent)}
+.alt .t{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alt .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.detail{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.stats{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 16px;align-items:end}
+.stat{display:flex;flex-direction:column;min-width:0}
+.stat b{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.stat:first-child b{font-size:48px}
+.stat b small{font-family:var(--f-body);font-size:14px;font-weight:600;margin-left:2px;color:var(--muted)}
+.stat span{font-family:var(--f-cond);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .delta{font-style:normal;text-transform:none;letter-spacing:0}
+.stat.sig b{color:var(--sig)}
+.delta.ok{color:var(--good)} .delta.off{color:var(--warn)}
+.profile{height:80px;position:relative}
+.profile canvas{width:100%;height:100%;display:block}
+.via{font-size:13.5px;color:var(--muted);margin:0}
+.via strong{color:var(--ink);font-weight:600}
+.notes{display:flex;flex-direction:column;gap:6px}
+.note{font-size:13.5px;line-height:1.4;padding:9px 12px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid var(--warn)}
+.note.err{background:var(--err-bg);border-color:var(--err-line);border-left-color:var(--avoid)}
+
+/* ---------- map ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.mapwrap{position:relative;flex:1;min-height:0;background:var(--map-bg);overflow:hidden}
+canvas#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas#map.pick{cursor:crosshair}
+.tools{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.tool{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0}
+.tool em{font-style:normal;font-size:12.5px;font-weight:600;background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:4px 8px;box-shadow:var(--shadow)}
+.tool i{font-style:normal;width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;box-shadow:var(--shadow);font-family:var(--f-cond);font-weight:700;font-size:15px;color:var(--ink)}
+.tool[data-tool="quart"] i,.tool[data-tool="place"] i{color:var(--avoid)}
+.tool[data-tool="via"] i{color:var(--good)}
+.tabs{display:flex;gap:4px;padding:8px 20px 0;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:10px 4px;font-weight:700;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.vchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 14%,transparent);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.vchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vchip button{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.alt .v{font-size:12.5px;color:var(--good);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.race[aria-pressed="true"]{border:2px solid var(--accent);padding:11px 13px}
+.race .t{font-weight:800;font-size:16px}
+.race .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted)}
+.race .k .past{color:var(--muted);font-weight:600}
+#race-filter{margin:2px 0 10px}
+#races #race-detail{margin:4px 0 10px}
+.portion{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.portion .row input{width:76px;padding:7px 8px;text-align:center;font-family:var(--f-cond);font-weight:700;font-size:15px}
+.chips.wrap{flex-wrap:wrap}.chips.wrap button{flex:0 0 auto;padding:7px 12px}
+.disclaim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:0}
+.tool[aria-pressed="true"] i{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tool[aria-pressed="true"] em{color:var(--ink);border-color:var(--accent)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:20px;box-shadow:var(--shadow)}
+.layers{position:absolute;left:16px;top:16px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 200px)}
+.layers button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 12px 6px 8px;font-family:var(--f-cond);font-weight:700;font-size:13.5px;box-shadow:var(--shadow);min-height:34px;cursor:pointer}
+.layers button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent)}
+.layers button[aria-pressed="false"] .ld{opacity:.45}
+.ld{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;font-style:normal;font-size:11px;font-weight:800;flex:none}
+.ld.metro,.lg.metrol{background:var(--metro-bg);color:var(--metro-ink);border:2px solid var(--metro-ring)}
+.ld.tree{background:var(--tree);width:12px;height:12px;margin:0 3px}
+.ld.sigd{background:var(--sig);width:12px;height:12px;margin:0 3px}
+.lg.treel{width:10px;height:10px;border-radius:50%;background:var(--tree);margin:0 6px}
+.lg.metrol{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;margin:0 2px;box-sizing:border-box}
+.metro-end{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:14px;color:var(--ink)}
+.metro-end .lbl{width:100%}
+.lb{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 4px;border-radius:5px;font-family:var(--f-cond);font-weight:800;font-size:12px;color:#fff;box-sizing:border-box}
+@media (max-width:700px){.layers{left:10px;top:10px;max-width:calc(100% - 70px)}.layers button{padding:4px 10px 4px 6px;font-size:12.5px;min-height:30px}}
+.legend{position:absolute;left:16px;bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);font-size:12.5px;color:var(--muted);max-width:240px}
+.legend summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none}
+.legend summary::-webkit-details-marker{display:none}
+.legend summary::after{content:" ▾"} .legend[open] summary::after{content:" ▴"}
+.attrib{position:absolute;right:76px;bottom:6px;font-size:10.5px;color:var(--muted);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:2px 6px;border-radius:6px;z-index:3;max-width:calc(100% - 330px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attrib a,.attrib-more{color:inherit;text-decoration:underline;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.legend ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.legend li{display:flex;align-items:center;gap:8px}
+.lg{width:22px;flex:none;display:inline-block}
+.lg.route{height:0;border-top:4px solid var(--route)}
+.lg.twice{height:10px;border-top:4px solid var(--route);border-bottom:4px solid var(--route-2);box-sizing:border-box}
+.lg.dash{height:0;border-top:3px dashed var(--route);opacity:.55}
+.lg.sig{width:12px;height:12px;border-radius:50%;background:var(--sig);margin:0 5px}
+.lg.km{width:18px;height:18px;border-radius:50%;border:2px solid var(--route);background:var(--panel);font-size:10px;display:grid;place-items:center;color:var(--ink);font-weight:700;margin:0 2px}
+.lg.via{width:14px;height:14px;border-radius:50%;background:var(--good);margin:0 4px}
+.lg.zone{height:12px;background:var(--avoid-fill);border:1px dashed var(--avoid)}
+.lg.station{height:12px;background:var(--station-fill);border:1px dashed var(--station)}
+.lg.water{height:12px;background:var(--water)}
+.lg.green{height:12px;background:var(--green)}
+.toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 14px;border-radius:10px;font-size:14px;max-width:min(520px,calc(100% - 140px));text-align:center;z-index:8}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--map-bg);z-index:5;font-family:var(--f-cond);font-size:15px;color:var(--muted)}
+.bar{height:3px;background:var(--accent);position:absolute;top:0;left:0;transition:width .15s;z-index:6}
+
+.grab{display:none}
+/* ---------- mobile: full-screen map + bottom sheet ---------- */
+@media (max-width:860px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .app{display:block;position:fixed;inset:0;height:auto}
+  .main{position:absolute;inset:0}
+  .mapwrap{position:absolute;inset:0;height:auto}
+  .panel{position:fixed;left:0;right:0;bottom:0;height:var(--sheet-h,52dvh);max-height:calc(100dvh - 56px);border-right:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.28);z-index:10;transition:height .25s ease;overflow:hidden}
+  .panel.dragging{transition:none}
+  .grab{display:flex;justify-content:center;align-items:center;width:100%;height:22px;border:0;background:none;padding:0;cursor:grab;touch-action:none;flex:none}
+  .grab span{width:42px;height:5px;border-radius:3px;background:var(--line)}
+  .phead{padding:0 16px 2px;border-bottom:0;touch-action:none}
+  .logo{font-size:19px}
+  .phead .iconbtn{width:32px;height:32px;font-size:14px}
+  .tabs{padding:0 12px}
+  .tabs button{padding:6px 4px 8px;font-size:13.5px}
+  .summary{padding:8px 10px}
+  #foot-res .textbtn{padding:2px;font-size:13.5px}
+  html.sheet-full .tools,html.sheet-full .zoom,html.sheet-full .legend{display:none}
+  .attrib{right:60px;left:auto;bottom:calc(var(--sheet-h,52dvh) + 4px);max-width:calc(100% - 120px);transition:bottom .25s ease}
+  .attrib .al{display:none}
+  .pbody{padding:12px 16px 14px;overscroll-behavior:contain}
+  .pfoot{padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:6px}
+  .pfoot .btn{min-height:46px}
+  .tools{top:auto;bottom:calc(var(--sheet-h,52dvh) + 12px);right:10px;gap:6px;transition:bottom .25s ease}
+  .tool i{width:40px;height:40px;border-radius:11px}
+  .tool em{display:none}
+  .zoom{right:auto;left:10px;bottom:calc(var(--sheet-h,52dvh) + 12px);gap:6px;transition:bottom .25s ease}
+  .zoom button{width:40px;height:40px;border-radius:11px;font-size:18px}
+  .legend{left:10px;bottom:auto;top:52px;max-width:220px;font-size:12px;padding:8px 10px}
+  .layers{left:10px;top:10px;right:10px;max-width:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .layers::-webkit-scrollbar{display:none}
+  .layers button{flex:none;padding:4px 10px 4px 6px;font-size:12.5px;min-height:32px}
+  .toast{top:56px;max-width:calc(100% - 24px)}
+  .themepop{right:12px}
+  .stat b{font-size:28px} .stat:first-child b{font-size:38px} .stats{gap:4px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="panel" aria-label="Réglages et résultats">
+    <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
+    <div class="phead">
+      <div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>
+      <button class="iconbtn" id="theme-btn" aria-label="Apparence" aria-expanded="false" title="Apparence">◐</button>
+    </div>
+    <div class="themepop" id="themepop" hidden role="group" aria-label="Apparence">
+      <span class="lbl">Apparence</span>
+      <div class="seg sm">
+        <button id="t-auto" aria-pressed="true">Auto</button>
+        <button id="t-light" aria-pressed="false">Clair</button>
+        <button id="t-dark" aria-pressed="false">Sombre</button>
+      </div>
+      <p class="hint">Auto suit le réglage de ton appareil.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
+      <button role="tab" id="tab-race" aria-selected="false">Courses officielles</button>
+    </div>
+    <!-- ===== Réglages ===== -->
+    <div class="pbody" id="view-set">
+      <section class="step" aria-labelledby="h-ou">
+        <h2 id="h-ou"><i>1</i>Où ?</h2>
+        <div class="startcard">
+          <span class="pin d" id="start-pin">D</span>
+          <div class="txt"><span class="name" id="start-name">—</span><small id="start-sub">Départ</small></div>
+          <button class="link" id="change-start" aria-expanded="false">Changer</button>
+        </div>
+        <div class="step" id="start-box" hidden>
+          <div class="search">
+            <input type="text" id="start-q" placeholder="Rechercher un départ (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher un départ">
+            <div class="results" id="start-res" hidden></div>
+          </div>
+          <button class="link" id="pick-start" style="align-self:flex-start">Ou le choisir sur la carte</button>
+        </div>
+        <div class="home" id="home-row">
+          <button class="chip-btn" id="home-go" hidden>Chez moi</button>
+          <button class="link" id="home-save">Enregistrer ce départ comme « Chez moi »</button>
+        </div>
+        <span class="lbl">Arrivée</span>
+        <div class="seg sm" role="group" aria-label="Arrivée">
+          <button id="a-back" aria-pressed="true">Retour au départ</button>
+          <button id="a-place" aria-pressed="false">Un lieu</button>
+          <button id="a-free" aria-pressed="false">N'importe où</button>
+        </div>
+        <div id="end-fixed" class="step" hidden>
+          <div class="startcard">
+            <span class="pin a">B</span>
+            <div class="txt"><span class="name" id="end-name">—</span><small>Arrivée</small></div>
+            <button class="link" id="pick-end">Sur la carte</button>
+          </div>
+          <div class="search">
+            <input type="text" id="end-q" placeholder="Rechercher l'arrivée (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher l'arrivée">
+            <div class="results" id="end-res" hidden></div>
+          </div>
+        </div>
+        <p class="hint" id="end-free-hint" hidden>Le parcours part de A et finit où c'est le plus agréable, à la distance demandée. Plusieurs arrivées te sont proposées.</p>
+        <label class="sw" id="end-metro-row" hidden>Finir près d'un métro ou RER<input type="checkbox" id="end-metro" checked></label>
+        <div class="avoid" id="via-list"></div>
+        <div class="search" id="via-box" hidden>
+          <input type="text" id="via-q" placeholder="Passer par : Tour Eiffel, canal Saint-Martin, une rue…" autocomplete="off" aria-label="Rechercher un lieu par où passer">
+          <div class="results" id="via-res" hidden></div>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="h-combien">
+        <h2 id="h-combien"><i>2</i>Combien ?<span class="seg sm" role="group" aria-label="Distance ou durée"><button id="u-km" aria-pressed="true">Distance</button><button id="u-min" aria-pressed="false">Durée</button></span></h2>
+        <div class="stepper">
+          <button type="button" id="minus" aria-label="Moins">−</button>
+          <label class="bignum" id="num-km"><input type="number" id="km" min="1" max="42" step="0.5" value="10" inputmode="decimal" aria-label="Distance en km"><span>km</span></label>
+          <label class="bignum" id="num-min" hidden><input type="number" id="dur" min="5" max="300" step="5" value="55" inputmode="numeric" aria-label="Durée en minutes"><span>min</span></label>
+          <button type="button" id="plus" aria-label="Plus">+</button>
+        </div>
+        <div class="chips" id="chips-km" role="group" aria-label="Distances courantes">
+          <button data-v="5">5</button><button data-v="10">10</button><button data-v="15">15</button><button data-v="21.1">Semi</button><button data-v="42.2">Marathon</button>
+        </div>
+        <div class="chips" id="chips-min" role="group" aria-label="Durées courantes" hidden>
+          <button data-v="30">30</button><button data-v="45">45</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button>
+        </div>
+        <div class="paceline"><span id="conv">≈ 55 min</span><span>à</span><input type="text" id="pace" value="5:30" inputmode="numeric" aria-label="Allure en minutes par km"><span>/km</span></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-comment">
+        <h2 id="h-comment"><i>3</i>Comment ?</h2>
+        <div class="seg sm" role="group" aria-label="Type de parcours">
+          <button id="k-classic" aria-pressed="true">Classique</button>
+          <button id="k-green" aria-pressed="false">Vert</button>
+          <button id="k-discover" aria-pressed="false">Découverte</button>
+        </div>
+        <p class="hint" id="k-hint" hidden></p>
+        <div class="seg sm" role="group" aria-label="Dénivelé">
+          <button id="d-flat" aria-pressed="false">Plat</button>
+          <button id="d-any" aria-pressed="true">Normal</button>
+          <button id="d-target" aria-pressed="false">Vallonné</button>
+        </div>
+        <div class="row" id="dplus-row" hidden>
+          <span style="font-size:14px;white-space:nowrap">D+ visé</span>
+          <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
+          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre).</p>
+        </div>
+        <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
+        <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
+      </section>
+
+      <section class="step" aria-labelledby="h-eviter">
+        <h2 id="h-eviter"><i>4</i>À éviter</h2>
+        <div class="avoid" id="avoid-list"></div>
+        <div class="addbox" id="addbox" hidden>
+          <div class="search">
+            <input type="text" id="avoid-q" placeholder="Un lieu : Tour Eiffel, Châtelet, un marché…" autocomplete="off" aria-label="Rechercher un lieu à éviter">
+            <div class="results" id="avoid-res" hidden></div>
+          </div>
+          <span class="lbl">Arrondissements</span>
+          <div class="arr" id="arr"></div>
+          <details class="q"><summary>Choisir quartier par quartier (80 quartiers)</summary><div class="qlist" id="qlist"></div></details>
+          <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
+        </div>
+        <p class="hint" id="always">Toujours évités : gares, quais et couloirs de métro.</p>
+      </section>
+
+      <details class="more">
+        <summary>Plus d'options</summary>
+        <div class="moreb">
+          <div class="row" id="sig-level" style="justify-content:space-between;min-height:40px"><span>Feux rouges</span><div class="seg sm" role="group" aria-label="Intensité d'évitement des feux" style="width:190px"><button id="s-1" aria-pressed="true">Limiter</button><button id="s-2" aria-pressed="false">Au maximum</button></div></div>
+          <label class="sw">Repasser par les mêmes rues (allers-retours)<input type="checkbox" id="allow-repeat"></label>
+          <label class="sw">Éviter les cimetières<input type="checkbox" id="avoid-cem" checked></label>
+        </div>
+      </details>
+    </div>
+
+    <!-- ===== Résultats ===== -->
+    <div class="pbody" id="view-res" hidden>
+      <div class="summary">
+        <div class="txt"><b id="sum-t">—</b><small id="sum-s"></small></div>
+        <button class="editbtn" id="edit" aria-label="Modifier les réglages"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Modifier</button>
+      </div>
+      <div class="stale" id="stale" hidden><span>Réglages modifiés sur la carte.</span><button id="recalc">Recalculer</button></div>
+      <span class="lbl" id="alts-h" hidden></span>
+      <div class="alts" id="alts" role="group" aria-label="Propositions"></div>
+      <div class="notes" id="notes"></div>
+      <div class="detail" id="detail">
+        <div class="stats">
+          <div class="stat"><b id="st-km">–</b><span>Distance <i class="delta" id="st-km-d"></i></span></div>
+          <div class="stat"><b id="st-up">–</b><span>D+ <i class="delta" id="st-up-d"></i></span></div>
+          <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
+          <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
+        </div>
+        <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
+        <p class="via" id="via"></p>
+      </div>
+    </div>
+
+    <!-- ===== Courses officielles ===== -->
+    <div class="pbody" id="view-race" hidden>
+      <p class="hint">Les tracés des grandes courses parisiennes, pour s'entraîner dessus en entier ou en partie.</p>
+      <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les courses"></div>
+      <div class="alts" id="races" role="group" aria-label="Courses"></div>
+      <div id="race-detail" class="step" hidden>
+        <p class="disclaim" id="race-desc"></p>
+        <div class="portion">
+          <span class="lbl">Courir une portion</span>
+          <div class="chips wrap" id="portion-chips"></div>
+          <div class="row"><span>Du km</span><input type="number" id="p-from" min="0" step="0.5" value="0" aria-label="Début de la portion en km"><span>au km</span><input type="number" id="p-to" min="0" step="0.5" value="0" aria-label="Fin de la portion en km"><button class="link" id="p-apply">Afficher</button></div>
+        </div>
+        <div id="race-slot"></div>
+      </div>
+    </div>
+
+    <div class="pfoot" id="foot-set">
+      <button class="btn primary" id="gen">Générer 3 parcours</button>
+    </div>
+    <div class="pfoot" id="foot-res" hidden>
+      <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button></div>
+      <button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mapwrap" id="mapwrap">
+      <div class="bar" id="bar" style="width:0"></div>
+      <canvas id="map" aria-label="Carte de Paris avec le parcours"></canvas>
+      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
+      <div class="layers" role="group" aria-label="Afficher sur la carte">
+        <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
+        <button type="button" id="ly-trees" aria-pressed="false"><i class="ld tree"></i>Arbres</button>
+        <button type="button" id="show-sig" aria-pressed="false"><i class="ld sigd"></i>Feux</button>
+      </div>
+      <div class="tools" role="toolbar" aria-label="Outils de carte">
+        <button class="tool" data-tool="start" aria-pressed="false"><em id="tl-start">Placer le départ</em><i id="ti-start">D</i></button>
+        <button class="tool" data-tool="end" aria-pressed="false" hidden><em>Placer l'arrivée</em><i>B</i></button>
+        <button class="tool" data-tool="via" aria-pressed="false"><em>Passer par un lieu</em><i aria-hidden="true">+</i></button>
+        <button class="tool" data-tool="quart" aria-pressed="false"><em>Éviter une zone</em><i aria-hidden="true">▨</i></button>
+        <button class="tool" data-tool="place" aria-pressed="false"><em>Éviter un lieu</em><i aria-hidden="true">⊘</i></button>
+      </div>
+      <details class="legend" id="legend" open>
+        <summary>Légende</summary>
+        <ul>
+          <li><span class="lg route"></span>Parcours choisi</li>
+          <li><span class="lg twice"></span>Rue empruntée 2 fois (2e passage)</li>
+          <li><span class="lg dash"></span>Autres propositions</li>
+          <li><span class="lg km">1</span>Borne kilométrique</li>
+          <li><span class="lg sig"></span>Feu sur le parcours</li>
+          <li><span class="lg treel"></span>Arbre le long du parcours</li>
+          <li><span class="lg metrol">M</span>Station de métro ou RER</li>
+          <li><span class="lg zone"></span>Zone ou lieu évité</li>
+          <li><span class="lg via"></span>Lieu par où passer, lieu connu</li>
+          <li><span class="lg station"></span>Gare (toujours évitée)</li>
+          <li><span class="lg green"></span>Parc, bois</li>
+          <li><span class="lg water"></span>Seine, canaux</li>
+        </ul>
+      </details>
+      <div class="zoom"><button id="zin" aria-label="Zoomer">+</button><button id="zout" aria-label="Dézoomer">−</button><button id="zfit" aria-label="Recentrer" style="font-size:15px">⤢</button></div>
+      <div class="toast" id="toast" hidden role="status"></div>
+      <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+/*ENGINE*/
+</script>

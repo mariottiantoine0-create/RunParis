@@ -1,0 +1,2098 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, tracés des courses officielles.">
+<meta name="theme-color" content="#0D1014">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230D1014%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%234CC3FF%27 stroke-width=%273.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunParis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Sofia+Sans:wght@400;500;600;700;800&family=Sofia+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F5F7F9; --panel:#FFFFFF; --field:#F5F7F9; --ink:#111820; --muted:#5B6672; --line:#DCE1E6; --soft:#EEF1F4;
+  --accent:#0B6FB8; --accent-ink:#FFFFFF; --accent-fill:rgba(11,111,184,.10);
+  --route:#0B6FB8; --route-2:#7B3FD0; --route-casing:#FFFFFF; --tree:#2F8F4E; --metro-bg:#FFFFFF; --metro-ink:#1B2430; --metro-ring:#1B2430;
+  --street:#D3D9DF; --street-major:#AEB7C0; --street-path:#7FB08F; --quart:#C5CCD3;
+  --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.14); --sig:#C27A00; --pin-b:#E0584A;
+  --good:#1E8E4F; --water:#CFE2EE; --green:#DDEBD8; --cem:#D5DCD2; --station:#8A93A0; --station-fill:rgba(110,116,128,.16); --label:#4A5561; --warn:#A86A12;
+  --warn-bg:#FFF6E5; --warn-line:#EBC98A; --err-bg:#FDEDEC; --err-line:#EFB2AC;
+  --map-bg:#EEF1F4; --shadow:0 2px 10px rgba(17,24,32,.10);
+  --f-display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --f-body:"Sofia Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-cond:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+  --f-mono:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+    --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+    --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+    --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+    --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+    --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+    --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+    --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+  --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+  --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+  --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+  --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+  --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+  --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+  --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:400px 1fr;height:100%}
+.panel{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;position:relative;z-index:2}
+.phead{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line)}
+.logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1}
+.logo span{color:var(--accent)}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;display:grid;place-items:center;font-size:16px}
+.themepop{position:absolute;right:20px;top:56px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px;z-index:30;display:flex;flex-direction:column;gap:8px;width:250px}
+.pbody{flex:1;overflow-y:auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.pfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+
+/* ---------- steps ---------- */
+.step{display:flex;flex-direction:column;gap:8px}
+.step h2 .seg{margin-left:auto;width:180px}
+.step h2{margin:0;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800}
+.step h2 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-family:var(--f-cond);font-size:13px;font-weight:700}
+.lbl{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 4px;border-radius:9px;font-weight:600;font-size:14px;white-space:nowrap;color:var(--muted);min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.seg.sm button{padding:6px 4px;font-size:13px;min-height:34px}
+input[type=number],input[type=text],select{border:1px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input[type=number]{font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.link{border:0;background:none;color:var(--accent);padding:4px 0;font-size:14px;font-weight:700}
+
+.startcard{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-cond);font-weight:700;font-size:14px;color:#fff;flex:none}
+.pin.d{background:var(--good);color:#06131C} .pin.a{background:var(--pin-b)}
+.startcard .txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.startcard .name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.startcard small{color:var(--muted);font-size:12.5px}
+.search{position:relative}
+.results{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:20;max-height:260px;overflow:auto}
+.results button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 12px}
+.results button:hover,.results button:focus{background:var(--soft)}
+.results em{font-style:normal;color:var(--muted);font-size:12px;white-space:nowrap}
+.home{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip-btn{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
+.chip-btn::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
+
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--field);font-size:24px;line-height:1;flex:none}
+.bignum{display:flex;align-items:baseline;justify-content:center;gap:4px;flex:1;min-width:0}
+.bignum input{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1;text-align:center;border:0;background:transparent;padding:0;width:104px;-moz-appearance:textfield}
+.bignum input::-webkit-outer-spin-button,.bignum input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.bignum span{font-size:17px;color:var(--muted);font-weight:600}
+.chips{display:flex;gap:6px}
+.chips button{flex:1;border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 0;font-family:var(--f-cond);font-weight:700;font-size:14px;color:var(--muted);min-height:36px}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-fill)}
+.paceline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.paceline input{width:74px;padding:6px 8px;font-family:var(--f-cond);font-weight:700;font-size:15px;text-align:center;color:var(--ink)}
+.paceline b{color:var(--ink);font-family:var(--f-cond)}
+
+.sw{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;min-height:36px;cursor:pointer}
+.sw input{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{left:21px;background:var(--accent-ink)}
+.sub{margin-left:0;padding:8px 0 0}
+
+.avoid{display:flex;flex-wrap:wrap;gap:6px}
+.xchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--avoid);color:var(--avoid);background:var(--avoid-fill);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.xchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xchip select{width:auto;padding:2px 4px;font-size:12.5px;border-radius:8px;background:var(--panel);color:var(--ink)}
+.xchip button{border:0;background:none;color:var(--avoid);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.addbtn{border:1px dashed var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:700}
+.addbox{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.arr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.arr button{border:1px solid var(--line);background:var(--panel);border-radius:9px;height:40px;font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1}
+.arr button sup{font-size:10px}
+.arr button[data-state="all"]{background:var(--avoid);border-color:var(--avoid);color:var(--panel)}
+.arr button[data-state="some"]{border:1px dashed var(--avoid);color:var(--avoid);background:var(--avoid-fill)}
+details.q summary,details.more summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);list-style:none}
+details.q summary::-webkit-details-marker,details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾"} details.more[open] summary::after{content:" ▴"}
+.qlist{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px;font-size:13.5px;max-height:220px;overflow:auto;padding-right:4px}
+.qlist label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.qlist .ah{grid-column:1/-1;font-family:var(--f-cond);font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:6px}
+.moreb{display:flex;flex-direction:column;gap:4px;padding-top:8px}
+
+/* ---------- buttons ---------- */
+.btn{border:0;border-radius:12px;padding:14px 16px;font-weight:800;font-size:16px;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:20px;letter-spacing:.05em;text-transform:uppercase;padding:12px 16px}
+.btn.primary:disabled{opacity:.6;cursor:progress}
+.btn.ghost{background:var(--field);border:1px solid var(--line);color:var(--ink)}
+.btnrow{display:flex;gap:8px}
+.btnrow .btn.primary{flex:1}
+.textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
+
+/* ---------- results ---------- */
+.summary{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.summary .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.summary b{font-size:15px}
+.summary small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.summary{cursor:pointer;transition:border-color .15s}
+.summary:hover{border-color:var(--accent)}
+.editbtn{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent-fill);color:var(--accent);font-family:var(--f-cond);font-weight:800;font-size:15px;letter-spacing:.01em;cursor:pointer}
+.editbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.stale{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:12px;padding:8px 8px 8px 12px;font-size:13.5px}
+.stale button{border:0;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:800;padding:8px 12px;white-space:nowrap}
+.alts{display:flex;flex-direction:column;gap:8px}
+.alt{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.alt[aria-pressed="true"]{border:2px solid var(--accent);padding:9px 11px}
+.alt .k{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.alt[aria-pressed="true"] .k{color:var(--accent)}
+.alt .t{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alt .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.detail{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.stats{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 16px;align-items:end}
+.stat{display:flex;flex-direction:column;min-width:0}
+.stat b{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.stat:first-child b{font-size:48px}
+.stat b small{font-family:var(--f-body);font-size:14px;font-weight:600;margin-left:2px;color:var(--muted)}
+.stat span{font-family:var(--f-cond);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .delta{font-style:normal;text-transform:none;letter-spacing:0}
+.stat.sig b{color:var(--sig)}
+.delta.ok{color:var(--good)} .delta.off{color:var(--warn)}
+.profile{height:80px;position:relative}
+.profile canvas{width:100%;height:100%;display:block}
+.via{font-size:13.5px;color:var(--muted);margin:0}
+.via strong{color:var(--ink);font-weight:600}
+.notes{display:flex;flex-direction:column;gap:6px}
+.note{font-size:13.5px;line-height:1.4;padding:9px 12px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid var(--warn)}
+.note.err{background:var(--err-bg);border-color:var(--err-line);border-left-color:var(--avoid)}
+
+/* ---------- map ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.mapwrap{position:relative;flex:1;min-height:0;background:var(--map-bg);overflow:hidden}
+canvas#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas#map.pick{cursor:crosshair}
+.tools{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.tool{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0}
+.tool em{font-style:normal;font-size:12.5px;font-weight:600;background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:4px 8px;box-shadow:var(--shadow)}
+.tool i{font-style:normal;width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;box-shadow:var(--shadow);font-family:var(--f-cond);font-weight:700;font-size:15px;color:var(--ink)}
+.tool[data-tool="quart"] i,.tool[data-tool="place"] i{color:var(--avoid)}
+.tool[data-tool="via"] i{color:var(--good)}
+.tabs{display:flex;gap:4px;padding:8px 20px 0;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:10px 4px;font-weight:700;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.vchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 14%,transparent);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.vchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vchip button{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.alt .v{font-size:12.5px;color:var(--good);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.race[aria-pressed="true"]{border:2px solid var(--accent);padding:11px 13px}
+.race .t{font-weight:800;font-size:16px}
+.race .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted)}
+.race .k .past{color:var(--muted);font-weight:600}
+#race-filter{margin:2px 0 10px}
+#races #race-detail{margin:4px 0 10px}
+.portion{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.portion .row input{width:76px;padding:7px 8px;text-align:center;font-family:var(--f-cond);font-weight:700;font-size:15px}
+.chips.wrap{flex-wrap:wrap}.chips.wrap button{flex:0 0 auto;padding:7px 12px}
+.disclaim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:0}
+.tool[aria-pressed="true"] i{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tool[aria-pressed="true"] em{color:var(--ink);border-color:var(--accent)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:20px;box-shadow:var(--shadow)}
+.layers{position:absolute;left:16px;top:16px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 200px)}
+.layers button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 12px 6px 8px;font-family:var(--f-cond);font-weight:700;font-size:13.5px;box-shadow:var(--shadow);min-height:34px;cursor:pointer}
+.layers button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent)}
+.layers button[aria-pressed="false"] .ld{opacity:.45}
+.ld{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;font-style:normal;font-size:11px;font-weight:800;flex:none}
+.ld.metro,.lg.metrol{background:var(--metro-bg);color:var(--metro-ink);border:2px solid var(--metro-ring)}
+.ld.tree{background:var(--tree);width:12px;height:12px;margin:0 3px}
+.ld.sigd{background:var(--sig);width:12px;height:12px;margin:0 3px}
+.lg.treel{width:10px;height:10px;border-radius:50%;background:var(--tree);margin:0 6px}
+.lg.metrol{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;margin:0 2px;box-sizing:border-box}
+.metro-end{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:14px;color:var(--ink)}
+.metro-end .lbl{width:100%}
+.lb{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 4px;border-radius:5px;font-family:var(--f-cond);font-weight:800;font-size:12px;color:#fff;box-sizing:border-box}
+@media (max-width:700px){.layers{left:10px;top:10px;max-width:calc(100% - 70px)}.layers button{padding:4px 10px 4px 6px;font-size:12.5px;min-height:30px}}
+.legend{position:absolute;left:16px;bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);font-size:12.5px;color:var(--muted);max-width:240px}
+.legend summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none}
+.legend summary::-webkit-details-marker{display:none}
+.legend summary::after{content:" ▾"} .legend[open] summary::after{content:" ▴"}
+.attrib{position:absolute;right:76px;bottom:6px;font-size:10.5px;color:var(--muted);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:2px 6px;border-radius:6px;z-index:3;max-width:calc(100% - 330px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attrib a,.attrib-more{color:inherit;text-decoration:underline;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.legend ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.legend li{display:flex;align-items:center;gap:8px}
+.lg{width:22px;flex:none;display:inline-block}
+.lg.route{height:0;border-top:4px solid var(--route)}
+.lg.twice{height:10px;border-top:4px solid var(--route);border-bottom:4px solid var(--route-2);box-sizing:border-box}
+.lg.dash{height:0;border-top:3px dashed var(--route);opacity:.55}
+.lg.sig{width:12px;height:12px;border-radius:50%;background:var(--sig);margin:0 5px}
+.lg.km{width:18px;height:18px;border-radius:50%;border:2px solid var(--route);background:var(--panel);font-size:10px;display:grid;place-items:center;color:var(--ink);font-weight:700;margin:0 2px}
+.lg.via{width:14px;height:14px;border-radius:50%;background:var(--good);margin:0 4px}
+.lg.zone{height:12px;background:var(--avoid-fill);border:1px dashed var(--avoid)}
+.lg.station{height:12px;background:var(--station-fill);border:1px dashed var(--station)}
+.lg.water{height:12px;background:var(--water)}
+.lg.green{height:12px;background:var(--green)}
+.toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 14px;border-radius:10px;font-size:14px;max-width:min(520px,calc(100% - 140px));text-align:center;z-index:8}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--map-bg);z-index:5;font-family:var(--f-cond);font-size:15px;color:var(--muted)}
+.bar{height:3px;background:var(--accent);position:absolute;top:0;left:0;transition:width .15s;z-index:6}
+
+.grab{display:none}
+/* ---------- mobile: full-screen map + bottom sheet ---------- */
+@media (max-width:860px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .app{display:block;position:fixed;inset:0;height:auto}
+  .main{position:absolute;inset:0}
+  .mapwrap{position:absolute;inset:0;height:auto}
+  .panel{position:fixed;left:0;right:0;bottom:0;height:var(--sheet-h,52dvh);max-height:calc(100dvh - 56px);border-right:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.28);z-index:10;transition:height .25s ease;overflow:hidden}
+  .panel.dragging{transition:none}
+  .grab{display:flex;justify-content:center;align-items:center;width:100%;height:22px;border:0;background:none;padding:0;cursor:grab;touch-action:none;flex:none}
+  .grab span{width:42px;height:5px;border-radius:3px;background:var(--line)}
+  .phead{padding:0 16px 2px;border-bottom:0;touch-action:none}
+  .logo{font-size:19px}
+  .phead .iconbtn{width:32px;height:32px;font-size:14px}
+  .tabs{padding:0 12px}
+  .tabs button{padding:6px 4px 8px;font-size:13.5px}
+  .summary{padding:8px 10px}
+  #foot-res .textbtn{padding:2px;font-size:13.5px}
+  html.sheet-full .tools,html.sheet-full .zoom,html.sheet-full .legend{display:none}
+  .attrib{right:60px;left:auto;bottom:calc(var(--sheet-h,52dvh) + 4px);max-width:calc(100% - 120px);transition:bottom .25s ease}
+  .attrib .al{display:none}
+  .pbody{padding:12px 16px 14px;overscroll-behavior:contain}
+  .pfoot{padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:6px}
+  .pfoot .btn{min-height:46px}
+  .tools{top:auto;bottom:calc(var(--sheet-h,52dvh) + 12px);right:10px;gap:6px;transition:bottom .25s ease}
+  .tool i{width:40px;height:40px;border-radius:11px}
+  .tool em{display:none}
+  .zoom{right:auto;left:10px;bottom:calc(var(--sheet-h,52dvh) + 12px);gap:6px;transition:bottom .25s ease}
+  .zoom button{width:40px;height:40px;border-radius:11px;font-size:18px}
+  .legend{left:10px;bottom:auto;top:52px;max-width:220px;font-size:12px;padding:8px 10px}
+  .layers{left:10px;top:10px;right:10px;max-width:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .layers::-webkit-scrollbar{display:none}
+  .layers button{flex:none;padding:4px 10px 4px 6px;font-size:12.5px;min-height:32px}
+  .toast{top:56px;max-width:calc(100% - 24px)}
+  .themepop{right:12px}
+  .stat b{font-size:28px} .stat:first-child b{font-size:38px} .stats{gap:4px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="panel" aria-label="Réglages et résultats">
+    <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
+    <div class="phead">
+      <div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>
+      <button class="iconbtn" id="theme-btn" aria-label="Apparence" aria-expanded="false" title="Apparence">◐</button>
+    </div>
+    <div class="themepop" id="themepop" hidden role="group" aria-label="Apparence">
+      <span class="lbl">Apparence</span>
+      <div class="seg sm">
+        <button id="t-auto" aria-pressed="true">Auto</button>
+        <button id="t-light" aria-pressed="false">Clair</button>
+        <button id="t-dark" aria-pressed="false">Sombre</button>
+      </div>
+      <p class="hint">Auto suit le réglage de ton appareil.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
+      <button role="tab" id="tab-race" aria-selected="false">Courses officielles</button>
+    </div>
+    <!-- ===== Réglages ===== -->
+    <div class="pbody" id="view-set">
+      <section class="step" aria-labelledby="h-ou">
+        <h2 id="h-ou"><i>1</i>Où ?</h2>
+        <div class="startcard">
+          <span class="pin d" id="start-pin">D</span>
+          <div class="txt"><span class="name" id="start-name">—</span><small id="start-sub">Départ</small></div>
+          <button class="link" id="change-start" aria-expanded="false">Changer</button>
+        </div>
+        <div class="step" id="start-box" hidden>
+          <div class="search">
+            <input type="text" id="start-q" placeholder="Rechercher un départ (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher un départ">
+            <div class="results" id="start-res" hidden></div>
+          </div>
+          <button class="link" id="pick-start" style="align-self:flex-start">Ou le choisir sur la carte</button>
+        </div>
+        <div class="home" id="home-row">
+          <button class="chip-btn" id="home-go" hidden>Chez moi</button>
+          <button class="link" id="home-save">Enregistrer ce départ comme « Chez moi »</button>
+        </div>
+        <span class="lbl">Arrivée</span>
+        <div class="seg sm" role="group" aria-label="Arrivée">
+          <button id="a-back" aria-pressed="true">Retour au départ</button>
+          <button id="a-place" aria-pressed="false">Un lieu</button>
+          <button id="a-free" aria-pressed="false">N'importe où</button>
+        </div>
+        <div id="end-fixed" class="step" hidden>
+          <div class="startcard">
+            <span class="pin a">B</span>
+            <div class="txt"><span class="name" id="end-name">—</span><small>Arrivée</small></div>
+            <button class="link" id="pick-end">Sur la carte</button>
+          </div>
+          <div class="search">
+            <input type="text" id="end-q" placeholder="Rechercher l'arrivée (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher l'arrivée">
+            <div class="results" id="end-res" hidden></div>
+          </div>
+        </div>
+        <p class="hint" id="end-free-hint" hidden>Le parcours part de A et finit où c'est le plus agréable, à la distance demandée. Plusieurs arrivées te sont proposées.</p>
+        <label class="sw" id="end-metro-row" hidden>Finir près d'un métro ou RER<input type="checkbox" id="end-metro" checked></label>
+        <div class="avoid" id="via-list"></div>
+        <div class="search" id="via-box" hidden>
+          <input type="text" id="via-q" placeholder="Passer par : Tour Eiffel, canal Saint-Martin, une rue…" autocomplete="off" aria-label="Rechercher un lieu par où passer">
+          <div class="results" id="via-res" hidden></div>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="h-combien">
+        <h2 id="h-combien"><i>2</i>Combien ?<span class="seg sm" role="group" aria-label="Distance ou durée"><button id="u-km" aria-pressed="true">Distance</button><button id="u-min" aria-pressed="false">Durée</button></span></h2>
+        <div class="stepper">
+          <button type="button" id="minus" aria-label="Moins">−</button>
+          <label class="bignum" id="num-km"><input type="number" id="km" min="1" max="42" step="0.5" value="10" inputmode="decimal" aria-label="Distance en km"><span>km</span></label>
+          <label class="bignum" id="num-min" hidden><input type="number" id="dur" min="5" max="300" step="5" value="55" inputmode="numeric" aria-label="Durée en minutes"><span>min</span></label>
+          <button type="button" id="plus" aria-label="Plus">+</button>
+        </div>
+        <div class="chips" id="chips-km" role="group" aria-label="Distances courantes">
+          <button data-v="5">5</button><button data-v="10">10</button><button data-v="15">15</button><button data-v="21.1">Semi</button><button data-v="42.2">Marathon</button>
+        </div>
+        <div class="chips" id="chips-min" role="group" aria-label="Durées courantes" hidden>
+          <button data-v="30">30</button><button data-v="45">45</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button>
+        </div>
+        <div class="paceline"><span id="conv">≈ 55 min</span><span>à</span><input type="text" id="pace" value="5:30" inputmode="numeric" aria-label="Allure en minutes par km"><span>/km</span></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-comment">
+        <h2 id="h-comment"><i>3</i>Comment ?</h2>
+        <div class="seg sm" role="group" aria-label="Type de parcours">
+          <button id="k-classic" aria-pressed="true">Classique</button>
+          <button id="k-green" aria-pressed="false">Vert</button>
+          <button id="k-discover" aria-pressed="false">Découverte</button>
+        </div>
+        <p class="hint" id="k-hint" hidden></p>
+        <div class="seg sm" role="group" aria-label="Dénivelé">
+          <button id="d-flat" aria-pressed="false">Plat</button>
+          <button id="d-any" aria-pressed="true">Normal</button>
+          <button id="d-target" aria-pressed="false">Vallonné</button>
+        </div>
+        <div class="row" id="dplus-row" hidden>
+          <span style="font-size:14px;white-space:nowrap">D+ visé</span>
+          <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
+          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre).</p>
+        </div>
+        <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
+        <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
+      </section>
+
+      <section class="step" aria-labelledby="h-eviter">
+        <h2 id="h-eviter"><i>4</i>À éviter</h2>
+        <div class="avoid" id="avoid-list"></div>
+        <div class="addbox" id="addbox" hidden>
+          <div class="search">
+            <input type="text" id="avoid-q" placeholder="Un lieu : Tour Eiffel, Châtelet, un marché…" autocomplete="off" aria-label="Rechercher un lieu à éviter">
+            <div class="results" id="avoid-res" hidden></div>
+          </div>
+          <span class="lbl">Arrondissements</span>
+          <div class="arr" id="arr"></div>
+          <details class="q"><summary>Choisir quartier par quartier (80 quartiers)</summary><div class="qlist" id="qlist"></div></details>
+          <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
+        </div>
+        <p class="hint" id="always">Toujours évités : gares, quais et couloirs de métro.</p>
+      </section>
+
+      <details class="more">
+        <summary>Plus d'options</summary>
+        <div class="moreb">
+          <div class="row" id="sig-level" style="justify-content:space-between;min-height:40px"><span>Feux rouges</span><div class="seg sm" role="group" aria-label="Intensité d'évitement des feux" style="width:190px"><button id="s-1" aria-pressed="true">Limiter</button><button id="s-2" aria-pressed="false">Au maximum</button></div></div>
+          <label class="sw">Repasser par les mêmes rues (allers-retours)<input type="checkbox" id="allow-repeat"></label>
+          <label class="sw">Éviter les cimetières<input type="checkbox" id="avoid-cem" checked></label>
+        </div>
+      </details>
+    </div>
+
+    <!-- ===== Résultats ===== -->
+    <div class="pbody" id="view-res" hidden>
+      <div class="summary">
+        <div class="txt"><b id="sum-t">—</b><small id="sum-s"></small></div>
+        <button class="editbtn" id="edit" aria-label="Modifier les réglages"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Modifier</button>
+      </div>
+      <div class="stale" id="stale" hidden><span>Réglages modifiés sur la carte.</span><button id="recalc">Recalculer</button></div>
+      <span class="lbl" id="alts-h" hidden></span>
+      <div class="alts" id="alts" role="group" aria-label="Propositions"></div>
+      <div class="notes" id="notes"></div>
+      <div class="detail" id="detail">
+        <div class="stats">
+          <div class="stat"><b id="st-km">–</b><span>Distance <i class="delta" id="st-km-d"></i></span></div>
+          <div class="stat"><b id="st-up">–</b><span>D+ <i class="delta" id="st-up-d"></i></span></div>
+          <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
+          <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
+        </div>
+        <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
+        <p class="via" id="via"></p>
+      </div>
+    </div>
+
+    <!-- ===== Courses officielles ===== -->
+    <div class="pbody" id="view-race" hidden>
+      <p class="hint">Les tracés des grandes courses parisiennes, pour s'entraîner dessus en entier ou en partie.</p>
+      <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les courses"></div>
+      <div class="alts" id="races" role="group" aria-label="Courses"></div>
+      <div id="race-detail" class="step" hidden>
+        <p class="disclaim" id="race-desc"></p>
+        <div class="portion">
+          <span class="lbl">Courir une portion</span>
+          <div class="chips wrap" id="portion-chips"></div>
+          <div class="row"><span>Du km</span><input type="number" id="p-from" min="0" step="0.5" value="0" aria-label="Début de la portion en km"><span>au km</span><input type="number" id="p-to" min="0" step="0.5" value="0" aria-label="Fin de la portion en km"><button class="link" id="p-apply">Afficher</button></div>
+        </div>
+        <div id="race-slot"></div>
+      </div>
+    </div>
+
+    <div class="pfoot" id="foot-set">
+      <button class="btn primary" id="gen">Générer 3 parcours</button>
+    </div>
+    <div class="pfoot" id="foot-res" hidden>
+      <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button></div>
+      <button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mapwrap" id="mapwrap">
+      <div class="bar" id="bar" style="width:0"></div>
+      <canvas id="map" aria-label="Carte de Paris avec le parcours"></canvas>
+      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
+      <div class="layers" role="group" aria-label="Afficher sur la carte">
+        <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
+        <button type="button" id="ly-trees" aria-pressed="false"><i class="ld tree"></i>Arbres</button>
+        <button type="button" id="show-sig" aria-pressed="false"><i class="ld sigd"></i>Feux</button>
+      </div>
+      <div class="tools" role="toolbar" aria-label="Outils de carte">
+        <button class="tool" data-tool="start" aria-pressed="false"><em id="tl-start">Placer le départ</em><i id="ti-start">D</i></button>
+        <button class="tool" data-tool="end" aria-pressed="false" hidden><em>Placer l'arrivée</em><i>B</i></button>
+        <button class="tool" data-tool="via" aria-pressed="false"><em>Passer par un lieu</em><i aria-hidden="true">+</i></button>
+        <button class="tool" data-tool="quart" aria-pressed="false"><em>Éviter une zone</em><i aria-hidden="true">▨</i></button>
+        <button class="tool" data-tool="place" aria-pressed="false"><em>Éviter un lieu</em><i aria-hidden="true">⊘</i></button>
+      </div>
+      <details class="legend" id="legend" open>
+        <summary>Légende</summary>
+        <ul>
+          <li><span class="lg route"></span>Parcours choisi</li>
+          <li><span class="lg twice"></span>Rue empruntée 2 fois (2e passage)</li>
+          <li><span class="lg dash"></span>Autres propositions</li>
+          <li><span class="lg km">1</span>Borne kilométrique</li>
+          <li><span class="lg sig"></span>Feu sur le parcours</li>
+          <li><span class="lg treel"></span>Arbre le long du parcours</li>
+          <li><span class="lg metrol">M</span>Station de métro ou RER</li>
+          <li><span class="lg zone"></span>Zone ou lieu évité</li>
+          <li><span class="lg via"></span>Lieu par où passer, lieu connu</li>
+          <li><span class="lg station"></span>Gare (toujours évitée)</li>
+          <li><span class="lg green"></span>Parc, bois</li>
+          <li><span class="lg water"></span>Seine, canaux</li>
+        </ul>
+      </details>
+      <div class="zoom"><button id="zin" aria-label="Zoomer">+</button><button id="zout" aria-label="Dézoomer">−</button><button id="zfit" aria-label="Recentrer" style="font-size:15px">⤢</button></div>
+      <div class="toast" id="toast" hidden role="status"></div>
+      <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+// RunParis routing engine — works in browser and node
+const Engine = (() => {
+  let M, G = {};
+  const DEG = Math.PI / 180;
+
+  function init(meta, buf) {
+    M = meta;
+    const o = meta.offs, nN = meta.nN, nE = meta.nE, nG = meta.nG;
+    const ny = new Uint16Array(buf, o[0], nN), nx = new Uint16Array(buf, o[1], nN);
+    const nz = new Uint16Array(buf, o[2], nN), nc = new Uint16Array(buf, o[3], nN);
+    const nq = new Uint8Array(buf, o[4], nN);
+    const ea = new Uint32Array(buf, o[5], nE), eb = new Uint32Array(buf, o[6], nE);
+    const el = new Uint16Array(buf, o[7], nE), eu = new Uint16Array(buf, o[8], nE), ed = new Uint16Array(buf, o[9], nE);
+    const ef = new Uint8Array(buf, o[10], nE), en = new Uint16Array(buf, o[11], nE);
+    const ez = new Uint8Array(buf, o[12], nE * 4);
+    const go = new Uint32Array(buf, o[13], nE + 1);
+    const gy = new Uint16Array(buf, o[14], nG), gx = new Uint16Array(buf, o[15], nG);
+    const CEM = o.length > 16 ? new Uint8Array(buf, o[16], nE) : new Uint8Array(nE);
+    const [la0, la1, lo0, lo1] = meta.bbox;
+    const latM = (la0 + la1) / 2, kx = Math.cos(latM * DEG) * 111320, ky = 110540;
+    const qlat = v => la0 + v / 65535 * (la1 - la0), qlon = v => lo0 + v / 65535 * (lo1 - lo0);
+    const NX = new Float32Array(nN), NY = new Float32Array(nN), NZ = new Float32Array(nN);
+    for (let i = 0; i < nN; i++) { NX[i] = (qlon(nx[i]) - lo0) * kx; NY[i] = (la1 - qlat(ny[i])) * ky; NZ[i] = nz[i] / 10; }
+    const GX = new Float32Array(nG), GY = new Float32Array(nG);
+    for (let i = 0; i < nG; i++) { GX[i] = (qlon(gx[i]) - lo0) * kx; GY[i] = (la1 - qlat(gy[i])) * ky; }
+    const LEN = new Float32Array(nE), C = new Uint8Array(nE), P = new Uint8Array(nE), S = new Uint8Array(nE);
+    for (let e = 0; e < nE; e++) { LEN[e] = el[e] / 2; C[e] = ef[e] & 3; P[e] = (ef[e] >> 2) & 3; S[e] = ef[e] >> 4; }
+    // CSR adjacency
+    const deg = new Uint32Array(nN + 1);
+    for (let e = 0; e < nE; e++) { deg[ea[e] + 1]++; deg[eb[e] + 1]++; }
+    for (let i = 0; i < nN; i++) deg[i + 1] += deg[i];
+    const adjE = new Uint32Array(2 * nE), fill = deg.slice(0, nN);
+    for (let e = 0; e < nE; e++) { adjE[fill[ea[e]]++] = e; adjE[fill[eb[e]]++] = e; }
+    // spatial grid (200 m)
+    const CELL = 200; let maxX = 0, maxY = 0;
+    for (let i = 0; i < nN; i++) { if (NX[i] > maxX) maxX = NX[i]; if (NY[i] > maxY) maxY = NY[i]; }
+    const GW = Math.ceil(maxX / CELL) + 1, GH = Math.ceil(maxY / CELL) + 1;
+    const cellCount = new Uint32Array(GW * GH + 1);
+    const cellOf = i => Math.floor(NY[i] / CELL) * GW + Math.floor(NX[i] / CELL);
+    for (let i = 0; i < nN; i++) cellCount[cellOf(i) + 1]++;
+    for (let i = 0; i < GW * GH; i++) cellCount[i + 1] += cellCount[i];
+    const cellNodes = new Uint32Array(nN), cf = cellCount.slice(0, GW * GH);
+    for (let i = 0; i < nN; i++) cellNodes[cf[cellOf(i)]++] = i;
+    // signal cluster centroids
+    const sc = new Map();
+    for (let i = 0; i < nN; i++) if (nc[i]) { const k = nc[i]; const a = sc.get(k) || [0, 0, 0]; a[0] += NX[i]; a[1] += NY[i]; a[2]++; sc.set(k, a); }
+    const SIG = [...sc.entries()].map(([k, a]) => ({ id: k, x: a[0] / a[2], y: a[1] / a[2] }));
+    G = { CEM, nN, nE, nG, ea, eb, eu, ed, en, ez, go, nc, nq, NX, NY, NZ, GX, GY, LEN, C, P, S, deg, adjE, CELL, GW, GH, cellCount, cellNodes, kx, ky, la1, lo0, SIG, maxX, maxY };
+    G.bad = new Uint8Array(nE); G.blocked = new Uint8Array(nE); G.nodeOk = new Uint8Array(nN).fill(1);
+    G.dist = new Float64Array(nN); G.stamp = new Uint32Array(nN); G.prev = new Int32Array(nN); G.done = new Uint32Array(nN); G.cur = 0;
+    G.used = new Uint8Array(nE);
+    return G;
+  }
+
+  const toXY = (lat, lon) => [(lon - G.lo0) * G.kx, (G.la1 - lat) * G.ky];
+  const toLL = (x, y) => [G.la1 - y / G.ky, G.lo0 + x / G.kx];
+
+  // ---------- constraints ----------
+  function segDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+    let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+  }
+  function edgePts(e) {
+    const pts = [[G.NX[G.ea[e]], G.NY[G.ea[e]]]];
+    for (let k = G.go[e]; k < G.go[e + 1]; k++) pts.push([G.GX[k], G.GY[k]]);
+    pts.push([G.NX[G.eb[e]], G.NY[G.eb[e]]]);
+    return pts;
+  }
+  function setConstraints(exclQ, places, opts = {}) {
+    const { nE, nN, blocked, nodeOk, ez, nq } = G;
+    blocked.fill(0); nodeOk.fill(1);
+    if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
+    for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
+    for (let e = 0; e < nE; e++) {
+      for (let k = 0; k < 4; k++) { const z = ez[4 * e + k]; if (z && exclQ.has(z)) { blocked[e] = 1; break; } }
+    }
+    for (const pl of places) {
+      const [px, py] = toXY(pl.lat, pl.lon), r = pl.r;
+      for (let e = 0; e < nE; e++) {
+        if (blocked[e]) continue;
+        const a = G.ea[e], b = G.eb[e];
+        const minx = Math.min(G.NX[a], G.NX[b]) - r - 400, maxx = Math.max(G.NX[a], G.NX[b]) + r + 400;
+        if (px < minx || px > maxx) continue;
+        const miny = Math.min(G.NY[a], G.NY[b]) - r - 400, maxy = Math.max(G.NY[a], G.NY[b]) + r + 400;
+        if (py < miny || py > maxy) continue;
+        const pts = edgePts(e);
+        for (let i = 1; i < pts.length; i++) if (segDist(px, py, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]) < r) { blocked[e] = 1; break; }
+      }
+      for (let i = 0; i < nN; i++) if (Math.hypot(G.NX[i] - px, G.NY[i] - py) < r) nodeOk[i] = 0;
+    }
+    // a node is usable only if it keeps an open edge
+    for (let i = 0; i < nN; i++) if (nodeOk[i]) {
+      let open = false; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) if (!blocked[G.adjE[k]]) { open = true; break; }
+      if (!open) nodeOk[i] = 0;
+    }
+    // drop small islands cut off by exclusions (e.g. a square whose exits are all in an avoided zone)
+    const comp = new Int32Array(nN).fill(-1), stack = [];
+    for (let i = 0; i < nN; i++) {
+      if (!nodeOk[i] || comp[i] >= 0) continue;
+      const members = [i]; comp[i] = i; stack.push(i);
+      while (stack.length) {
+        const u = stack.pop();
+        for (let k = G.deg[u]; k < G.deg[u + 1]; k++) {
+          const ed = G.adjE[k]; if (blocked[ed]) continue;
+          const v = G.ea[ed] === u ? G.eb[ed] : G.ea[ed];
+          if (comp[v] < 0) { comp[v] = i; stack.push(v); members.push(v); }
+        }
+      }
+      if (members.length < 300) for (const v of members) nodeOk[v] = 0;
+    }
+  }
+
+  function nearest(x, y, opts = {}) {
+    const { CELL, GW, GH, cellCount, cellNodes, NX, NY, NZ, nodeOk } = G;
+    x = Math.max(0, Math.min(G.maxX, x)); y = Math.max(0, Math.min(G.maxY, y));
+    const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+    let best = -1, bd = Infinity;
+    const hill = opts.hillRadius || 0, greenR = !hill && G.GR ? (opts.greenRadius || 0) : 0;
+    for (let r = 0; r < 60; r++) {
+      for (let gy = cy - r; gy <= cy + r; gy++) for (let gx = cx - r; gx <= cx + r; gx++) {
+        if (Math.max(Math.abs(gx - cx), Math.abs(gy - cy)) !== r) continue;
+        if (gx < 0 || gy < 0 || gx >= GW || gy >= GH) continue;
+        const c = gy * GW + gx;
+        for (let k = cellCount[c]; k < cellCount[c + 1]; k++) {
+          const i = cellNodes[k]; if (!nodeOk[i]) continue;
+          const d = Math.hypot(NX[i] - x, NY[i] - y);
+          if (hill) { if (d > hill) continue; const sc = -NZ[i] * 12 + d * 0.02; if (sc < bd) { bd = sc; best = i; } }
+          else if (greenR) { if (d > greenR) continue; let g = 0; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) g = Math.max(g, G.GR[G.adjE[k]]); const sc = -g * greenR + d * 0.5; if (sc < bd) { bd = sc; best = i; } }
+          else if (d < bd) { bd = d; best = i; }
+        }
+      }
+      if (!hill && !greenR && best >= 0 && bd < r * CELL) break;
+      if ((hill || greenR) && r * CELL > (hill || greenR) + CELL) break;
+    }
+    if ((hill || greenR) && best < 0) return nearest(x, y);
+    return best;
+  }
+
+  // ---------- A* ----------
+  let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
+  // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
+  function setWeights(w) { W = Object.assign({}, W, w); }
+
+  function stepCost(e, fromA) {
+    if (G.blocked[e]) return Infinity;
+    const L = G.LEN[e];
+    let m = 1 + W.road[G.C[e]];
+    const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
+    if (W.green && G.GR) m -= W.green * G.GR[e];
+    let cost = L * m;
+    const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
+    cost += W.climb * up;
+    if (cost < 0.3 * L) cost = 0.3 * L;
+    cost += G.S[e] * W.sig;
+    const v = fromA ? G.eb[e] : G.ea[e];
+    if (G.nc[v]) cost += W.sig;
+    if (G.used[e]) cost *= W.reuse;
+    return cost;
+  }
+
+  // binary heap
+  let hN = new Uint32Array(1 << 16), hK = new Float64Array(1 << 16), hS = 0;
+  function hpush(n, k) {
+    if (hS >= hN.length) { const a = new Uint32Array(hN.length * 2); a.set(hN); hN = a; const b = new Float64Array(hK.length * 2); b.set(hK); hK = b; }
+    let i = hS++; while (i > 0) { const p = (i - 1) >> 1; if (hK[p] <= k) break; hN[i] = hN[p]; hK[i] = hK[p]; i = p; } hN[i] = n; hK[i] = k;
+  }
+  function hpop() {
+    const n = hN[0], last = --hS; const ln = hN[last], lk = hK[last]; let i = 0;
+    while (true) { let c = 2 * i + 1; if (c >= hS) break; if (c + 1 < hS && hK[c + 1] < hK[c]) c++; if (hK[c] >= lk) break; hN[i] = hN[c]; hK[i] = hK[c]; i = c; }
+    hN[i] = ln; hK[i] = lk; return n;
+  }
+
+  function astar(s, t) {
+    const { dist, stamp, prev, done, NX, NY, deg, adjE, ea, eb } = G;
+    const cur = ++G.cur; hS = 0;
+    const hk = 0.3; // admissible lower bound factor
+    const tx = NX[t], ty = NY[t];
+    stamp[s] = cur; dist[s] = 0; prev[s] = -1; hpush(s, 0);
+    while (hS) {
+      const u = hpop();
+      if (done[u] === cur) continue; done[u] = cur;
+      if (u === t) break;
+      const du = dist[u];
+      for (let k = deg[u]; k < deg[u + 1]; k++) {
+        const e = adjE[k]; const fromA = ea[e] === u; const v = fromA ? eb[e] : ea[e];
+        if (done[v] === cur) continue;
+        const c = stepCost(e, fromA); if (c === Infinity) continue;
+        const nd = du + c;
+        if (stamp[v] !== cur || nd < dist[v]) { stamp[v] = cur; dist[v] = nd; prev[v] = e; hpush(v, nd + hk * Math.hypot(NX[v] - tx, NY[v] - ty)); }
+      }
+    }
+    if (done[t] !== cur) return null;
+    const edges = []; let v = t;
+    while (v !== s) { const e = prev[v]; const fromA = eb[e] === v; edges.push([e, fromA]); v = fromA ? ea[e] : eb[e]; }
+    return edges.reverse();
+  }
+
+  function routeThrough(nodes) {
+    G.used.fill(0);
+    const all = [];
+    for (let i = 1; i < nodes.length; i++) {
+      if (nodes[i] === nodes[i - 1]) continue;
+      const leg = astar(nodes[i - 1], nodes[i]);
+      if (!leg) return null;
+      for (const [e] of leg) G.used[e] = 1;
+      all.push(...leg);
+    }
+    return all.length ? all : null;
+  }
+
+  function stats(edges, startNode) {
+    let len = 0, up = 0, dn = 0, extraSig = 0;
+    const clusters = new Set(), quart = new Map(), names = new Map(), seen = new Map();
+    let v = startNode; const prof = [[0, G.NZ[v]]]; const nodes = [v];
+    if (G.nc[v]) clusters.add(G.nc[v]);
+    for (const [e, fromA] of edges) {
+      const L = G.LEN[e]; len += L;
+      up += (fromA ? G.eu[e] : G.ed[e]) / 10; dn += (fromA ? G.ed[e] : G.eu[e]) / 10;
+      extraSig += G.S[e];
+      v = fromA ? G.eb[e] : G.ea[e]; nodes.push(v);
+      if (G.nc[v]) clusters.add(G.nc[v]);
+      quart.set(G.nq[v], (quart.get(G.nq[v]) || 0) + L);
+      if (G.en[e]) names.set(G.en[e] - 1, (names.get(G.en[e] - 1) || 0) + L);
+      seen.set(e, (seen.get(e) || 0) + 1);
+      prof.push([len, G.NZ[v]]);
+    }
+    let overlap = 0; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
+    up = smoothClimb(prof); dn = smoothClimb(prof.map(([d, z]) => [d, -z]));
+    let cemLen = 0, gl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; }
+    return { green: len ? gl / len : 0, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
+  }
+
+  // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
+  function smoothClimb(prof, win = 60, hyst = 1) {
+    if (prof.length < 2) return 0;
+    const L = prof[prof.length - 1][0], pts = []; let j = 0;
+    for (let d = 0; d <= L; d += 10) {
+      while (j < prof.length - 2 && prof[j + 1][0] < d) j++;
+      const [d0, z0] = prof[j], [d1, z1] = prof[j + 1]; const t = d1 > d0 ? (d - d0) / (d1 - d0) : 0;
+      pts.push(z0 + Math.max(0, Math.min(1, t)) * (z1 - z0));
+    }
+    const h = Math.round(win / 20); let up = 0, ref = null;
+    for (let i = 0; i < pts.length; i++) {
+      let s = 0, n = 0; for (let k = Math.max(0, i - h); k <= Math.min(pts.length - 1, i + h); k++) { s += pts[k]; n++; }
+      const z = s / n; if (ref === null) ref = z;
+      if (z > ref + hyst) { up += z - ref; ref = z; } else if (z < ref - hyst) ref = z;
+    }
+    return up;
+  }
+
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  function score(st, target, opt) {
+    const de = Math.abs(st.len - target) / target;
+    let s = de * 200 + (de > 0.05 ? 40 : 0);
+    if (opt.dplus != null) s += Math.abs(st.up - opt.dplus) / Math.max(opt.dplus, 15) * 45;
+    else if (opt.flat) s += st.up / 2;
+    s += st.feux * (opt.sigScore || 0);
+    s += st.overlap * (opt.allowRepeat ? 0 : 120);
+    if (opt.green) s -= st.green * 90;
+    if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
+    return s;
+  }
+
+  const tick = () => new Promise(r => setTimeout(r, 0));
+
+  // ---------- alternatives: keep up to 3 good and clearly different routes ----------
+  function edgeSet(st) { const m = new Map(); for (const [e] of st.edges) m.set(e, G.LEN[e]); return m; }
+  function similarity(a, b) {
+    const A = a._set || (a._set = edgeSet(a)), B = b._set || (b._set = edgeSet(b));
+    let inter = 0, uni = 0; for (const [e, l] of A) { uni += l; if (B.has(e)) inter += l; } for (const [e, l] of B) if (!A.has(e)) uni += l;
+    return uni ? inter / uni : 0;
+  }
+  function pickAlts(cands, target, max = 3) {
+    if (!cands.length) return null;
+    const ok = cands.filter(c => Math.abs(c.len - target) / target <= 0.05);
+    const pool = (ok.length ? ok : cands).slice().sort((a, b) => a.score - b.score);
+    const picked = [];
+    for (const c of pool) { if (picked.length >= max) break; if (picked.every(p => similarity(p, c) < 0.5)) picked.push(c); }
+    const best = picked[0]; best.alts = picked; return best;
+  }
+
+  function candidateLoop(start, target, opt, rng, theta, nW) {
+    const sx = G.NX[start], sy = G.NY[start];
+    const jit = Array.from({ length: nW }, () => [(rng() - 0.5) * 0.5, 0.85 + rng() * 0.3]);
+    const n = nW + 1, perim = n * 2 * Math.sin(Math.PI / n);
+    let R = target / (perim * 1.3), cb = null;
+    for (let it = 0; it < 4; it++) {
+      const cx = sx + R * Math.cos(theta), cy = sy + R * Math.sin(theta);
+      const wps = [];
+      for (let k = 1; k <= nW; k++) {
+        const ang = theta + Math.PI + k * 2 * Math.PI / n + jit[k - 1][0], rr = R * jit[k - 1][1];
+        wps.push(nearest(cx + rr * Math.cos(ang), cy + rr * Math.sin(ang), opt.hill ? { hillRadius: Math.min(450, R * 0.5) } : opt.green ? { greenRadius: Math.min(500, R * 0.5) } : {}));
+      }
+      const r = routeThrough([start, ...wps, start]); if (!r) break;
+      const st = stats(r, start); st.kind = 'boucle';
+      if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+      if (Math.abs(st.len / target - 1) < 0.025) break;
+      R *= Math.pow(target / st.len, 0.95);
+    }
+    return cb;
+  }
+  // straight out to a point and back (only when repeating streets is allowed)
+  function candidateOutBack(start, target, opt, theta) {
+    const sx = G.NX[start], sy = G.NY[start];
+    let D = target / 2 / 1.25, cb = null;
+    for (let it = 0; it < 4; it++) {
+      const w = nearest(sx + D * Math.cos(theta), sy + D * Math.sin(theta), opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+      if (w < 0 || w === start) break;
+      G.used.fill(0);
+      const go = astar(start, w); if (!go) break;
+      const back = go.slice().reverse().map(([e, fromA]) => [e, !fromA]);
+      const st = stats(go.concat(back), start); st.kind = 'aller-retour';
+      if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+      if (Math.abs(st.len / target - 1) < 0.025) break;
+      D *= target / st.len;
+    }
+    return cb;
+  }
+  function hillTheta(sx, sy, R0, rng, theta) {
+    let bz = -1e9, best = theta;
+    for (let k = 0; k < 5; k++) {
+      const th = k ? rng() * 2 * Math.PI : theta;
+      let z = 0; for (const f of [1, 2]) { const n = nearest(sx + f * R0 * Math.cos(th), sy + f * R0 * Math.sin(th)); if (n >= 0) z += G.NZ[n]; }
+      if (z > bz) { bz = z; best = th; }
+    }
+    return best;
+  }
+
+  async function loop(start, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
+    const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
+    for (let c = 0; c < NC + NB; c++) {
+      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
+      let st;
+      if (c < NC) {
+        const nW = rng() < 0.55 ? 2 : 3;
+        if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
+        st = candidateLoop(start, target, opt, rng, theta, nW);
+      } else {
+        if (opt.hill) theta = hillTheta(sx, sy, target / 2.5, rng, theta);
+        st = candidateOutBack(start, target, opt, theta);
+      }
+      if (st) { st.score = score(st, target, opt); cands.push(st); }
+      if (onProgress) onProgress((c + 1) / (NC + NB));
+      await tick();
+    }
+    return pickAlts(cands, target);
+  }
+
+  async function aToB(A, B, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    G.used.fill(0);
+    const base = routeThrough([A, B]);
+    if (!base) return null;
+    const bst = stats(base, A); bst.kind = 'a-b'; bst.score = score(bst, target || bst.len, opt);
+    if (!target || target <= bst.len * 1.03) { bst.shortest = true; bst.alts = [bst]; return bst; }
+    const ax = G.NX[A], ay = G.NY[A], bx = G.NX[B], by = G.NY[B];
+    const d = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / d, uy = (by - ay) / d;
+    const NC = opt.candidates || 10, cands = [];
+    for (let c = 0; c < NC; c++) {
+      const side = c % 2 ? 1 : -1, along = 0.25 + ((c >> 1) % 5) * 0.12 + (rng() - 0.5) * 0.08;
+      let h = Math.sqrt(Math.max(0, (target / 2.6) ** 2 - (d / 2) ** 2)) + 50;
+      let cb = null;
+      for (let it = 0; it < 4; it++) {
+        const mx = ax + (bx - ax) * along, my = ay + (by - ay) * along;
+        const w = nearest(mx - uy * h * side, my + ux * h * side, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+        const r = routeThrough([A, w, B]); if (!r) break;
+        const st = stats(r, A); st.kind = 'a-b';
+        if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+        if (Math.abs(st.len / target - 1) < 0.025) break;
+        h *= Math.pow(target / st.len, 1.3);
+      }
+      if (cb) { cb.score = score(cb, target, opt); cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    return pickAlts(cands, target) || (bst.alts = [bst], bst);
+  }
+
+  // A → free arrival: one-way routes of the requested length in different directions
+  async function oneWay(A, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const NC = opt.candidates || (opt.endNodes ? 16 : 12), cands = [], endSet = opt.endNodes ? new Set(opt.endNodes.map(q => q.n)) : null;
+    const ax = G.NX[A], ay = G.NY[A], off = rng() * 2 * Math.PI;
+    for (let c = 0; c < NC; c++) {
+      let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
+      if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
+      let D = target / 1.3, cb = null;
+      const legs = Math.max(1, Math.ceil(D / 6000)); // Paris is ~12 km wide: long one-ways zigzag through waypoints
+      const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
+      for (let it = 0; it < 4; it++) {
+        const pts = [A]; let x = ax, y = ay, th = theta;
+        for (let k = 0; k < legs; k++) {
+          th += turns[k]; const step = D / legs;
+          x = Math.max(300, Math.min(G.maxX - 300, x + step * Math.cos(th))); y = Math.max(300, Math.min(G.maxY - 300, y + step * Math.sin(th)));
+          let n = nearest(x, y, opt.hill && k === legs - 1 ? { hillRadius: 400 } : {});
+          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finish at a metro / RER station near the planned end
+            let bd = 1e9, bn = -1; for (const q of opt.endNodes) { const dd = Math.hypot(q.x - x, q.y - y); if (dd < bd) { bd = dd; bn = q.n; } }
+            if (bn >= 0 && bd < 1500) n = bn;
+          }
+          if (n >= 0 && n !== pts[pts.length - 1]) pts.push(n);
+        }
+        const w = pts[pts.length - 1];
+        if (w < 0 || w === A) break;
+        const r = routeThrough(pts); if (!r) break;
+        const st = stats(r, A); st.kind = 'aller-simple'; st.end = w;
+        if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+        if (Math.abs(st.len / target - 1) < 0.025) break;
+        D *= target / st.len;
+      }
+      if (cb) { cb.score = score(cb, target, opt); if (endSet && !endSet.has(cb.end)) cb.score += 600; cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    if (endSet) { const at = cands.filter(c => endSet.has(c.end) && Math.abs(c.len - target) / target <= 0.05); if (at.length >= 2) return pickAlts(at, target); }
+    return pickAlts(cands, target);
+  }
+
+
+  // ---------- through places (via points) ----------
+  function orderVias(start, vias, end) {
+    // brute-force order (<= 6 vias) on straight-line distance
+    if (vias.length < 2) return vias.slice();
+    const d = (a, b) => Math.hypot(G.NX[a] - G.NX[b], G.NY[a] - G.NY[b]);
+    let best = null, bl = Infinity;
+    const perm = (arr, l) => { if (l === arr.length) { let L = 0, p = start; for (const v of arr) { L += d(p, v); p = v; } if (end != null) L += d(p, end); if (L < bl) { bl = L; best = arr.slice(); } return; }
+      for (let i = l; i < arr.length; i++) { [arr[l], arr[i]] = [arr[i], arr[l]]; perm(arr, l + 1); [arr[l], arr[i]] = [arr[i], arr[l]]; } };
+    perm(vias.slice(), 0); return best;
+  }
+  // pts: ordered nodes; end: node or 'free'. Adds one detour point to reach the target length.
+  async function through(pts, end, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const free = end === 'free', full = free ? pts.slice() : pts.concat([end]);
+    const base = routeThrough(full); if (!base) return null;
+    const bst = stats(base, pts[0]); bst.kind = free ? 'aller-simple' : end === pts[0] ? 'boucle' : 'a-b'; bst.score = score(bst, target, opt);
+    if (bst.len >= target * 0.97) { bst.shortest = bst.len > target * 1.03; bst.alts = [bst]; return bst; }
+    const NC = opt.candidates || 10, cands = [bst];
+    for (let c = 0; c < NC; c++) {
+      let cb = null;
+      if (free) {
+        // extend beyond the last place
+        const last = pts[pts.length - 1], prev = pts.length > 1 ? pts[pts.length - 2] : last;
+        let th = Math.atan2(G.NY[last] - G.NY[prev], G.NX[last] - G.NX[prev]); if (pts.length < 2) th = 0;
+        th += (c - NC / 2) * 0.45 + (rng() - 0.5) * 0.2;
+        let D = (target - bst.len) / 1.3;
+        for (let it = 0; it < 4; it++) {
+          const w = nearest(G.NX[last] + D * Math.cos(th), G.NY[last] + D * Math.sin(th)); if (w < 0 || w === last) break;
+          const r = routeThrough(pts.concat([w])); if (!r) break;
+          const st = stats(r, pts[0]); st.kind = 'aller-simple'; st.end = w;
+          if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+          if (Math.abs(st.len / target - 1) < 0.025) break; D *= Math.pow(target / st.len, 1.2);
+        }
+      } else {
+        // detour on one leg of the chain, alternating legs and sides
+        const legs = full.length - 1, i = c % legs, side = (c >> 0) % 2 ? 1 : -1;
+        const a = full[i], b = full[i + 1];
+        const ax = G.NX[a], ay = G.NY[a], bx = G.NX[b], by = G.NY[b];
+        const d = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / d, uy = (by - ay) / d;
+        const along = 0.3 + rng() * 0.4;
+        let h = Math.max(150, (target - bst.len) / 2.4);
+        for (let it = 0; it < 4; it++) {
+          const mx = ax + (bx - ax) * along, my = ay + (by - ay) * along;
+          const px = d > 1 ? mx - uy * h * side : ax + h * Math.cos(c), py = d > 1 ? my + ux * h * side : ay + h * Math.sin(c);
+          const w = nearest(px, py, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+          const seq = full.slice(0, i + 1).concat([w], full.slice(i + 1));
+          const r = routeThrough(seq); if (!r) break;
+          const st = stats(r, pts[0]); st.kind = bst.kind;
+          if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+          if (Math.abs(st.len / target - 1) < 0.025) break; h *= Math.pow(target / st.len, 1.3);
+        }
+      }
+      if (cb) { cb.score = score(cb, target, opt); cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    return pickAlts(cands, target);
+  }
+  async function viaRoute(A, vias, end, target, opt, onProgress) {
+    const ord = orderVias(A, vias, end === 'free' ? null : end);
+    return through([A, ...ord], end, target, opt, onProgress);
+  }
+  // ---------- discovery: pass by famous places ----------
+  function sightsOn(st, sights, R = 70) {
+    const hit = [];
+    const v0 = st.nodes[0];
+    for (const s of sights) { if (s._n == null || Math.hypot(G.NX[v0] - s.x, G.NY[v0] - s.y) < 250) continue; for (const v of st.nodes) if (Math.hypot(G.NX[v] - s.x, G.NY[v] - s.y) < R) { hit.push(s.name); break; } }
+    st.sights = hit; st.sightsN = hit.length; return st;
+  }
+  async function discover(A, end, target, sights, opt, onProgress) {
+    for (const s of sights) { if (s.x == null) { const [x, y] = toXY(s.lat, s.lon); s.x = x; s.y = y; } s._n = nearest(s.x, s.y); if (s._n >= 0 && Math.hypot(G.NX[s._n] - s.x, G.NY[s._n] - s.y) > 250) s._n = null; }
+    const ok = sights.filter(s => s._n != null && s._n >= 0);
+    const rng = mulberry(opt.seed || 1), NC = 8, cands = [];
+    const ax = G.NX[A], ay = G.NY[A], off = rng() * 2 * Math.PI;
+    const o2 = Object.assign({}, opt, { candidates: 4, sights: true });
+    for (let c = 0; c < NC; c++) {
+      const th = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
+      let pick = [];
+      if (end === 'free' || end === A) {
+        const loop = end === A, R = loop ? target / (2 * Math.PI) * 0.95 : target / 1.35;
+        const cx = loop ? ax + R * Math.cos(th) : ax, cy = loop ? ay + R * Math.sin(th) : ay;
+        const cand = ok.map(s => { const dd = Math.hypot(s.x - cx, s.y - cy); const ang = Math.atan2(s.y - cy, s.x - cx);
+          const fit = loop ? Math.abs(dd - R) / R : (dd > R * 1.05 ? 9 : Math.abs(((ang - th + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) > 0.9 ? 9 : 0);
+          return { s, fit, ang, dd }; }).filter(o => o.fit < (loop ? 0.45 : 1)).sort((a, b) => a.fit - b.fit || b.s.w - a.s.w);
+        for (const o of cand) { if (pick.length >= 4) break; if (pick.every(p => Math.hypot(p.s.x - o.s.x, p.s.y - o.s.y) > Math.max(400, target / 12))) pick.push(o); }
+        pick = pick.map(o => o.s._n);
+      } else {
+        const bx = G.NX[end], by = G.NY[end], d = Math.hypot(bx - ax, by - ay) || 1, slack = Math.max(300, (target - d * 1.25) / 2.2);
+        const cand = ok.map(s => { const t = ((s.x - ax) * (bx - ax) + (s.y - ay) * (by - ay)) / (d * d); const off2 = Math.abs((s.x - ax) * (by - ay) - (s.y - ay) * (bx - ax)) / d; return { s, t, off2 }; })
+          .filter(o => o.t > 0.05 && o.t < 0.95 && o.off2 < slack * (0.6 + 0.8 * rng())).sort((a, b) => b.s.w - a.s.w);
+        for (const o of cand) { if (pick.length >= 4) break; if (pick.every(p => Math.hypot(p.s.x - o.s.x, p.s.y - o.s.y) > 400)) pick.push(o); }
+        pick = pick.sort((a, b) => a.t - b.t).map(o => o.s._n);
+      }
+      if (!pick.length) { if (onProgress) onProgress((c + 1) / NC); continue; }
+      let r = await viaRoute(A, pick, end, target, o2);
+      // too long: drop the farthest place until it fits
+      while (r && r.len > target * 1.05 && pick.length > 1) { pick.pop(); r = await viaRoute(A, pick, end, target, o2); }
+      if (r) for (const a of (r.alts || [r])) { sightsOn(a, ok); a.score = score(a, target, Object.assign({}, opt, { sights: true })); cands.push(a); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    const best = pickAlts(cands, target);
+    if (best) for (const a of best.alts) sightsOn(a, ok);
+    return best;
+  }
+  function statsOf(edges, start) { return stats(edges, start); }
+
+  return { init, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+})();
+if (typeof module !== 'undefined') module.exports = Engine;
+
+</script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const E = Engine;
+const fmt = (n, d = 1) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+const S = {
+  mode: 'loop', start: null, end: null, // {lat,lon,name}
+  dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false,
+  unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
+};
+let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null;
+
+// ---------- loading ----------
+async function boot() {
+  try {
+    const [meta, buf] = await Promise.all([fetch('meta.json').then(r => r.json()), fetch('graph.bin').then(r => r.arrayBuffer())]);
+    M = meta; G = E.init(meta, buf);
+    // optional layers: green score per street, official race routes, famous places
+    const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+    const [gr, rc, sg, mt] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null)]);
+    if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
+    else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
+    if (gr) E.setGreen(b64(gr)); else $('#k-green').disabled = true;
+    RACES = rc || []; SIGHTS = sg || [];
+    for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
+  } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de Paris (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
+  buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; renderAvoid(); renderVias(); renderRaces(); updateConv();
+  const home = getHome();
+  if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
+  else { const rep = M.poi.find(p => p[0] === 'Place de la République') || ['Place de la République', 'square', 48.8674, 2.3636]; setPoint('start', { lat: rep[2], lon: rep[3], name: rep[0] }); }
+  renderHome();
+  generate();
+  loadTrees();
+}
+// street trees (OSM natural=tree): x, y in metres as Int16 pairs; loaded after the first route
+function loadTrees() {
+  fetch('trees.txt').then(r => r.ok ? r.text() : null).then(t => {
+    if (!t) { $('#ly-trees').disabled = true; return; }
+    const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    TREES = new Int16Array(u.buffer); TGRID = new Map();
+    for (let i = 0; i < TREES.length; i += 2) { const k = (TREES[i] >> 5) * 4096 + (TREES[i + 1] >> 5); let c = TGRID.get(k); if (!c) TGRID.set(k, c = []); c.push(i); }
+    if (S.route) { S.route._trees = null; showRoute(S.route, [...$('#notes').children].map(d => ({ t: d.textContent, err: d.classList.contains('err') }))); }
+    draw();
+  }).catch(() => { $('#ly-trees').disabled = true; });
+}
+// trees within 10 m of the route (computed once per route)
+function routeTrees(r) {
+  if (!TGRID) return null; if (r._trees) return r._trees;
+  const seen = new Set(), P = laneInfo(r).pts;
+  for (const [x, y] of P) { const cx = Math.round(x) >> 5, cy = Math.round(y) >> 5;
+    for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const i of TGRID.get(gx * 4096 + gy) || []) if (!seen.has(i) && Math.hypot(TREES[i] - x, TREES[i + 1] - y) <= 10) seen.add(i); }
+  return (r._trees = [...seen]);
+}
+// closest metro / RER station to a point (straight line, metres)
+function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
+function lineBadge(l) { const b = document.createElement('span'); b.className = 'lb'; const c = METRO.lines[l] || '#888'; b.style.background = c;
+  const h = c.replace('#', ''), [R, Gc, B] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); b.style.color = (R * 299 + Gc * 587 + B * 114) / 1000 > 150 ? '#111' : '#fff';
+  b.textContent = l.replace(/^M/, ''); b.title = l.startsWith('M') ? 'Métro ' + l.slice(1) : l; return b; }
+
+// ---------- search index ----------
+let IDX = [];
+function buildSearch() {
+  const typeLabel = { station: 'Gare / métro', park: 'Parc', attraction: 'Lieu', museum: 'Musée', viewpoint: 'Point de vue', square: 'Place', monument: 'Monument', marketplace: 'Marché', university: 'Université', mall: 'Centre commercial', stadium: 'Stade' };
+  for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
+  // streets: centroid of longest edge per name
+  const best = new Map();
+  for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e]; const b = best.get(n); if (!b || L > b[0]) best.set(n, [L, e]); }
+  for (const [n, [, e]] of best) {
+    const a = G.ea[e], b = G.eb[e]; const [la, lo] = E.toLL((G.NX[a] + G.NX[b]) / 2, (G.NY[a] + G.NY[b]) / 2);
+    const name = M.names[n - 1]; IDX.push({ name, type: 'Rue', lat: la, lon: lo, k: norm(name) });
+  }
+}
+function searchBox(inp, res, onPick) {
+  const run = () => {
+    const q = norm(inp.value.trim()); if (q.length < 2) { res.hidden = true; return; }
+    const words = q.split(/\s+/);
+    const hits = IDX.filter(x => words.every(w => x.k.includes(w)))
+      .sort((a, b) => (a.k.startsWith(q) ? 0 : 1) - (b.k.startsWith(q) ? 0 : 1) || (a.type === 'Rue') - (b.type === 'Rue') || a.name.length - b.name.length).slice(0, 8);
+    res.innerHTML = '';
+    if (!hits.length) { res.innerHTML = '<button disabled>Aucun résultat dans Paris</button>'; res.hidden = false; return; }
+    for (const h of hits) { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `<span></span><em></em>`; b.firstChild.textContent = h.name; b.lastChild.textContent = h.type; b.onclick = () => { onPick(h); inp.value = ''; res.hidden = true; }; res.appendChild(b); }
+    res.hidden = false;
+  };
+  inp.addEventListener('input', run); inp.addEventListener('focus', run);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = res.querySelector('button:not([disabled])'); if (b) b.click(); } if (e.key === 'Escape') res.hidden = true; });
+  document.addEventListener('click', e => { if (!res.contains(e.target) && e.target !== inp) res.hidden = true; });
+}
+
+// ---------- zones ----------
+function arrLabel(n) { return n === 1 ? '1<sup>er</sup>' : n + '<sup>e</sup>'; }
+function buildZones() {
+  const box = $('#arr');
+  for (let a = 1; a <= 20; a++) { const b = document.createElement('button'); b.type = 'button'; b.dataset.ar = a; b.innerHTML = arrLabel(a); b.setAttribute('aria-label', `${a}${a === 1 ? 'er' : 'e'} arrondissement`); b.onclick = () => toggleArr(a); box.appendChild(b); }
+  const ql = $('#qlist');
+  for (let a = 1; a <= 20; a++) {
+    const h = document.createElement('div'); h.className = 'ah'; h.innerHTML = arrLabel(a) + ' arr.'; ql.appendChild(h);
+    for (const q of M.quartiers.filter(q => q.ar === a)) {
+      const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" data-q="${q.id}"><span></span>`; l.lastChild.textContent = q.name;
+      l.firstChild.onchange = e => { e.target.checked ? S.exclQ.add(q.id) : S.exclQ.delete(q.id); zonesChanged(); };
+      ql.appendChild(l);
+    }
+  }
+  // centroids of arrondissements for labels
+  M.arrC = {};
+  for (const q of M.quartiers) { const r = q.rings[0]; let x = 0, y = 0; for (const [la, lo] of r) { const p = E.toXY(la, lo); x += p[0]; y += p[1]; } const c = M.arrC[q.ar] || [0, 0, 0]; c[0] += x / r.length; c[1] += y / r.length; c[2]++; M.arrC[q.ar] = c; }
+}
+function toggleArr(a) {
+  const qs = M.quartiers.filter(q => q.ar === a).map(q => q.id);
+  const all = qs.every(id => S.exclQ.has(id));
+  qs.forEach(id => all ? S.exclQ.delete(id) : S.exclQ.add(id)); zonesChanged();
+}
+function zonesChanged() {
+  document.querySelectorAll('#arr button').forEach(b => {
+    const qs = M.quartiers.filter(q => q.ar === +b.dataset.ar); const n = qs.filter(q => S.exclQ.has(q.id)).length;
+    b.dataset.state = n === 0 ? 'none' : n === qs.length ? 'all' : 'some'; b.setAttribute('aria-pressed', n > 0);
+  });
+  document.querySelectorAll('#qlist input').forEach(i => i.checked = S.exclQ.has(+i.dataset.q));
+  renderAvoid(); markStale(); draw();
+}
+function renderPlaces() { renderAvoid(); markStale(); }
+// one place for every exclusion: whole arrondissements, single quartiers, places (+ radius)
+function renderAvoid() {
+  const box = $('#avoid-list'); box.innerHTML = '';
+  const mk = (label, onX, extra) => {
+    const c = document.createElement('span'); c.className = 'xchip';
+    c.innerHTML = `<span class="name"></span>${extra || ''}<button type="button" aria-label="Retirer">×</button>`;
+    c.querySelector('.name').textContent = label; c.querySelector('.name').title = label;
+    c.querySelector('button').setAttribute('aria-label', 'Réautoriser ' + label);
+    c.querySelector('button').onclick = onX; box.appendChild(c); return c;
+  };
+  if (M) for (let a = 1; a <= 20; a++) {
+    const qs = M.quartiers.filter(q => q.ar === a), ex = qs.filter(q => S.exclQ.has(q.id));
+    if (!ex.length) continue;
+    if (ex.length === qs.length) mk(a === 1 ? '1er arr.' : a + 'e arr.', () => toggleArr(a));
+    else for (const q of ex) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
+  }
+  S.places.forEach((p, i) => {
+    const c = mk(p.name, () => { S.places.splice(i, 1); renderPlaces(); draw(); }, `<select aria-label="Rayon d'évitement">${[100, 150, 300, 500].map(r => `<option value="${r}" ${r === p.r ? 'selected' : ''}>${r} m</option>`).join('')}</select>`);
+    c.querySelector('select').onchange = e => { p.r = +e.target.value; markStale(); draw(); };
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'addbtn';
+  const open = !$('#addbox').hidden;
+  add.textContent = open ? 'Fermer' : (box.children.length ? '+ Ajouter' : '+ Ajouter une zone ou un lieu');
+  add.setAttribute('aria-expanded', open);
+  add.onclick = () => { $('#addbox').hidden = !$('#addbox').hidden; renderAvoid(); if (!$('#addbox').hidden) $('#avoid-q').focus(); };
+  box.appendChild(add);
+}
+function markStale() { if (S.view === 'res' && S.route) $('#stale').hidden = false; }
+// ---------- points ----------
+function setPoint(which, p) {
+  S[which] = p; $(`#${which}-name`).textContent = p.name; draw(); if (which === 'start') renderHome();
+}
+// ---------- « Chez moi » (stored only in this browser) ----------
+function getHome() { try { const h = JSON.parse(localStorage.getItem('runparis-home') || 'null'); return h && isFinite(h.lat) && isFinite(h.lon) ? h : null; } catch (e) { return null; } }
+function renderHome() {
+  const h = getHome(), go = $('#home-go'), save = $('#home-save');
+  go.hidden = !h;
+  const isHome = h && S.start && Math.abs(S.start.lat - h.lat) < 1e-6 && Math.abs(S.start.lon - h.lon) < 1e-6;
+  save.textContent = isHome ? 'Retirer « Chez moi »' : h ? 'Remplacer « Chez moi » par ce départ' : 'Enregistrer ce départ comme « Chez moi »';
+  save.dataset.mode = isHome ? 'remove' : 'save';
+  go.hidden = !h || isHome;
+}
+
+// ---------- map rendering ----------
+const cv = $('#map'), ctx = cv.getContext('2d');
+let V = { s: 0.05, tx: 0, ty: 0 }, W = 0, H = 0, dpr = 1;
+function buildPaths() {
+  const cls = { minor: new Path2D(), path: new Path2D(), c1: new Path2D(), c2: new Path2D(), c3: new Path2D() };
+  for (let e = 0; e < G.nE; e++) {
+    if (G.bad[e]) continue;
+    const p = G.P[e] ? cls.path : G.C[e] === 3 ? cls.c3 : G.C[e] === 2 ? cls.c2 : G.C[e] === 1 ? cls.c1 : cls.minor;
+    const a = G.ea[e], b = G.eb[e];
+    p.moveTo(G.NX[a], G.NY[a]);
+    for (let k = G.go[e]; k < G.go[e + 1]; k++) p.lineTo(G.GX[k], G.GY[k]);
+    p.lineTo(G.NX[b], G.NY[b]);
+  }
+  paths = cls;
+  const polyPath = list => { const p = new Path2D(); for (const rings of list) for (const r of rings) { r.forEach(([la, lo], i) => { const [x, y] = E.toXY(la, lo); i ? p.lineTo(x, y) : p.moveTo(x, y); }); p.closePath(); } return p; };
+  if (M.layers) { M.greenPath = polyPath(M.layers.green || []); M.waterPath = polyPath(M.layers.water || []); }
+  if (M.cemeteries) M.cemPath = polyPath(M.cemeteries.map(c => c.rings));
+  if (M.stations) { const sp = new Path2D(); for (const st of M.stations) for (const r of st.rings) { r.forEach(([la, lo], i) => { const [x, y] = E.toXY(la, lo); i ? sp.lineTo(x, y) : sp.moveTo(x, y); }); sp.closePath(); } M.stationPath = sp; }
+  for (const q of M.quartiers) { const p = new Path2D(); for (const r of q.rings) { r.forEach(([la, lo], i) => { const [x, y] = E.toXY(la, lo); i ? p.lineTo(x, y) : p.moveTo(x, y); }); p.closePath(); } q.path = p; }
+}
+function resize() {
+  const r = cv.getBoundingClientRect(); dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); draw();
+}
+// ---------- mobile bottom sheet ----------
+const MOB = matchMedia('(max-width: 860px)');
+let sheet = 'half';
+function sheetPx() { return MOB.matches ? $('.panel').getBoundingClientRect().height : 0; }
+function sheetHeights() {
+  const foot = [...document.querySelectorAll('.pfoot')].find(f => !f.hidden);
+  const peek = $('#grab').offsetHeight + $('.phead').offsetHeight + $('.tabs').offsetHeight + (foot ? foot.offsetHeight : 0);
+  return { peek, half: Math.max(peek + 170, Math.round(innerHeight * 0.56)), full: innerHeight - 56 };
+}
+function setSheet(st, refit) {
+  if (!MOB.matches) { document.documentElement.style.removeProperty('--sheet-h'); return; }
+  sheet = st; document.documentElement.style.setProperty('--sheet-h', sheetHeights()[st] + 'px');
+  document.documentElement.classList.toggle('sheet-full', st === 'full');
+  if (refit) setTimeout(() => { if (S.route) (S.tab === 'race' && S.race ? fit(raceBounds()) : fitRoute()); }, 270);
+}
+(() => {
+  let d = null; const panel = $('.panel');
+  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const move = e => { if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 4) d.moved = true; const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, d.h - dy)) + 'px'); };
+  const end = () => { if (!d) return; panel.classList.remove('dragging'); const h = panel.getBoundingClientRect().height, hs = sheetHeights();
+    if (!d.moved) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true);
+    else { const st = Object.entries(hs).sort((a, b) => Math.abs(a[1] - h) - Math.abs(b[1] - h))[0][0]; setSheet(st, st !== 'full'); }
+    d = null; };
+  for (const el of [$('#grab'), $('.phead')]) { el.addEventListener('pointerdown', start); el.addEventListener('pointermove', move); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
+  MOB.addEventListener('change', () => { setSheet(sheet); if (MOB.matches) $('#legend').open = false; });
+  if (MOB.matches) { $('#legend').open = false; setSheet('half'); }
+  addEventListener('resize', () => MOB.matches && setSheet(sheet));
+})();
+function raceBounds() { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of routePts(S.route)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return [x0, y0, x1, y1]; }
+function fit(bounds) {
+  const r = cv.getBoundingClientRect(); W = r.width || 800; H = r.height || 600;
+  const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // on phones, fit into the map area left visible above the sheet
+  const [x0, y0, x1, y1] = bounds || [0, 0, G.maxX, G.maxY];
+  const pad = MOB.matches ? 18 : 30; V.s = Math.min((W - 2 * pad - (MOB.matches ? 50 : 0)) / (x1 - x0 || 1), (Hv - 2 * pad - top) / (y1 - y0 || 1));
+  V.tx = (W - (MOB.matches ? 50 : 0)) / 2 - (x0 + x1) / 2 * V.s; V.ty = (Hv + top) / 2 - (y0 + y1) / 2 * V.s; draw();
+}
+function drawMetro(hiOnly) {
+  if (!METRO.st.length) return;
+  {
+    const endSt = S.route && S.route._metroEnd ? S.route._metroEnd.s : null;
+    const big = V.s >= 0.09, badges = V.s >= 0.2;
+    ctx.font = `700 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const st of METRO.st) {
+      const sx = st.x * V.s + V.tx, sy = st.y * V.s + V.ty; if (sx < -60 || sy < -20 || sx > W + 60 || sy > H + 20) continue;
+      const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi)) continue; const r = hi ? 9 : big ? 6.5 : 3;
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.metroBg; ctx.fill(); ctx.lineWidth = hi ? 2.5 : big ? 1.6 : 1.2; ctx.strokeStyle = hi ? colors.route : colors.metroInk; ctx.stroke();
+      if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText('M', sx, sy + 0.5); }
+      if (badges || hi) { // line badges + name
+        let bx = sx + r + 4; ctx.textAlign = 'left';
+        for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', ''), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
+          ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 3) : ctx.rect(bx, sy - 7, w, 14); ctx.fill();
+          const h = c.replace('#', ''), lum = (parseInt(h.substr(0, 2), 16) * 299 + parseInt(h.substr(2, 2), 16) * 587 + parseInt(h.substr(4, 2), 16) * 114) / 1000;
+          ctx.fillStyle = lum > 150 ? '#111' : '#fff'; ctx.font = `800 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.fillText(lab, bx + w / 2, sy + 0.5); ctx.textAlign = 'left'; bx += w + 2; }
+        if (V.s >= 0.32 || hi) { ctx.font = `700 11.5px ${css('--f-body')}`; ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(st.n, bx + 3, sy + 0.5); ctx.fillStyle = colors.ink; ctx.fillText(st.n, bx + 3, sy + 0.5); }
+        ctx.textAlign = 'center';
+      }
+    }
+  }
+}
+let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+function render() {
+  if (!G || !paths.minor) return;
+  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem') };
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr);
+  const px = v => v / V.s;
+  // background: green spaces, water, cemeteries
+  if (M.greenPath) { ctx.fillStyle = colors.green; ctx.fill(M.greenPath, 'evenodd'); }
+  if (M.cemPath) { ctx.fillStyle = colors.cem; ctx.fill(M.cemPath, 'evenodd'); }
+  if (M.waterPath) { ctx.fillStyle = colors.water; ctx.fill(M.waterPath, 'evenodd'); }
+  // excluded quartiers
+  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.fillStyle = colors.avoidFill; ctx.fill(q.path); }
+  if (M.stationPath) { ctx.fillStyle = colors.stationFill; ctx.fill(M.stationPath, 'nonzero'); }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const z = V.s; // px per metre
+  ctx.strokeStyle = colors.street; ctx.lineWidth = px(z > 0.25 ? 1.6 : z > 0.1 ? 0.9 : 0.5); ctx.stroke(paths.minor);
+  ctx.strokeStyle = colors.path; ctx.setLineDash([px(3), px(2)]); ctx.lineWidth = px(z > 0.25 ? 1.4 : 0.7); ctx.stroke(paths.path); ctx.setLineDash([]);
+  ctx.strokeStyle = colors.major; ctx.lineWidth = px(z > 0.25 ? 2 : 1); ctx.stroke(paths.c1);
+  ctx.lineWidth = px(z > 0.25 ? 3 : 1.5); ctx.stroke(paths.c2);
+  ctx.lineWidth = px(z > 0.25 ? 4 : 2); ctx.stroke(paths.c3);
+  // quartier & arr borders
+  ctx.strokeStyle = colors.quart; ctx.lineWidth = px(1); ctx.setLineDash([px(5), px(4)]);
+  for (const q of M.quartiers) ctx.stroke(q.path);
+  ctx.setLineDash([]);
+  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(1.5); ctx.stroke(q.path); }
+  // avoided places
+  if (S.tab !== 'race') for (const p of S.places) { const [x, y] = E.toXY(p.lat, p.lon); ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fillStyle = colors.avoidFill; ctx.fill(); ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(1.5); ctx.stroke(); }
+  // signals
+  if (S.showSig) { ctx.fillStyle = colors.sig; for (const s of G.SIG) { ctx.beginPath(); ctx.arc(s.x, s.y, px(z > 0.2 ? 3 : 1.8), 0, 7); ctx.fill(); } }
+  // all street trees, as small dots (a density map when zoomed out)
+  if (S.showTrees && TREES) {
+    const x0 = -V.tx / V.s, y0 = -V.ty / V.s, x1 = (W - V.tx) / V.s, y1 = (H - V.ty) / V.s, r = px(z > 0.4 ? 2.4 : z > 0.15 ? 1.6 : 1);
+    ctx.save(); ctx.globalAlpha = z > 0.15 ? 0.75 : 0.45; ctx.fillStyle = colors.tree; ctx.beginPath();
+    for (let i = 0; i < TREES.length; i += 2) { const x = TREES[i], y = TREES[i + 1]; if (x < x0 || x > x1 || y < y0 || y > y1) continue; ctx.rect(x - r, y - r, 2 * r, 2 * r); }
+    ctx.fill(); ctx.restore();
+  }
+  ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawLabels(); ctx.restore();
+  ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawMetro(false); ctx.restore();
+  // route
+  const R = S.route;
+  if (R && S.alts && S.alts.length > 1) {
+    ctx.save(); ctx.globalAlpha = 0.45; ctx.strokeStyle = colors.route; ctx.lineWidth = px(2.5); ctx.setLineDash([px(6), px(5)]);
+    for (const a of S.alts) { if (a === R) continue; const p = new Path2D(); let f = true;
+      for (const [e, fromA] of a.edges) { const pts = E.edgePts(e); if (!fromA) pts.reverse(); pts.forEach(([x, y], i) => { if (f) { p.moveTo(x, y); f = false; } else if (i) p.lineTo(x, y); }); }
+      ctx.stroke(p); }
+    ctx.restore();
+    // number each proposal at its midpoint
+    S.alts.forEach((a, i) => { if (a === R) return; const v = a.nodes[Math.floor(a.nodes.length * 0.55)]; a._label = [G.NX[v], G.NY[v], i + 1]; });
+  }
+  if (R) {
+    // each pass over the same street gets its own lane (to the right of its direction of travel)
+    const LI = laneInfo(R), U = 3 / V.s;
+    const OP = LI.any ? LI.pts.map(([x, y], i) => [x - LI.ty[i] * LI.lane[i] * U, y + LI.tx[i] * LI.lane[i] * U]) : LI.pts;
+    const stroke = (a, b, col) => { const p = new Path2D(); for (let i = a; i <= b; i++) i === a ? p.moveTo(OP[i][0], OP[i][1]) : p.lineTo(OP[i][0], OP[i][1]);
+      ctx.strokeStyle = colors.casing; ctx.lineWidth = px(LI.any ? 7 : 8); ctx.stroke(p); ctx.strokeStyle = col; ctx.lineWidth = px(LI.any ? 4 : 4.5); ctx.stroke(p); };
+    // trees along the route, like the feux: small dots drawn UNDER the line, at street zoom only,
+    // thinned to one dot per ~8 px so a tree-lined avenue reads as a green fringe, not noise
+    const rt = z > 0.22 && !S.showTrees ? routeTrees(R) : null;
+    if (rt && rt.length) { const seen = new Set(), rr = px(2.2); ctx.fillStyle = colors.tree; ctx.beginPath();
+      for (const i of rt) { const k = Math.floor(TREES[i] * z / 8) + ',' + Math.floor(TREES[i + 1] * z / 8); if (seen.has(k)) continue; seen.add(k); ctx.moveTo(TREES[i] + rr, TREES[i + 1]); ctx.arc(TREES[i], TREES[i + 1], rr, 0, 7); }
+      ctx.fill(); }
+    if (!LI.any) stroke(0, OP.length - 1, colors.route);
+    else for (let a = 0; a < OP.length - 1;) { // short chunks so later passes are drawn over earlier ones; 2nd pass in its own colour
+      let b = a + 1; while (b < OP.length - 1 && b - a < 24 && LI.pass[b] === LI.pass[a]) b++;
+      stroke(a, b, LI.pass[a] % 2 ? colors.route2 : colors.route); a = b; }
+    // feux on route
+    const ids = new Set(S.tab === 'race' ? [] : R.clusterIds); ctx.fillStyle = colors.sig; ctx.strokeStyle = colors.casing; ctx.lineWidth = px(1.5);
+    for (const s of G.SIG) if (ids.has(s.id)) { ctx.beginPath(); ctx.arc(s.x, s.y, px(4.5), 0, 7); ctx.fill(); ctx.stroke(); }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // direction chevrons every ~70 px along the line
+    { const P = LI.pts; let run = 35; ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (let i = 1; i < P.length; i++) { run += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]) * V.s;
+        if (run < 70 || i < 2 || i > P.length - 3) continue; run = 0;
+        const sx = OP[i][0] * V.s + V.tx, sy = OP[i][1] * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
+        const dx = LI.tx[i], dy = LI.ty[i], k = 2.6;
+        ctx.beginPath(); ctx.moveTo(sx - dx * k - dy * k, sy - dy * k + dx * k); ctx.lineTo(sx + dx * k, sy + dy * k); ctx.lineTo(sx - dx * k + dy * k, sy - dy * k - dx * k); ctx.stroke(); } }
+    // km markers, placed on the lane of the pass they belong to
+    let acc = 0, next = 1000;
+    ctx.font = `600 11px ${css('--f-mono')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    {
+      const pts = LI.pts;
+      for (let i = 1; i < pts.length; i++) {
+        const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        while (acc + d >= next && next < R.len - 150) {
+          const t = (next - acc) / d, x = OP[i - 1][0] + t * (OP[i][0] - OP[i - 1][0]), y = OP[i - 1][1] + t * (OP[i][1] - OP[i - 1][1]);
+          const sx = x * V.s + V.tx, sy = y * V.s + V.ty, km = next / 1000;
+          if (V.s > 0.06 || km % 2 === 0 || R.len < 12000) {
+            ctx.beginPath(); ctx.arc(sx, sy, 9, 0, 7); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = colors.ink; ctx.fillText(String(km), sx, sy + 0.5);
+          }
+          next += 1000;
+        }
+        acc += d;
+      }
+    }
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (M.stationPath) { ctx.save(); ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr); ctx.strokeStyle = colors.station; ctx.lineWidth = 1.2 / V.s; ctx.setLineDash([4 / V.s, 3 / V.s]); ctx.stroke(M.stationPath); ctx.restore(); }
+  // arrondissement numbers when zoomed out
+  if (V.s < 0.12 && M.arrC) {
+    ctx.font = `600 ${V.s < 0.07 ? 13 : 16}px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
+    for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
+    ctx.globalAlpha = 1;
+  }
+  drawMetro(true);
+  // pins
+  const pin = (p, label, col) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
+  if (R && S.alts) for (const a of S.alts) if (a !== R && a._label) {
+    const [x, y, n] = a._label, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = colors.route; ctx.font = `700 12px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), sx, sy + 1);
+  }
+  // famous places passed by the selected route
+  if (R && R.sightsN) {
+    ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    for (const nm of R.sights) { const sg = SIGHTS.find(x => x.name === nm); if (!sg) continue; const sx = sg.x * V.s + V.tx, sy = sg.y * V.s + V.ty;
+      ctx.beginPath(); ctx.arc(sx, sy, 6, 0, 7); ctx.fillStyle = colors.good; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke();
+      ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(nm, sx + 10, sy); ctx.fillStyle = colors.ink; ctx.fillText(nm, sx + 10, sy); }
+  }
+  if (S.tab === 'race') {
+    if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.good); pin(ll(b), 'A', colors.avoid); }
+    return;
+  }
+  S.vias.forEach((v, i) => pin(v, String(i + 1), colors.good));
+  pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.good);
+  if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.avoid);
+  if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.avoid); }
+}
+
+// ---------- street names ----------
+let labelOrder = null;
+function drawLabels() {
+  if (V.s < 0.22) return;
+  if (!labelOrder) {
+    labelOrder = []; for (let e = 0; e < G.nE; e++) if (G.en[e] && !G.bad[e]) labelOrder.push(e);
+    labelOrder.sort((a, b) => (G.C[b] - G.C[a]) || (G.LEN[b] - G.LEN[a]));
+  }
+  const minC = V.s < 0.35 ? 2 : V.s < 0.6 ? 1 : 0;
+  const boxes = [], placed = new Map(); let n = 0;
+  const fs = V.s > 1 ? 12.5 : 11.5;
+  ctx.font = `500 ${fs}px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.fillStyle = colors.label;
+  const x0 = -V.tx / V.s, y0 = -V.ty / V.s, x1 = (W - V.tx) / V.s, y1 = (H - V.ty) / V.s;
+  for (const e of labelOrder) {
+    if (G.C[e] < minC) continue;
+    const a = G.ea[e]; const ax = G.NX[a], ay = G.NY[a];
+    if (ax < x0 - 300 || ax > x1 + 300 || ay < y0 - 300 || ay > y1 + 300) continue;
+    const name = M.names[G.en[e] - 1]; if (!name) continue;
+    const pts = E.edgePts(e);
+    let bi = -1, bl = 0;
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (l > bl) { bl = l; bi = i; } }
+    const tw = ctx.measureText(name).width;
+    if (bl * V.s < tw + 16) continue;
+    const p0 = pts[bi - 1], p1 = pts[bi];
+    const cx = (p0[0] + p1[0]) / 2 * V.s + V.tx, cy = (p0[1] + p1[1]) / 2 * V.s + V.ty;
+    if (cx < -50 || cy < -20 || cx > W + 50 || cy > H + 20) continue;
+    let ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]); if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+    const prev = placed.get(name); if (prev && prev.some(([px, py]) => Math.hypot(px - cx, py - cy) < 260)) continue;
+    const hw = Math.abs(Math.cos(ang)) * tw / 2 + Math.abs(Math.sin(ang)) * fs / 2 + 3, hh = Math.abs(Math.sin(ang)) * tw / 2 + Math.abs(Math.cos(ang)) * fs / 2 + 3;
+    if (boxes.some(b => Math.abs(b[0] - cx) < b[2] + hw && Math.abs(b[1] - cy) < b[3] + hh)) continue;
+    boxes.push([cx, cy, hw, hh]); if (!prev) placed.set(name, [[cx, cy]]); else prev.push([cx, cy]);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang); ctx.strokeText(name, 0, 0); ctx.fillText(name, 0, 0); ctx.restore();
+    if (++n > 180) break;
+  }
+}
+
+// ---------- theme ----------
+function applyTheme(t) {
+  const root = document.documentElement;
+  if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+  ['auto', 'light', 'dark'].forEach(k => $('#t-' + k).setAttribute('aria-pressed', k === t));
+  try { localStorage.setItem('runparis-theme', t); } catch (e) {}
+  draw(); if (S.route) drawProfile(S.route);
+}
+['auto', 'light', 'dark'].forEach(k => $('#t-' + k).onclick = () => applyTheme(k));
+$('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); };
+document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
+try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
+
+// ---------- map interaction ----------
+const ptrs = new Map(); let drag = null, pinch = null;
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.offsetX, e.offsetY]); if (ptrs.size === 1) drag = { x: e.offsetX, y: e.offsetY, tx: V.tx, ty: V.ty, moved: false }; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s: V.s, tx: V.tx, ty: V.ty, cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2 }; drag = null; } });
+cv.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
+  if (pinch && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const k = Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d; zoomAt(pinch.cx, pinch.cy, pinch.s * k, pinch); return; }
+  if (drag) { const dx = e.offsetX - drag.x, dy = e.offsetY - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved) { V.tx = drag.tx + dx; V.ty = drag.ty + dy; draw(); } }
+});
+cv.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (drag && !drag.moved) click(e.offsetX, e.offsetY); drag = null; });
+cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); drag = null; pinch = null; });
+cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.offsetX, e.offsetY, V.s * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+function zoomAt(cx, cy, s, base) {
+  s = Math.max(0.02, Math.min(3, s)); const b = base || V; const mx = (cx - b.tx) / b.s, my = (cy - b.ty) / b.s;
+  V.s = s; V.tx = cx - mx * s; V.ty = cy - my * s; draw();
+}
+$('#zin').onclick = () => zoomAt(W / 2, H / 2, V.s * 1.5);
+$('#zout').onclick = () => zoomAt(W / 2, H / 2, V.s / 1.5);
+$('#zfit').onclick = () => fitRoute();
+function pip(pt, ring) { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [yi, xi] = ring[i], [yj, xj] = ring[j]; if (((yi > pt[0]) !== (yj > pt[0])) && (pt[1] < (xj - xi) * (pt[0] - yi) / (yj - yi) + xi)) c = !c; } return c; }
+function click(sx, sy) {
+  const x = (sx - V.tx) / V.s, y = (sy - V.ty) / V.s; const [lat, lon] = E.toLL(x, y);
+  const q = M.quartiers.find(q => q.rings.some(r => pip([lat, lon], r)));
+  const t = S.tool;
+  if (t === 'start' || t === 'end') {
+    if (!q) return toast('Choisis un point dans Paris.');
+    setPoint(t, { lat, lon, name: `Point sur la carte · ${q.name}` }); setTool(null); generate(); return;
+  }
+  if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast('Choisis un point dans Paris.');
+  if (t === 'via') { if (!q) return toast('Choisis un point dans Paris.'); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
+  if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name} (${q.ar}${q.ar === 1 ? 'er' : 'e'}) ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
+  if (t === 'place') { S.places.push({ lat, lon, r: 150, name: `Point · ${q.name}` }); renderPlaces(); draw(); toast('Lieu évité (150 m). Rayon modifiable dans « À éviter ».'); return; }
+}
+function setTool(t) {
+  S.tool = S.tool === t ? null : t;
+  document.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === S.tool));
+  cv.classList.toggle('pick', !!S.tool);
+  const msg = { start: 'Clique sur la carte pour placer le départ.', end: "Clique sur la carte pour placer l'arrivée.", quart: 'Clique sur un quartier pour l’éviter ou le réautoriser.', place: 'Clique sur la carte pour éviter un lieu (150 m autour).', via: 'Clique sur la carte pour ajouter un lieu par où passer.' };
+  if (S.tool) toast(msg[S.tool], 3500);
+}
+document.querySelectorAll('.tool').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+$('#pick-start').onclick = () => setTool('start');
+$('#change-start').onclick = () => { const b = $('#start-box'); b.hidden = !b.hidden; $('#change-start').setAttribute('aria-expanded', !b.hidden); $('#change-start').textContent = b.hidden ? 'Changer' : 'Fermer'; if (!b.hidden) $('#start-q').focus(); };
+$('#home-go').onclick = () => { const h = getHome(); if (!h) return; setPoint('start', { lat: h.lat, lon: h.lon, name: 'Chez moi · ' + h.name.replace(/^Chez moi · /, '') }); if (S.mode === 'loop') generate(); };
+$('#home-save').onclick = () => {
+  const b = $('#home-save');
+  try {
+    if (b.dataset.mode === 'remove') { localStorage.removeItem('runparis-home'); toast('« Chez moi » retiré.'); }
+    else if (S.start) { localStorage.setItem('runparis-home', JSON.stringify({ lat: S.start.lat, lon: S.start.lon, name: S.start.name })); toast('Départ enregistré comme « Chez moi » sur cet appareil.'); }
+  } catch (e) { toast('Ce navigateur ne permet pas d’enregistrer « Chez moi ».'); }
+  renderHome();
+};
+$('#avoid-cem').onchange = () => { $('#always').textContent = 'Toujours évités : gares, quais, métro' + ($('#avoid-cem').checked ? ' · cimetières' : '') + '.'; };
+$('#avoid-cem').onchange();
+$('#pick-end').onclick = () => setTool('end');
+let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, ms); }
+
+// ---------- controls ----------
+function seg(ids, onPick) { ids.forEach(id => $('#' + id).onclick = () => { ids.forEach(j => $('#' + j).setAttribute('aria-pressed', j === id)); onPick(id); }); }
+// Arrivée : Retour au départ (boucle) / Un lieu (A→B) / N'importe où (aller simple)
+function setArrival(k) {
+  ['back', 'place', 'free'].forEach(j => $('#a-' + j).setAttribute('aria-pressed', j === k));
+  S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
+  $('#end-fixed').hidden = k !== 'place'; $('#end-free-hint').hidden = k !== 'free'; $('#end-metro-row').hidden = k !== 'free' || !METRO.st.length;
+  if (k === 'place' && !S.end) { const p = M.poi.find(p => p[0] === 'Jardin du Luxembourg') || ['Jardin du Luxembourg', 'park', 48.8462, 2.3371]; setPoint('end', { lat: p[2], lon: p[3], name: p[0] }); }
+  applyModeLabels(); draw();
+}
+['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
+function applyModeLabels() {
+  const ab = S.mode === 'ab';
+  $('#start-pin').textContent = ab ? 'A' : 'D'; $('#ti-start').textContent = ab ? 'A' : 'D';
+  $('#start-sub').textContent = ab ? 'Départ (A)' : 'Départ et arrivée';
+  $('#start-q').placeholder = ab ? 'Rechercher le départ A (lieu, rue, métro…)' : 'Rechercher un départ (lieu, rue, métro…)';
+  $('#tl-start').textContent = ab ? 'Placer A (départ)' : 'Placer le départ';
+  document.querySelector('[data-tool="end"]').hidden = !ab || S.endFree;
+}
+// Distance ou durée
+const clampKm = v => Math.max(1, Math.min(42, v));
+function updateConv() {
+  const p = pace();
+  if (S.unit === 'km') { const v = parseFloat(String($('#km').value).replace(',', '.')); const sec = isFinite(v) && v > 0 ? v * p : 0; $('#conv').textContent = sec ? `≈ ${fmtDur(sec)}` : ''; }
+  else { const v = parseFloat($('#dur').value); $('#conv').textContent = isFinite(v) && v > 0 ? `≈ ${fmt(clampKm(v * 60 / p))} km` : ''; }
+  const cur = S.unit === 'km' ? parseFloat(String($('#km').value).replace(',', '.')) : parseFloat($('#dur').value);
+  document.querySelectorAll(`#chips-${S.unit} button`).forEach(b => b.setAttribute('aria-pressed', Math.abs(+b.dataset.v - cur) < 0.01));
+}
+function fmtDur(sec) { const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60); return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`; }
+function setUnit(u) {
+  if (u === S.unit) return;
+  const p = pace();
+  if (u === 'min') { const v = parseFloat(String($('#km').value).replace(',', '.')); if (isFinite(v) && v > 0) $('#dur').value = Math.max(5, Math.round(v * p / 60 / 5) * 5); }
+  else { const v = parseFloat($('#dur').value); if (isFinite(v) && v > 0) $('#km').value = Math.round(clampKm(v * 60 / p) * 2) / 2; }
+  S.unit = u; ['km', 'min'].forEach(k => { $('#u-' + k).setAttribute('aria-pressed', k === u); $('#num-' + k).hidden = k !== u; $('#chips-' + k).hidden = k !== u; });
+  updateConv();
+}
+$('#u-km').onclick = () => setUnit('km'); $('#u-min').onclick = () => setUnit('min');
+function step(dir) {
+  if (S.unit === 'km') { const v = parseFloat(String($('#km').value).replace(',', '.')) || 10; $('#km').value = clampKm(Math.round((v + dir * 0.5) * 2) / 2); }
+  else { const v = parseFloat($('#dur').value) || 55; $('#dur').value = Math.max(5, Math.min(300, Math.round((v + dir * 5) / 5) * 5)); }
+  updateConv();
+}
+$('#minus').onclick = () => step(-1); $('#plus').onclick = () => step(1);
+document.querySelectorAll('#chips-km button').forEach(b => b.onclick = () => { $('#km').value = b.dataset.v; updateConv(); });
+document.querySelectorAll('#chips-min button').forEach(b => b.onclick = () => { $('#dur').value = b.dataset.v; updateConv(); });
+$('#km').addEventListener('input', updateConv); $('#dur').addEventListener('input', updateConv); $('#pace').addEventListener('input', updateConv);
+$('#dur').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-row').hidden = S.dmode !== 'target'; });
+// Feux : interrupteur (Ignorer / éviter) + intensité (Limiter / Au maximum)
+let sigLevel = 1;
+seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checked ? sigLevel : 0; });
+$('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
+$('#show-sig').onclick = e => { S.showSig = !S.showSig; e.currentTarget.setAttribute('aria-pressed', S.showSig); draw(); };
+$('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setAttribute('aria-pressed', S.showMetro); draw(); };
+$('#ly-trees').onclick = e => { S.showTrees = !S.showTrees; e.currentTarget.setAttribute('aria-pressed', S.showTrees); if (S.showTrees && !TREES) toast('Arbres en cours de chargement…'); draw(); };
+$('#end-metro').onchange = () => markStale();
+searchBox($('#start-q'), $('#start-res'), h => { setPoint('start', h); fitRoute(true); if (!$('#start-box').hidden) $('#change-start').click(); });
+searchBox($('#end-q'), $('#end-res'), h => { setPoint('end', h); });
+searchBox($('#avoid-q'), $('#avoid-res'), h => { S.places.push({ lat: h.lat, lon: h.lon, r: h.type === 'Parc' ? 300 : 150, name: h.name }); renderPlaces(); draw(); });
+$('#gen').onclick = () => generate();
+$('#pace').addEventListener('change', () => { if (!parsePace($('#pace').value)) toast('Allure non reconnue. Exemple : 5:30 (5 min 30 s par km).'); else if (S.route) { renderAlts(); showRoute(S.route, S.baseNotes.concat(routeNotes(S.route))); } });
+$('#km').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+$('#again').onclick = () => { S.seed++; generate(true); };
+$('#recalc').onclick = () => generate(true);
+// legend: open by default on large screens, closed on phones; remembered on this device
+try { const lg = localStorage.getItem('runparis-legend'); $('#legend').open = lg ? lg === 'open' : !matchMedia('(max-width: 860px)').matches; } catch (e) { $('#legend').open = !matchMedia('(max-width: 860px)').matches; }
+$('#legend').addEventListener('toggle', () => { try { localStorage.setItem('runparis-legend', $('#legend').open ? 'open' : 'closed'); } catch (e) {} });
+$('#edit').onclick = e => { e.stopPropagation(); showView('set'); };
+$('.summary').onclick = () => showView('set');
+function showView(v) {
+  S.view = v;
+  $('#view-set').hidden = v !== 'set'; $('#foot-set').hidden = v !== 'set';
+  $('#view-res').hidden = v !== 'res'; $('#foot-res').hidden = v !== 'res';
+  if (v === 'res') { $('#view-res').scrollTop = 0; requestAnimationFrame(() => { drawProfile(S.route); scrollToMap(); }); }
+  else { $('#stale').hidden = true; $('#view-set').scrollTop = 0; if (MOB.matches && sheet !== 'full') setSheet('full'); }
+}
+
+// bring the map into view after a calculation (useful when the page is narrow and the map sits above the panel)
+function scrollToMap() {
+  if (MOB.matches) { setSheet('half', true); return; }
+  const r = $('#mapwrap').getBoundingClientRect();
+  if (r.top < -10 || r.top > innerHeight * 0.4) window.scrollTo({ top: Math.max(0, scrollY + r.top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+// ---------- type of route ----------
+const KHINT = { green: 'Passe au maximum par les parcs, jardins, quais et rues bordées d’arbres (≈ 160 000 arbres recensés dans OpenStreetMap), quitte à faire quelques détours.', discover: 'Passe devant des monuments et lieux connus à portée de ta distance. Tu peux aussi choisir tes lieux avec « Passer par un lieu ».' };
+['classic', 'green', 'discover'].forEach(k => $('#k-' + k).onclick = () => { S.kind = k; ['classic', 'green', 'discover'].forEach(j => $('#k-' + j).setAttribute('aria-pressed', j === k)); $('#k-hint').hidden = k === 'classic'; $('#k-hint').textContent = KHINT[k] || ''; });
+// ---------- places to pass by ----------
+function addVia(p) {
+  if (S.vias.length >= 5) return toast('5 lieux au maximum.');
+  S.vias.push(p); renderVias(); markStale(); draw();
+}
+function renderVias() {
+  const box = $('#via-list'); box.innerHTML = '';
+  S.vias.forEach((v, i) => {
+    const c = document.createElement('span'); c.className = 'vchip';
+    c.innerHTML = `<span class="name"></span><button type="button">×</button>`;
+    c.querySelector('.name').textContent = `${i + 1}. ${v.name}`;
+    c.querySelector('button').setAttribute('aria-label', 'Ne plus passer par ' + v.name);
+    c.querySelector('button').onclick = () => { S.vias.splice(i, 1); renderVias(); markStale(); draw(); };
+    box.appendChild(c);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'link';
+  const open = !$('#via-box').hidden;
+  add.textContent = open ? 'Fermer' : '+ Passer par un lieu';
+  add.onclick = () => { $('#via-box').hidden = !$('#via-box').hidden; renderVias(); if (!$('#via-box').hidden) $('#via-q').focus(); };
+  box.appendChild(add);
+}
+searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
+// ---------- official races ----------
+function setTab(t) {
+  S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race');
+  const tools = document.querySelector('.tools'); tools.hidden = t === 'race';
+  if (t === 'race') {
+    $('#view-set').hidden = true; $('#foot-set').hidden = true; $('#view-res').hidden = true; $('#stale').hidden = true;
+    $('#view-race').hidden = false; $('#foot-res').hidden = !S.race; $('#again').hidden = true;
+    S.saved = { route: S.route, alts: S.alts, lastTarget: S.lastTarget, lastD: S.lastD, baseNotes: S.baseNotes };
+    if (S.race) showRace(S.race, S.raceFrom, S.raceTo); else { S.route = null; S.alts = []; draw(); }
+  } else {
+    $('#view-race').hidden = true; $('#again').hidden = false;
+    $('#view-res').appendChild($('#notes')); $('#view-res').appendChild($('#detail'));
+    const sv = S.saved || {}; S.route = sv.route || null; S.alts = sv.alts || []; S.lastTarget = sv.lastTarget; S.lastD = sv.lastD; S.baseNotes = sv.baseNotes || [];
+    showView(S.route ? 'res' : 'set'); if (S.route) { renderAlts(); showRoute(S.route, S.baseNotes.concat(routeNotes(S.route))); fitRoute(); } draw();
+  }
+}
+$('#tab-gen').onclick = () => S.tab !== 'gen' && setTab('gen');
+$('#tab-race').onclick = () => S.tab !== 'race' && setTab('race');
+// ---- overlapping passes: resample the route, find where it runs over itself, and give each pass its own lane
+function laneInfo(R) {
+  if (R._lanes) return R._lanes;
+  const src = routePts(R), step = 8, pts = [];
+  for (let i = 1; i < src.length; i++) {
+    const [ax, ay] = src[i - 1], [bx, by] = src[i], d = Math.hypot(bx - ax, by - ay); if (!d) continue;
+    if (!pts.length) pts.push([ax, ay]);
+    let last = pts[pts.length - 1], rem = Math.hypot(bx - last[0], by - last[1]);
+    while (rem >= step) { const t = 1 - (rem - step) / d; last = [ax + (bx - ax) * Math.min(1, t), ay + (by - ay) * Math.min(1, t)]; pts.push(last); rem = Math.hypot(bx - last[0], by - last[1]); }
+  }
+  if (src.length) pts.push(src[src.length - 1]);
+  const n = pts.length, tx = new Float32Array(n), ty = new Float32Array(n), lane = new Float32Array(n), pass = new Uint8Array(n);
+  for (let i = 0; i < n; i++) { const a = pts[Math.max(0, i - 2)], b = pts[Math.min(n - 1, i + 2)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; tx[i] = (b[0] - a[0]) / l; ty[i] = (b[1] - a[1]) / l; }
+  const C = 14, grid = new Map(), key = (x, y) => Math.floor(x / C) + ',' + Math.floor(y / C);
+  let any = false;
+  for (let i = 0; i < n; i++) {
+    const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C); const js = [];
+    for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || [])
+      if (i - j >= 10 && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) js.push(j);
+    if (js.length) { // one earlier pass = a run of consecutive samples; count the passes going the same way
+      js.sort((a, b) => a - b); let same = 0, tot = 0, prev = -99;
+      for (const j of js) { if (j - prev > 6) { tot++; if (tx[i] * tx[j] + ty[i] * ty[j] > 0) same++; } prev = j; }
+      lane[i] = 1 + 2 * Math.min(same, 3); pass[i] = Math.min(tot, 3); any = true;
+    }
+    const k = key(x, y); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i);
+  }
+  // the first pass also moves to its own lane wherever a later pass comes back over it
+  if (any) for (let i = 0; i < n; i++) if (lane[i]) {
+    const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C);
+    for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || []) if (j < i - 10 && !lane[j] && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) lane[j] = 1;
+  }
+  // smooth lane changes over ~40 m so the line glides from one lane to the other
+  const sm = new Float32Array(n); for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = -5; k <= 5; k++) { const j = i + k; if (j >= 0 && j < n) { s += lane[j]; c++; } } sm[i] = s / c; }
+  // a pass shorter than ~50 m is noise (crossing, corner): keep it in the colour of what surrounds it
+  for (let i = 0; i < n;) { let j = i; while (j < n && pass[j] === pass[i]) j++; if (j - i < 6 && i > 0) for (let k = i; k < j; k++) pass[k] = pass[i - 1]; i = j; }
+  return (R._lanes = { pts, tx, ty, lane: sm, pass, any });
+}
+// polyline of a route in map metres: from street edges, or from a GPX geometry (official races)
+function routePts(r) {
+  if (r.geom) return r.geom;
+  if (r._pts) return r._pts;
+  const pts = []; let first = true;
+  for (const [e, fromA] of r.edges) { const p = E.edgePts(e); if (!fromA) p.reverse(); p.forEach((q, i) => { if (first || i) pts.push(q); first = false; }); }
+  return (r._pts = pts);
+}
+// route object from a polyline (x, y in metres): length, smoothed D+, feux crossed, streets and quartiers
+function geomRoute(xy) {
+  let len = 0; const prof = [], nodes = [], names = new Map(), quart = new Map(), clusters = new Set();
+  const step = 15; let acc = 0, next = 0;
+  for (let i = 0; i < xy.length; i++) {
+    if (i) { const d = Math.hypot(xy[i][0] - xy[i - 1][0], xy[i][1] - xy[i - 1][1]); len += d; }
+    if (len >= next || i === xy.length - 1) {
+      next = len + step;
+      const v = E.nearest(xy[i][0], xy[i][1]); if (v < 0) continue;
+      if (Math.hypot(G.NX[v] - xy[i][0], G.NY[v] - xy[i][1]) < 60) { prof.push([len, G.NZ[v]]); if (nodes[nodes.length - 1] !== v) nodes.push(v); quart.set(G.nq[v], (quart.get(G.nq[v]) || 0) + step);
+        for (let k = G.deg[v]; k < G.deg[v + 1]; k++) { const e = G.adjE[k]; if (G.en[e]) names.set(G.en[e] - 1, (names.get(G.en[e] - 1) || 0) + step / 2); } }
+    }
+  }
+  for (const s of G.SIG) { for (let i = 0; i < xy.length; i += 1) { if (Math.abs(xy[i][0] - s.x) < 20 && Math.abs(xy[i][1] - s.y) < 20) { clusters.add(s.id); break; } } }
+  let gl = 0; // green share from nearest street edge
+  return { geom: xy, len, prof, nodes, names, quart, up: E.smoothClimb(prof), feux: clusters.size, clusterIds: [...clusters], edges: [], green: null, kind: 'course' };
+}
+function sliceGeom(xy, a, b) {
+  const out = []; let acc = 0;
+  for (let i = 1; i < xy.length; i++) {
+    const p = xy[i - 1], q = xy[i], d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    const lerp = t => [p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])];
+    if (acc + d >= a && acc <= b) { if (!out.length) out.push(lerp(Math.max(0, (a - acc) / d))); out.push(acc + d <= b ? q : lerp((b - acc) / d)); }
+    acc += d;
+  }
+  return out;
+}
+function raceStats(race) {
+  if (race.geom && !race._full) { race._xy = race.geom.map(([la, lo]) => E.toXY(la, lo)); race._full = geomRoute(race._xy); }
+  if (!race._full) { const edges = race.edges.map(x => x >= 0 ? [x, true] : [-x - 1, false]); const e0 = edges[0]; const start = e0[1] ? G.ea[e0[0]] : G.eb[e0[0]]; race._full = E.statsOf(edges, start); race._full.kind = 'course'; }
+  return race._full;
+}
+const RACE_CATS = [['all', 'Toutes'], ['10', '10 km'], ['long', 'Semi et plus'], ['bois', 'Bois et trail']];
+function renderRaces() {
+  const box = $('#races'), det = $('#race-detail'); $('#view-race').appendChild(det); box.innerHTML = '';
+  if (!RACES.length) { box.innerHTML = '<p class="hint">Tracés indisponibles (données non chargées).</p>'; return; }
+  const cat = S.raceCat || 'all', today = new Date().toISOString().slice(0, 10);
+  const fb = $('#race-filter'); fb.innerHTML = '';
+  for (const [k, lab] of RACE_CATS) { const n = k === 'all' ? RACES.length : RACES.filter(r => (r.cat === 'semi' ? 'long' : r.cat === 'trail' ? 'bois' : r.cat) === k).length; if (!n) continue;
+    const c = document.createElement('button'); c.type = 'button'; c.textContent = `${lab} · ${n}`; c.setAttribute('aria-pressed', cat === k); c.onclick = () => { S.raceCat = k; renderRaces(); }; fb.appendChild(c); }
+  const group = r => r.cat === 'semi' ? 'long' : r.cat === 'trail' ? 'bois' : r.cat;
+  const list = RACES.filter(r => cat === 'all' || group(r) === cat || r === S.race);
+  const up = list.filter(r => (r.date || '') >= today).sort((a, b) => a.date < b.date ? -1 : 1), past = list.filter(r => (r.date || '') < today).sort((a, b) => a.date > b.date ? -1 : 1);
+  for (const race of up.concat(past)) {
+    const st = raceStats(race), isPast = (race.date || '') < today;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'race'; b.setAttribute('aria-pressed', S.race === race);
+    b.innerHTML = '<span class="k lbl"></span><span class="t"></span><span class="s"></span>';
+    b.querySelector('.k').textContent = race.edition; if (isPast) { const p = document.createElement('span'); p.className = 'past'; p.textContent = ' · passée, tracé conservé'; b.querySelector('.k').appendChild(p); }
+    b.querySelector('.t').textContent = race.name;
+    b.querySelector('.s').textContent = race.geom ? `${fmt(race.official, race.official % 1 ? 1 : 0)} km · tracé GPX ${race.year} · ${Math.round(st.up)} m D+` : `${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels · tracé reconstitué ${fmt(st.len / 1000)} km · ${Math.round(st.up)} m D+`;
+    b.onclick = () => { S.race = race; showRace(race); renderRaces(); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
+    box.appendChild(b);
+    if (S.race === race) box.appendChild(det); // the detail opens right under the chosen race
+  }
+}
+function showRace(race, from, to) {
+  const full = raceStats(race), L = full.len;
+  from = Math.max(0, Math.min(from || 0, L / 1000)); to = to ? Math.min(to, L / 1000) : L / 1000; if (to - from < 0.5) { from = 0; to = L / 1000; }
+  S.raceFrom = from; S.raceTo = to;
+  let st = full;
+  if (from > 0.01 || to < L / 1000 - 0.01) {
+    const sel = []; let acc = 0; let start = null;
+    if (!race.geom) for (const [e, fa] of full.edges) { const mid = acc + G.LEN[e] / 2; if (mid >= from * 1000 && mid <= to * 1000) { if (start == null) start = fa ? G.ea[e] : G.eb[e]; sel.push([e, fa]); } acc += G.LEN[e]; }
+    if (sel.length) { st = E.statsOf(sel, start); st.kind = 'course'; }
+  }
+  if (race.geom && (from > 0.01 || to < L / 1000 - 0.01)) st = geomRoute(sliceGeom(race._xy, from * 1000, to * 1000));
+  E.sightsOn(st, SIGHTS);
+  S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null; S.baseNotes = [];
+  $('#race-detail').hidden = false; $('#foot-res').hidden = false;
+  $('#race-desc').textContent = race.geom ? `${race.desc} Tracé de l'édition ${race.year} (${race.source}) : ${fmt(full.len / 1000)} km pour ${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels. Site : ${race.url.replace(/^https?:\/\//, '')}` : `${race.desc} Tracé reconstitué par RunParis à partir des descriptions publiées : il peut différer du parcours officiel (fermetures de voies, tunnels). Distance du tracé : ${fmt(full.len / 1000)} km pour ${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels. Site : ${race.url.replace(/^https?:\/\//, '')}`;
+  $('#p-from').value = Math.round(from * 10) / 10; $('#p-to').value = Math.round(to * 10) / 10; $('#p-to').max = $('#p-from').max = (Math.round(L / 100) / 10);
+  const chips = $('#portion-chips'); chips.innerHTML = '';
+  const Lk = L / 1000, opts = [['En entier', 0, Lk], ['5 premiers km', 0, 5], ['10 premiers km', 0, 10], ['5 derniers km', Lk - 5, Lk], ['La moitié', 0, Lk / 2]];
+  // steepest 3 km window
+  let best = null; const P = full.prof; for (let i = 0; i < P.length; i++) { let up = 0; for (let j = i + 1; j < P.length && P[j][0] - P[i][0] <= 3000; j++) up += Math.max(0, P[j][1] - P[j - 1][1]); if (!best || up > best[1]) best = [P[i][0], up]; }
+  if (best && Lk > 6) opts.push(['3 km les plus vallonnés', best[0] / 1000, best[0] / 1000 + 3]);
+  for (const [lab, a, b] of opts) { if (b > Lk + 0.01 || a < 0) continue; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = lab; btn.setAttribute('aria-pressed', Math.abs(a - from) < 0.05 && Math.abs(b - to) < 0.05); btn.onclick = () => showRace(race, a, b); chips.appendChild(btn); }
+  const slot = $('#race-slot'); slot.appendChild($('#notes')); slot.appendChild($('#detail'));
+  showRoute(st, from > 0.01 || to < Lk - 0.01 ? [`Portion du km ${fmt(from)} au km ${fmt(to)} : ${fmt(st.len / 1000)} km.`] : []);
+  $('#st-km-d').textContent = from > 0.01 || to < Lk - 0.01 ? 'portion' : `officiel ${fmt(race.official, race.official % 1 ? 1 : 0)}`; $('#st-km-d').className = 'delta';
+  $('#st-sig').textContent = '—'; $('#st-sig').title = 'Course : routes fermées à la circulation';
+  drawProfile(st);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of routePts(st)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  fit([x0, y0, x1, y1]); draw(); scrollToMap();
+}
+$('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($('#p-from').value).replace(',', '.')) || 0, parseFloat(String($('#p-to').value).replace(',', '.')) || 0); };
+
+// summary of the settings used for the results on screen
+function renderSummary() {
+  const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
+  const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
+  const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'B'}`);
+  $('#sum-t').textContent = `${mode} · ${kmTxt} · ${where}`;
+  const d = S.dmode === 'flat' ? 'Plat' : S.dmode === 'target' ? `Vallonné (D+ ${$('#dplus').value} m)` : 'Dénivelé normal';
+  const f = ['feux ignorés', 'feux limités', 'feux évités au max'][S.sig];
+  const n = S.exclQ.size ? `${S.exclQ.size} quartier${S.exclQ.size > 1 ? 's' : ''} évité${S.exclQ.size > 1 ? 's' : ''}` : '';
+  const pl = S.places.length ? `${S.places.length} lieu${S.places.length > 1 ? 'x' : ''} évité${S.places.length > 1 ? 's' : ''}` : '';
+  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : ''].filter(Boolean).join(' · ');
+}
+new ResizeObserver(resize).observe(cv);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+
+
+// ---------- generate ----------
+let busy = false;
+// ---------- input validation ----------
+function readKm() {
+  if (S.unit === 'min') {
+    const v = parseFloat(String($('#dur').value).trim().replace(',', '.'));
+    if (!isFinite(v) || v <= 0) return { err: 'Indique une durée en minutes (par exemple 45).' };
+    const km = Math.round(v * 60 / pace() * 10) / 10;
+    if (km < 1) return { km: 1, info: `${fmt(v, 0)} min à ton allure font moins de 1 km : le parcours est calculé pour 1 km.` };
+    if (km > 42) return { km: 42, info: `${fmt(v, 0)} min à ton allure dépassent 42 km (un marathon) : le parcours est calculé pour 42 km.` };
+    return { km };
+  }
+  const raw = String($('#km').value).trim().replace(',', '.');
+  const v = parseFloat(raw);
+  if (!raw || !isFinite(v) || v <= 0) return { err: 'Indique une distance en kilomètres, entre 1 et 42 km.' };
+  if (v < 1) return { km: 1, info: 'Distance minimale : 1 km. Le parcours est calculé pour 1 km.' };
+  if (v > 42) return { km: 42, info: `Distance maximale : 42 km (un marathon). Le parcours est calculé pour 42 km au lieu de ${fmt(v, 0)}.` };
+  return { km: v };
+}
+function parsePace(str) {
+  const m = /^\s*(\d{1,2})\s*(?:[:'’.,h]\s*(\d{1,2}))?\s*(?:"|min)?\s*$/.exec(str || '');
+  if (!m) return null; const min = +m[1], sec = +(m[2] || 0);
+  if (sec >= 60 || min < 2 || min > 15) return null;
+  return min * 60 + sec;
+}
+function pace() { return parsePace($('#pace').value) || 330; }
+function readDplus() {
+  const raw = String($('#dplus').value).trim().replace(',', '.'); const v = parseFloat(raw);
+  if (!raw || !isFinite(v) || v < 0) return { err: 'Indique un D+ visé en mètres (0 ou plus).' };
+  if (v > 600) return { dplus: 600, info: 'D+ visé limité à 600 m.' };
+  return { dplus: Math.round(v) };
+}
+
+// ---------- generate ----------
+function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
+async function generate(isAgain) {
+  if (!G || busy) return;
+  const notes = [], errs = [];
+  if (!S.start) { fail([{ t: 'Choisis un départ : recherche un lieu ou une rue, ou clique « Sur la carte ».', err: true }]); return; }
+  const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
+  if (k.info) notes.push(k.info);
+  const km = k.km, target = km * 1000;
+  if (!parsePace($('#pace').value)) notes.push('Allure non reconnue (exemple : 5:30) : le temps est estimé à 5:30 /km.');
+  let dplus = null;
+  if (S.dmode === 'target') { const d = readDplus(); if (d.err) { fail([{ t: d.err, err: true }]); return; } if (d.info) notes.push(d.info); dplus = d.dplus; }
+  if (S.mode === 'ab' && !S.endFree && !S.end) { fail([{ t: 'Choisis le lieu d’arrivée, ou choisis « N’importe où ».', err: true }]); return; }
+  if (S.exclQ.size >= M.quartiers.length) { fail([{ t: 'Tu as exclu tout Paris. Réautorise au moins un arrondissement ou un quartier.', err: true }]); return; }
+
+  busy = true; $('#gen').disabled = true; $('#again').disabled = true; $('#recalc').disabled = true; $('#gen').textContent = 'Calcul en cours…'; $('#again').textContent = 'Calcul en cours…';
+  const bar = $('#bar'); bar.style.width = '5%';
+  let r = null;
+  try {
+    await new Promise(res => setTimeout(res, 20));
+    E.setConstraints(S.exclQ, S.places, { avoidCemeteries: $('#avoid-cem').checked });
+    const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
+    const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
+    const allowRepeat = $('#allow-repeat').checked;
+    const green = S.kind === 'green';
+    E.setWeights({ climb, sig: [0, 150, 450][S.sig], path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] });
+    const opt = { seed: S.seed * 7919 + 13, sigScore: [0, 0.5, 1.5][S.sig], dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
+    const ab = S.mode === 'ab', A = ab ? 'A' : 'le départ';
+    const [sx, sy] = E.toXY(S.start.lat, S.start.lon);
+    const s = E.nearest(sx, sy);
+    if (s < 0) errs.push(`Aucune rue accessible autour de ${A} avec ces exclusions. Réautorise un quartier proche ou retire un lieu évité.`);
+    else {
+      const snapD = Math.hypot(G.NX[s] - sx, G.NY[s] - sy);
+      if (snapD > 250) notes.push(`${ab ? 'A est' : 'Ton départ est'} dans une zone évitée : le parcours part de la rue autorisée la plus proche (${Math.round(snapD)} m).`);
+      const prog = f => bar.style.width = (5 + f * 95) + '%';
+      // places to pass by, or discovery of famous places
+      let endN = null;
+      if (ab && !S.endFree) {
+        const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = E.nearest(ex, ey);
+        if (endN < 0) errs.push('Aucune rue accessible autour de l’arrivée avec ces exclusions.');
+        else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « Retour au départ » ou « N’importe où ».');
+      }
+      const endArg = !ab ? s : S.endFree ? 'free' : endN;
+      if (errs.length) { /* reported below */ }
+      else if (S.vias.length) {
+        const vn = [];
+        for (const v of S.vias) { const [vx, vy] = E.toXY(v.lat, v.lon); const n = E.nearest(vx, vy); if (n < 0 || Math.hypot(G.NX[n] - vx, G.NY[n] - vy) > 400) { errs.push(`« ${v.name} » est dans une zone évitée ou inaccessible : retire-le ou réautorise sa zone.`); } else vn.push(n); }
+        if (!errs.length) {
+          r = await E.viaRoute(s, vn, endArg, target, opt, prog);
+          if (!r) errs.push('Impossible de passer par ces lieux sans traverser une zone évitée. Retire un lieu ou réautorise un quartier.');
+          else if (r.shortest) notes.push(`Passer par ces lieux fait déjà ${fmt(r.len / 1000)} km : c'est le parcours le plus court qui est proposé.`);
+        }
+      } else if (S.kind === 'discover') {
+        r = await E.discover(s, endArg, target, SIGHTS.map(x => Object.assign({}, x)), opt, prog);
+        if (!r) errs.push('Aucun lieu connu assez proche pour cette distance. Allonge la distance, change de départ ou ajoute toi-même des lieux par où passer.');
+        else if (!(r.sightsN > 0)) notes.push('Peu de lieux connus à portée : ce parcours en croise peu. Allonge la distance ou pars plus près du centre.');
+      } else if (!ab) {
+        r = await E.loop(s, target, opt, prog);
+        if (!r) errs.push("Aucune boucle trouvée avec ces réglages : les zones évitées isolent le départ. Réautorise un quartier ou change la distance.");
+      } else if (S.endFree) {
+        if ($('#end-metro').checked && METRO.st.length) { // finish at a station: their nearest allowed street node
+          opt.endNodes = []; for (const st of METRO.st) { const n = E.nearest(st.x, st.y); if (n >= 0 && Math.hypot(G.NX[n] - st.x, G.NY[n] - st.y) < 120) opt.endNodes.push({ n, x: st.x, y: st.y }); }
+        }
+        r = await E.oneWay(s, target, opt, prog);
+        if (!r) errs.push("Aucun aller simple trouvé depuis A avec ces réglages. Réautorise un quartier ou change la distance.");
+      } else {
+        const [ex, ey] = E.toXY(S.end.lat, S.end.lon); const t = endN;
+        {
+          const snapB = Math.hypot(G.NX[t] - ex, G.NY[t] - ey);
+          if (snapB > 250) notes.push(`B est dans une zone évitée : l'arrivée est déplacée à la rue autorisée la plus proche (${Math.round(snapB)} m).`);
+          r = await E.aToB(s, t, target, opt, prog);
+          if (!r) errs.push("Impossible de relier A et B sans traverser une zone évitée. Réautorise un quartier entre les deux.");
+          else if (r.shortest && r.len > target * 1.03) notes.push(`Le plus court chemin de A à B fait déjà ${fmt(r.len / 1000)} km : c'est lui qui est proposé.`);
+        }
+      }
+      if (r && r.alts && r.alts.length === 1 && !r.shortest) notes.push('Une seule proposition trouvée avec ces réglages.');
+    }
+  } catch (e) {
+    console.error(e); r = null; errs.push('Le calcul a échoué de façon inattendue. Réessaie ; si ça se reproduit, change un réglage.');
+  } finally {
+    bar.style.width = '100%'; setTimeout(() => bar.style.width = '0', 300);
+    busy = false; $('#gen').disabled = false; $('#again').disabled = false; $('#recalc').disabled = false; $('#gen').textContent = 'Générer 3 parcours'; $('#again').textContent = '↻ Voir 3 autres parcours';
+  }
+  S.lastKm = km; $('#stale').hidden = true;
+  if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
+  if (r && !errs.length) {
+    S.alts = r.alts || [r]; S.baseNotes = notes; S.lastTarget = target; S.lastD = dplus;
+    renderSummary(); showView('res'); selectAlt(0);
+    if (!isAgain) fitRoute();
+  } else { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, errs.map(t => ({ t, err: true })).concat(notes)); showView('res'); }
+  draw();
+}
+function hillHint() {
+  const hills = [['Montmartre', 18], ['Belleville', 20], ['les Buttes-Chaumont', 19], ['Ménilmontant', 20], ['la Butte-aux-Cailles', 13]];
+  const ok = hills.filter(([, a]) => M.quartiers.filter(q => q.ar === a).some(q => !S.exclQ.has(q.id)));
+  if (!ok.length) return 'Les buttes de Paris sont dans tes zones évitées : réautorise le 18e, 19e ou 20e pour grimper plus.';
+  const names = ok.slice(0, 3).map(([n, a]) => `${n} (${a}e)`);
+  return 'Pour grimper plus, pars vers ' + (names.length > 1 ? names.slice(0, -1).join(', ') + ' ou ' + names[names.length - 1] : names[0]) + '.';
+}
+function routeNotes(r) {
+  const notes = [], km = S.lastKm, target = S.lastTarget, dplus = S.lastD;
+  if (Math.abs(r.len - target) / target > 0.05 && !r.shortest) notes.push(`Distance la plus proche trouvée : ${fmt(r.len / 1000)} km pour ${fmt(km)} demandés. Les exclusions limitent les rues disponibles.`);
+  if (dplus != null && r.up < dplus * 0.8) notes.push(`D+ maximum trouvé ici : ${Math.round(r.up)} m pour ${dplus} m visés. ${hillHint()}`);
+  if (r.kind === 'aller-retour') notes.push('Aller-retour : tu reviens par le même chemin.');
+  if (r.cemLen > 50) notes.push(`Le parcours traverse un cimetière sur ${Math.round(r.cemLen)} m : horaires d'ouverture limités et lieu de recueillement.`);
+  if (r.quart && [...r.quart.keys()].some(q => /Bois|Muette|Bel-Air|Auteuil/.test(M.quartiers[q - 1]?.name || ''))) notes.push('Le parcours passe par un bois ou un grand parc : vérifie les horaires si tu cours tôt ou tard.');
+  return notes;
+}
+const KIND = { 'boucle': 'Boucle', 'aller-retour': 'Aller-retour', 'aller-simple': 'Aller simple', 'a-b': 'A → B' };
+function shortStreet(n) { return n.replace(/^(Rue|Boulevard|Avenue)\s+((de la|de l'|de l’|du|des|de|d'|d’)\s*)?/i, '').replace(/^./, c => c.toUpperCase()); }
+function altNames(a) { return [...a.names].sort((x, y) => y[1] - x[1]).slice(0, 2).map(([i]) => shortStreet(M.names[i] || '')).filter(Boolean).join(' · ') || (KIND[a.kind] || 'Parcours'); }
+function altLabels(alts) {
+  const L = new Array(alts.length).fill(null);
+  if (alts.length < 2) return [alts.length ? 'Recommandé' : ''];
+  const crit = [
+    ...(S.kind === 'green' ? [['Le plus vert', a => a.green, -1, 0.04]] : []),
+    ...(S.kind === 'discover' || S.vias.length ? [['Le plus de lieux connus', a => a.sightsN || 0, -1, 1]] : []),
+    ['Le moins de feux', a => a.feux, 1, 2],
+    ['Le plus plat', a => a.up, 1, 8],
+    ['Le plus vallonné', a => a.up, -1, 8],
+    ['Le plus proche de la distance', a => Math.abs(a.len - S.lastTarget), 1, 150],
+  ];
+  for (const [name, f, sgn, gap] of crit) {
+    const order = alts.map((a, i) => i).sort((i, j) => sgn * (f(alts[i]) - f(alts[j])));
+    const best = order[0], second = order[1];
+    if (L[best] || Math.abs(f(alts[best]) - f(alts[second])) < gap) continue;
+    L[best] = name;
+  }
+  return L.map((l, i) => l || (i === 0 ? 'Recommandé' : 'Autre itinéraire'));
+}
+function renderAlts() {
+  const box = $('#alts'); box.innerHTML = '';
+  const n = S.alts ? S.alts.length : 0;
+  $('#alts-h').hidden = !n; $('#alts-h').textContent = n > 1 ? `${n} parcours trouvés` : '1 parcours trouvé';
+  if (!n) return;
+  const labels = altLabels(S.alts);
+  S.alts.forEach((a, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'alt'; b.setAttribute('aria-pressed', a === S.route);
+    b.innerHTML = `<span class="k"></span><span class="t"></span><span class="s"></span><span class="v"></span>`;
+    b.querySelector('.k').textContent = `${String(i + 1).padStart(2, '0')} · ${labels[i]}${a.kind === 'aller-retour' ? ' · aller-retour' : ''}`;
+    b.querySelector('.t').textContent = altNames(a);
+    b.querySelector('.s').textContent = `${fmt(a.len / 1000)} km · ${Math.round(a.up)} m D+ · ${a.feux} feux · ${fmtDur(a.len / 1000 * pace())}` + (S.kind === 'green' ? ` · ${Math.round(a.green * 100)} % vert` : '');
+    const vv = b.querySelector('.v'); vv.textContent = a.sightsN ? 'Passe par ' + a.sights.slice(0, 4).join(', ') + (a.sightsN > 4 ? '…' : '') : ''; vv.hidden = !a.sightsN;
+    b.onclick = () => selectAlt(i);
+    box.appendChild(b);
+  });
+}
+function selectAlt(i) {
+  const r = S.alts[i]; if (!r) return;
+  S.route = r; renderAlts(); showRoute(r, S.baseNotes.concat(routeNotes(r))); draw();
+}
+function fitRoute(onlyStart) {
+  if (onlyStart || !S.route) { if (S.start) { const [x, y] = E.toXY(S.start.lat, S.start.lon); zoomAt(0, 0, V.s); V.s = Math.max(V.s, 0.12); V.tx = W / 2 - x * V.s; V.ty = (H - sheetPx()) / 2 - y * V.s; draw(); } else fit(); return; }
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const a of (S.alts && S.alts.length ? S.alts : [S.route])) for (const v of a.nodes) { x0 = Math.min(x0, G.NX[v]); x1 = Math.max(x1, G.NX[v]); y0 = Math.min(y0, G.NY[v]); y1 = Math.max(y1, G.NY[v]); }
+  fit([x0, y0, x1, y1]);
+}
+function showRoute(r, notes) {
+  const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
+  $('#detail').hidden = !r;
+  if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
+  $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
+  $('#st-up').innerHTML = `${Math.round(r.up)}<small>m</small>`;
+  $('#st-sig').textContent = r.feux;
+  const sec = r.len / 1000 * pace(); const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60);
+  $('#st-time').innerHTML = h ? `${h}<small>h</small>${String(m).padStart(2, '0')}` : `${m}<small>min</small>`;
+  $('#st-km-d').textContent = '';
+  const dk = (r.len - S.lastTarget) / S.lastTarget * 100;
+  const kd = $('#st-km-d'); kd.textContent = `${dk >= 0 ? '+' : ''}${fmt(dk, 1)} %`; kd.className = 'delta ' + (Math.abs(dk) <= 5 ? 'ok' : 'off');
+  const ud = $('#st-up-d'); if (S.lastD != null) { ud.textContent = `visé ${S.lastD}`; ud.className = 'delta ' + (Math.abs(r.up - S.lastD) <= Math.max(20, S.lastD * .2) ? 'ok' : 'off'); } else ud.textContent = '';
+  const top = [...r.names].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([i]) => M.names[i]);
+  const arrs = [...new Set([...r.quart.keys()].map(q => M.quartiers[q - 1]?.ar).filter(Boolean))].sort((a, b) => a - b);
+  $('#via').innerHTML = ''; const sp = document.createElement('span');
+  sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
+  if (r.green != null && G.GR) sp.appendChild(document.createTextNode(` · ${Math.round(r.green * 100)} % du parcours au vert (parcs, rues arborées)`));
+  if (r.sightsN) sp.appendChild(document.createTextNode(` · Lieux : ${r.sights.join(', ')}`));
+  const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
+  $('#via').appendChild(sp);
+  // one-way routes: nearest metro / RER at the arrival, to get back home
+  const P = routePts(r), a = P[0], b = P[P.length - 1]; r._metroEnd = null;
+  if (METRO.st.length && Math.hypot(b[0] - a[0], b[1] - a[1]) > 300) {
+    const ns = nearestStation(b[0], b[1]); r._metroEnd = ns;
+    const box = document.createElement('div'); box.className = 'metro-end';
+    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Pour rentrer'; box.appendChild(l);
+    const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // walking ≈ 1.25 × straight line
+    t.innerHTML = `<strong></strong> à ${d < 30 ? 'l’arrivée' : '~' + d + ' m à pied'}`; t.querySelector('strong').textContent = (ns.d > 1500 ? 'Pas de station proche · la plus proche : ' : ns.s.ls.every(x => x.startsWith('RER')) ? 'RER ' : 'Métro ') + ns.s.n;
+    box.appendChild(t); for (const ln of ns.s.ls) box.appendChild(lineBadge(ln));
+    $('#via').appendChild(box);
+  }
+  drawProfile(r);
+}
+
+// ---------- profile ----------
+function drawProfile(r) {
+  const c = $('#prof'), b = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  if (!b.width) return;
+  c.width = Math.round(b.width * d); c.height = Math.round(b.height * d);
+  const x = c.getContext('2d'); x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, b.width, b.height);
+  if (!r) return;
+  const P = r.prof, L = r.len; let zmin = Infinity, zmax = -Infinity; for (const [, z] of P) { zmin = Math.min(zmin, z); zmax = Math.max(zmax, z); }
+  const lo = Math.floor((zmin - 3) / 10) * 10, hi = Math.max(lo + 30, Math.ceil((zmax + 3) / 10) * 10);
+  const padL = 42, padB = 16, w = b.width - padL - 4, h = b.height - padB - 6;
+  const X = s => padL + s / L * w, Y = z => 6 + (1 - (z - lo) / (hi - lo)) * h;
+  x.font = `600 11.5px ${css('--f-mono')}`; x.fillStyle = css('--muted'); x.strokeStyle = css('--line'); x.lineWidth = 1; x.textBaseline = 'middle'; x.textAlign = 'right';
+  for (const z of [lo, Math.round((lo + hi) / 2), hi]) { x.beginPath(); x.moveTo(padL, Y(z)); x.lineTo(padL + w, Y(z)); x.stroke(); x.fillText(z + ' m', padL - 4, Y(z)); }
+  x.textAlign = 'center'; x.textBaseline = 'top';
+  const stepKm = L > 15000 ? 5 : L > 6000 ? 2 : 1;
+  for (let k = 0; k * 1000 <= L; k += stepKm) x.fillText(k + ' km', Math.min(X(k * 1000), padL + w - 14), 6 + h + 3);
+  const col = css('--route');
+  x.beginPath(); x.moveTo(X(0), Y(lo)); for (const [s, z] of P) x.lineTo(X(s), Y(z)); x.lineTo(X(L), Y(lo)); x.closePath();
+  x.globalAlpha = .18; x.fillStyle = col; x.fill(); x.globalAlpha = 1;
+  x.beginPath(); P.forEach(([s, z], i) => i ? x.lineTo(X(s), Y(z)) : x.moveTo(X(s), Y(z))); x.strokeStyle = col; x.lineWidth = 1.8; x.stroke();
+  // highest point
+  let im = 0; P.forEach((p, i) => { if (p[1] > P[im][1]) im = i; });
+  x.beginPath(); x.arc(X(P[im][0]), Y(P[im][1]), 3.5, 0, 7); x.fillStyle = col; x.fill();
+}
+window.addEventListener('resize', () => S.route && drawProfile(S.route));
+
+// ---------- GPX ----------
+function gpx() {
+  const r = S.route; if (!r) return null;
+  const pts = routePts(r);
+  const esc = s => s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
+  const name = S.tab === 'race' && S.race ? `${S.race.name} – ${S.race.geom ? 'tracé ' + S.race.year : 'tracé reconstitué RunParis'}, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `RunParis ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
+  const body = pts.map(([x, y]) => { const [la, lo] = E.toLL(x, y); return `<trkpt lat="${la.toFixed(6)}" lon="${lo.toFixed(6)}"></trkpt>`; }).join('\n      ');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="RunParis" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
+}
+$('#gpx').onclick = async () => {
+  const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
+  try {
+    const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`;
+    if (!window.claude) { // public site: a real .gpx file
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      return toast('GPX téléchargé : importe-le dans ta montre ou Strava.', 4000);
+    }
+    const dl = await window.claude.use('downloads');
+    if (!dl) return toast('Export indisponible ici : utilise « Copier ».');
+    await dl.save({ filename: fn + '.gpx.txt', data: g });
+    toast('GPX enregistré : renomme-le en .gpx pour ta montre ou Strava.', 4500);
+  } catch (e) { if (e && e.code === 'declined') return; toast('Export impossible ici : utilise « Copier ».'); }
+};
+$('#copy').onclick = async () => {
+  const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
+  try { await navigator.clipboard.writeText(g); toast('GPX copié : colle-le dans un fichier .gpx.'); } catch { toast('Copie refusée par le navigateur.'); }
+};
+
+$('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Tracés des courses : organisateurs, WeRun, The Post Trace.', 7000);
+boot();
+})();
+</script>

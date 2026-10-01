@@ -1,0 +1,25 @@
+# RunParis — site statique : pas d'étape de build, Netlify publie le dossier site/
+[build]
+  publish = "site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(self), camera=(), microphone=()"
+
+# données de Paris : gardées 1 jour par le navigateur
+[[headers]]
+  for = "/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+[[headers]]
+  for = "/*.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+[[headers]]
+  for = "/graph.bin"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "application/octet-stream"
