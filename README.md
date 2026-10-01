@@ -21,7 +21,8 @@ Tout le calcul se fait dans le navigateur : pas de serveur, pas de compte, rien 
 
 ```
 site/              ce que Netlify publie
-  index.html       l'app (générée par src/build.py)
+  index.html       page d'accueil (générée par src/build.py)
+  app.html         l'application (générée par src/build.py)
   graph.bin        réseau des rues de Paris (47 000 carrefours, 63 000 tronçons, altitudes)
   meta.json        noms de rues, quartiers, gares, cimetières, lieux, fond de carte
   green.txt        part « verte » de chaque tronçon
@@ -33,7 +34,9 @@ src/
   engine.js        moteur de calcul des parcours
   app_head.html    structure et styles de la page
   app.js           interface
-  build.py         assemble site/index.html
+  landing.html     modèle de la page d'accueil
+  hero.json        carte de Paris et parcours dessinés sur la page d'accueil
+  build.py         assemble site/app.html et site/index.html
 netlify.toml       réglages Netlify (dossier publié, cache)
 ```
 

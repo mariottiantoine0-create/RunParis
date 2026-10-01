@@ -1,3 +1,1056 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, tracés des courses officielles.">
+<meta name="theme-color" content="#0D1014">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230D1014%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%234CC3FF%27 stroke-width=%273.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunParis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Sofia+Sans:wght@400;500;600;700;800&family=Sofia+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F5F7F9; --panel:#FFFFFF; --field:#F5F7F9; --ink:#111820; --muted:#5B6672; --line:#DCE1E6; --soft:#EEF1F4;
+  --accent:#0B6FB8; --accent-ink:#FFFFFF; --accent-fill:rgba(11,111,184,.10);
+  --route:#0B6FB8; --route-2:#7B3FD0; --route-casing:#FFFFFF; --tree:#2F8F4E; --metro-bg:#FFFFFF; --metro-ink:#1B2430; --metro-ring:#1B2430;
+  --street:#D3D9DF; --street-major:#AEB7C0; --street-path:#7FB08F; --quart:#C5CCD3;
+  --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.14); --sig:#C27A00; --pin-b:#E0584A;
+  --good:#1E8E4F; --water:#CFE2EE; --green:#DDEBD8; --cem:#D5DCD2; --station:#8A93A0; --station-fill:rgba(110,116,128,.16); --label:#4A5561; --warn:#A86A12;
+  --warn-bg:#FFF6E5; --warn-line:#EBC98A; --err-bg:#FDEDEC; --err-line:#EFB2AC;
+  --map-bg:#EEF1F4; --shadow:0 2px 10px rgba(17,24,32,.10);
+  --f-display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --f-body:"Sofia Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-cond:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+  --f-mono:"Sofia Sans Condensed","Sofia Sans","Arial Narrow",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+    --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+    --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+    --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+    --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+    --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+    --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+    --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
+  --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
+  --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+  --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
+  --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
+  --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
+  --warn-bg:#1F1A10; --warn-line:#5A4415; --err-bg:#241314; --err-line:#6A2B2B;
+  --map-bg:#0D1014; --shadow:0 2px 12px rgba(0,0,0,.45);
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:400px 1fr;height:100%}
+.panel{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;position:relative;z-index:2}
+.phead{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line)}
+.logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1}
+.logo span{color:var(--accent)}
+a.logo{color:inherit;text-decoration:none}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:10px;display:grid;place-items:center;font-size:16px}
+.themepop{position:absolute;right:20px;top:56px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px;z-index:30;display:flex;flex-direction:column;gap:8px;width:250px}
+.pbody{flex:1;overflow-y:auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.pfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+
+/* ---------- steps ---------- */
+.step{display:flex;flex-direction:column;gap:8px}
+.step h2 .seg{margin-left:auto;width:180px}
+.step h2{margin:0;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800}
+.step h2 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-family:var(--f-cond);font-size:13px;font-weight:700}
+.lbl{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 4px;border-radius:9px;font-weight:600;font-size:14px;white-space:nowrap;color:var(--muted);min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.seg.sm button{padding:6px 4px;font-size:13px;min-height:34px}
+input[type=number],input[type=text],select{border:1px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input[type=number]{font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.link{border:0;background:none;color:var(--accent);padding:4px 0;font-size:14px;font-weight:700}
+
+.startcard{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-cond);font-weight:700;font-size:14px;color:#fff;flex:none}
+.pin.d{background:var(--good);color:#06131C} .pin.a{background:var(--pin-b)}
+.startcard .txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.startcard .name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.startcard small{color:var(--muted);font-size:12.5px}
+.search{position:relative}
+.results{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:20;max-height:260px;overflow:auto}
+.results button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 12px}
+.results button:hover,.results button:focus{background:var(--soft)}
+.results em{font-style:normal;color:var(--muted);font-size:12px;white-space:nowrap}
+.home{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip-btn{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
+.chip-btn::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
+
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--field);font-size:24px;line-height:1;flex:none}
+.bignum{display:flex;align-items:baseline;justify-content:center;gap:4px;flex:1;min-width:0}
+.bignum input{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1;text-align:center;border:0;background:transparent;padding:0;width:104px;-moz-appearance:textfield}
+.bignum input::-webkit-outer-spin-button,.bignum input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.bignum span{font-size:17px;color:var(--muted);font-weight:600}
+.chips{display:flex;gap:6px}
+.chips button{flex:1;border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 0;font-family:var(--f-cond);font-weight:700;font-size:14px;color:var(--muted);min-height:36px}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-fill)}
+.paceline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.paceline input{width:74px;padding:6px 8px;font-family:var(--f-cond);font-weight:700;font-size:15px;text-align:center;color:var(--ink)}
+.paceline b{color:var(--ink);font-family:var(--f-cond)}
+
+.sw{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;min-height:36px;cursor:pointer}
+.sw input{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{left:21px;background:var(--accent-ink)}
+.sub{margin-left:0;padding:8px 0 0}
+
+.avoid{display:flex;flex-wrap:wrap;gap:6px}
+.xchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--avoid);color:var(--avoid);background:var(--avoid-fill);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.xchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xchip select{width:auto;padding:2px 4px;font-size:12.5px;border-radius:8px;background:var(--panel);color:var(--ink)}
+.xchip button{border:0;background:none;color:var(--avoid);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.addbtn{border:1px dashed var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:700}
+.addbox{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.arr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.arr button{border:1px solid var(--line);background:var(--panel);border-radius:9px;height:40px;font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1}
+.arr button sup{font-size:10px}
+.arr button[data-state="all"]{background:var(--avoid);border-color:var(--avoid);color:var(--panel)}
+.arr button[data-state="some"]{border:1px dashed var(--avoid);color:var(--avoid);background:var(--avoid-fill)}
+details.q summary,details.more summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);list-style:none}
+details.q summary::-webkit-details-marker,details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾"} details.more[open] summary::after{content:" ▴"}
+.qlist{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px;font-size:13.5px;max-height:220px;overflow:auto;padding-right:4px}
+.qlist label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.qlist .ah{grid-column:1/-1;font-family:var(--f-cond);font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:6px}
+.moreb{display:flex;flex-direction:column;gap:4px;padding-top:8px}
+
+/* ---------- buttons ---------- */
+.btn{border:0;border-radius:12px;padding:14px 16px;font-weight:800;font-size:16px;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:20px;letter-spacing:.05em;text-transform:uppercase;padding:12px 16px}
+.btn.primary:disabled{opacity:.6;cursor:progress}
+.btn.ghost{background:var(--field);border:1px solid var(--line);color:var(--ink)}
+.btnrow{display:flex;gap:8px}
+.btnrow .btn.primary{flex:1}
+.textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
+
+/* ---------- results ---------- */
+.summary{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
+.summary .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.summary b{font-size:15px}
+.summary small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.summary{cursor:pointer;transition:border-color .15s}
+.summary:hover{border-color:var(--accent)}
+.editbtn{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent-fill);color:var(--accent);font-family:var(--f-cond);font-weight:800;font-size:15px;letter-spacing:.01em;cursor:pointer}
+.editbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.stale{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:12px;padding:8px 8px 8px 12px;font-size:13.5px}
+.stale button{border:0;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:800;padding:8px 12px;white-space:nowrap}
+.alts{display:flex;flex-direction:column;gap:8px}
+.alt{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.alt[aria-pressed="true"]{border:2px solid var(--accent);padding:9px 11px}
+.alt .k{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.alt[aria-pressed="true"] .k{color:var(--accent)}
+.alt .t{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alt .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.detail{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.stats{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 16px;align-items:end}
+.stat{display:flex;flex-direction:column;min-width:0}
+.stat b{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.stat:first-child b{font-size:48px}
+.stat b small{font-family:var(--f-body);font-size:14px;font-weight:600;margin-left:2px;color:var(--muted)}
+.stat span{font-family:var(--f-cond);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .delta{font-style:normal;text-transform:none;letter-spacing:0}
+.stat.sig b{color:var(--sig)}
+.delta.ok{color:var(--good)} .delta.off{color:var(--warn)}
+.profile{height:80px;position:relative}
+.profile canvas{width:100%;height:100%;display:block}
+.via{font-size:13.5px;color:var(--muted);margin:0}
+.via strong{color:var(--ink);font-weight:600}
+.notes{display:flex;flex-direction:column;gap:6px}
+.note{font-size:13.5px;line-height:1.4;padding:9px 12px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid var(--warn)}
+.note.err{background:var(--err-bg);border-color:var(--err-line);border-left-color:var(--avoid)}
+
+/* ---------- map ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.mapwrap{position:relative;flex:1;min-height:0;background:var(--map-bg);overflow:hidden}
+canvas#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas#map.pick{cursor:crosshair}
+.tools{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.tool{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0}
+.tool em{font-style:normal;font-size:12.5px;font-weight:600;background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:4px 8px;box-shadow:var(--shadow)}
+.tool i{font-style:normal;width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;box-shadow:var(--shadow);font-family:var(--f-cond);font-weight:700;font-size:15px;color:var(--ink)}
+.tool[data-tool="quart"] i,.tool[data-tool="place"] i{color:var(--avoid)}
+.tool[data-tool="via"] i{color:var(--good)}
+.tabs{display:flex;gap:4px;padding:8px 20px 0;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:10px 4px;font-weight:700;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.vchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--good);color:var(--ink);background:color-mix(in srgb,var(--good) 14%,transparent);border-radius:999px;padding:4px 4px 4px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.vchip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vchip button{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;width:28px;height:28px;border-radius:50%}
+.alt .v{font-size:12.5px;color:var(--good);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;text-align:left;width:100%}
+.race[aria-pressed="true"]{border:2px solid var(--accent);padding:11px 13px}
+.race .t{font-weight:800;font-size:16px}
+.race .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted)}
+.race .k .past{color:var(--muted);font-weight:600}
+#race-filter{margin:2px 0 10px}
+#races #race-detail{margin:4px 0 10px}
+.portion{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field)}
+.portion .row input{width:76px;padding:7px 8px;text-align:center;font-family:var(--f-cond);font-weight:700;font-size:15px}
+.chips.wrap{flex-wrap:wrap}.chips.wrap button{flex:0 0 auto;padding:7px 12px}
+.disclaim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:0}
+.tool[aria-pressed="true"] i{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tool[aria-pressed="true"] em{color:var(--ink);border-color:var(--accent)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:20px;box-shadow:var(--shadow)}
+.layers{position:absolute;left:16px;top:16px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 200px)}
+.layers button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 12px 6px 8px;font-family:var(--f-cond);font-weight:700;font-size:13.5px;box-shadow:var(--shadow);min-height:34px;cursor:pointer}
+.layers button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent)}
+.layers button[aria-pressed="false"] .ld{opacity:.45}
+.ld{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;font-style:normal;font-size:11px;font-weight:800;flex:none}
+.ld.metro,.lg.metrol{background:var(--metro-bg);color:var(--metro-ink);border:2px solid var(--metro-ring)}
+.ld.tree{background:var(--tree);width:12px;height:12px;margin:0 3px}
+.ld.sigd{background:var(--sig);width:12px;height:12px;margin:0 3px}
+.lg.treel{width:10px;height:10px;border-radius:50%;background:var(--tree);margin:0 6px}
+.lg.metrol{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;margin:0 2px;box-sizing:border-box}
+.metro-end{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:14px;color:var(--ink)}
+.metro-end .lbl{width:100%}
+.lb{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 4px;border-radius:5px;font-family:var(--f-cond);font-weight:800;font-size:12px;color:#fff;box-sizing:border-box}
+@media (max-width:700px){.layers{left:10px;top:10px;max-width:calc(100% - 70px)}.layers button{padding:4px 10px 4px 6px;font-size:12.5px;min-height:30px}}
+.legend{position:absolute;left:16px;bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);font-size:12.5px;color:var(--muted);max-width:240px}
+.legend summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none}
+.legend summary::-webkit-details-marker{display:none}
+.legend summary::after{content:" ▾"} .legend[open] summary::after{content:" ▴"}
+.attrib{position:absolute;right:76px;bottom:6px;font-size:10.5px;color:var(--muted);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:2px 6px;border-radius:6px;z-index:3;max-width:calc(100% - 330px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attrib a,.attrib-more{color:inherit;text-decoration:underline;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.legend ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.legend li{display:flex;align-items:center;gap:8px}
+.lg{width:22px;flex:none;display:inline-block}
+.lg.route{height:0;border-top:4px solid var(--route)}
+.lg.twice{height:10px;border-top:4px solid var(--route);border-bottom:4px solid var(--route-2);box-sizing:border-box}
+.lg.dash{height:0;border-top:3px dashed var(--route);opacity:.55}
+.lg.sig{width:12px;height:12px;border-radius:50%;background:var(--sig);margin:0 5px}
+.lg.km{width:18px;height:18px;border-radius:50%;border:2px solid var(--route);background:var(--panel);font-size:10px;display:grid;place-items:center;color:var(--ink);font-weight:700;margin:0 2px}
+.lg.via{width:14px;height:14px;border-radius:50%;background:var(--good);margin:0 4px}
+.lg.zone{height:12px;background:var(--avoid-fill);border:1px dashed var(--avoid)}
+.lg.station{height:12px;background:var(--station-fill);border:1px dashed var(--station)}
+.lg.water{height:12px;background:var(--water)}
+.lg.green{height:12px;background:var(--green)}
+.toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 14px;border-radius:10px;font-size:14px;max-width:min(520px,calc(100% - 140px));text-align:center;z-index:8}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--map-bg);z-index:5;font-family:var(--f-cond);font-size:15px;color:var(--muted)}
+.bar{height:3px;background:var(--accent);position:absolute;top:0;left:0;transition:width .15s;z-index:6}
+
+.grab{display:none}
+/* ---------- mobile: full-screen map + bottom sheet ---------- */
+@media (max-width:860px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .app{display:block;position:fixed;inset:0;height:auto}
+  .main{position:absolute;inset:0}
+  .mapwrap{position:absolute;inset:0;height:auto}
+  .panel{position:fixed;left:0;right:0;bottom:0;height:var(--sheet-h,52dvh);max-height:calc(100dvh - 56px);border-right:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.28);z-index:10;transition:height .25s ease;overflow:hidden}
+  .panel.dragging{transition:none}
+  .grab{display:flex;justify-content:center;align-items:center;width:100%;height:22px;border:0;background:none;padding:0;cursor:grab;touch-action:none;flex:none}
+  .grab span{width:42px;height:5px;border-radius:3px;background:var(--line)}
+  .phead{padding:0 16px 2px;border-bottom:0;touch-action:none}
+  .logo{font-size:19px}
+  .phead .iconbtn{width:32px;height:32px;font-size:14px}
+  .tabs{padding:0 12px}
+  .tabs button{padding:6px 4px 8px;font-size:13.5px}
+  .summary{padding:8px 10px}
+  #foot-res .textbtn{padding:2px;font-size:13.5px}
+  html.sheet-full .tools,html.sheet-full .zoom,html.sheet-full .legend{display:none}
+  .attrib{right:60px;left:auto;bottom:calc(var(--sheet-h,52dvh) + 4px);max-width:calc(100% - 120px);transition:bottom .25s ease}
+  .attrib .al{display:none}
+  .pbody{padding:12px 16px 14px;overscroll-behavior:contain}
+  .pfoot{padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:6px}
+  .pfoot .btn{min-height:46px}
+  .tools{top:auto;bottom:calc(var(--sheet-h,52dvh) + 12px);right:10px;gap:6px;transition:bottom .25s ease}
+  .tool i{width:40px;height:40px;border-radius:11px}
+  .tool em{display:none}
+  .zoom{right:auto;left:10px;bottom:calc(var(--sheet-h,52dvh) + 12px);gap:6px;transition:bottom .25s ease}
+  .zoom button{width:40px;height:40px;border-radius:11px;font-size:18px}
+  .legend{left:10px;bottom:auto;top:52px;max-width:220px;font-size:12px;padding:8px 10px}
+  .layers{left:10px;top:10px;right:10px;max-width:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .layers::-webkit-scrollbar{display:none}
+  .layers button{flex:none;padding:4px 10px 4px 6px;font-size:12.5px;min-height:32px}
+  .toast{top:56px;max-width:calc(100% - 24px)}
+  .themepop{right:12px}
+  .stat b{font-size:28px} .stat:first-child b{font-size:38px} .stats{gap:4px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="panel" aria-label="Réglages et résultats">
+    <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
+    <div class="phead">
+      <div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>
+      <button class="iconbtn" id="theme-btn" aria-label="Apparence" aria-expanded="false" title="Apparence">◐</button>
+    </div>
+    <div class="themepop" id="themepop" hidden role="group" aria-label="Apparence">
+      <span class="lbl">Apparence</span>
+      <div class="seg sm">
+        <button id="t-auto" aria-pressed="true">Auto</button>
+        <button id="t-light" aria-pressed="false">Clair</button>
+        <button id="t-dark" aria-pressed="false">Sombre</button>
+      </div>
+      <p class="hint">Auto suit le réglage de ton appareil.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
+      <button role="tab" id="tab-race" aria-selected="false">Courses officielles</button>
+    </div>
+    <!-- ===== Réglages ===== -->
+    <div class="pbody" id="view-set">
+      <section class="step" aria-labelledby="h-ou">
+        <h2 id="h-ou"><i>1</i>Où ?</h2>
+        <div class="startcard">
+          <span class="pin d" id="start-pin">D</span>
+          <div class="txt"><span class="name" id="start-name">—</span><small id="start-sub">Départ</small></div>
+          <button class="link" id="change-start" aria-expanded="false">Changer</button>
+        </div>
+        <div class="step" id="start-box" hidden>
+          <div class="search">
+            <input type="text" id="start-q" placeholder="Rechercher un départ (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher un départ">
+            <div class="results" id="start-res" hidden></div>
+          </div>
+          <button class="link" id="pick-start" style="align-self:flex-start">Ou le choisir sur la carte</button>
+        </div>
+        <div class="home" id="home-row">
+          <button class="chip-btn" id="home-go" hidden>Chez moi</button>
+          <button class="link" id="home-save">Enregistrer ce départ comme « Chez moi »</button>
+        </div>
+        <span class="lbl">Arrivée</span>
+        <div class="seg sm" role="group" aria-label="Arrivée">
+          <button id="a-back" aria-pressed="true">Retour au départ</button>
+          <button id="a-place" aria-pressed="false">Un lieu</button>
+          <button id="a-free" aria-pressed="false">N'importe où</button>
+        </div>
+        <div id="end-fixed" class="step" hidden>
+          <div class="startcard">
+            <span class="pin a">B</span>
+            <div class="txt"><span class="name" id="end-name">—</span><small>Arrivée</small></div>
+            <button class="link" id="pick-end">Sur la carte</button>
+          </div>
+          <div class="search">
+            <input type="text" id="end-q" placeholder="Rechercher l'arrivée (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher l'arrivée">
+            <div class="results" id="end-res" hidden></div>
+          </div>
+        </div>
+        <p class="hint" id="end-free-hint" hidden>Le parcours part de A et finit où c'est le plus agréable, à la distance demandée. Plusieurs arrivées te sont proposées.</p>
+        <label class="sw" id="end-metro-row" hidden>Finir près d'un métro ou RER<input type="checkbox" id="end-metro" checked></label>
+        <div class="avoid" id="via-list"></div>
+        <div class="search" id="via-box" hidden>
+          <input type="text" id="via-q" placeholder="Passer par : Tour Eiffel, canal Saint-Martin, une rue…" autocomplete="off" aria-label="Rechercher un lieu par où passer">
+          <div class="results" id="via-res" hidden></div>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="h-combien">
+        <h2 id="h-combien"><i>2</i>Combien ?<span class="seg sm" role="group" aria-label="Distance ou durée"><button id="u-km" aria-pressed="true">Distance</button><button id="u-min" aria-pressed="false">Durée</button></span></h2>
+        <div class="stepper">
+          <button type="button" id="minus" aria-label="Moins">−</button>
+          <label class="bignum" id="num-km"><input type="number" id="km" min="1" max="42" step="0.5" value="10" inputmode="decimal" aria-label="Distance en km"><span>km</span></label>
+          <label class="bignum" id="num-min" hidden><input type="number" id="dur" min="5" max="300" step="5" value="55" inputmode="numeric" aria-label="Durée en minutes"><span>min</span></label>
+          <button type="button" id="plus" aria-label="Plus">+</button>
+        </div>
+        <div class="chips" id="chips-km" role="group" aria-label="Distances courantes">
+          <button data-v="5">5</button><button data-v="10">10</button><button data-v="15">15</button><button data-v="21.1">Semi</button><button data-v="42.2">Marathon</button>
+        </div>
+        <div class="chips" id="chips-min" role="group" aria-label="Durées courantes" hidden>
+          <button data-v="30">30</button><button data-v="45">45</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button>
+        </div>
+        <div class="paceline"><span id="conv">≈ 55 min</span><span>à</span><input type="text" id="pace" value="5:30" inputmode="numeric" aria-label="Allure en minutes par km"><span>/km</span></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-comment">
+        <h2 id="h-comment"><i>3</i>Comment ?</h2>
+        <div class="seg sm" role="group" aria-label="Type de parcours">
+          <button id="k-classic" aria-pressed="true">Classique</button>
+          <button id="k-green" aria-pressed="false">Vert</button>
+          <button id="k-discover" aria-pressed="false">Découverte</button>
+        </div>
+        <p class="hint" id="k-hint" hidden></p>
+        <div class="seg sm" role="group" aria-label="Dénivelé">
+          <button id="d-flat" aria-pressed="false">Plat</button>
+          <button id="d-any" aria-pressed="true">Normal</button>
+          <button id="d-target" aria-pressed="false">Vallonné</button>
+        </div>
+        <div class="row" id="dplus-row" hidden>
+          <span style="font-size:14px;white-space:nowrap">D+ visé</span>
+          <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
+          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre).</p>
+        </div>
+        <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
+        <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
+      </section>
+
+      <section class="step" aria-labelledby="h-eviter">
+        <h2 id="h-eviter"><i>4</i>À éviter</h2>
+        <div class="avoid" id="avoid-list"></div>
+        <div class="addbox" id="addbox" hidden>
+          <div class="search">
+            <input type="text" id="avoid-q" placeholder="Un lieu : Tour Eiffel, Châtelet, un marché…" autocomplete="off" aria-label="Rechercher un lieu à éviter">
+            <div class="results" id="avoid-res" hidden></div>
+          </div>
+          <span class="lbl">Arrondissements</span>
+          <div class="arr" id="arr"></div>
+          <details class="q"><summary>Choisir quartier par quartier (80 quartiers)</summary><div class="qlist" id="qlist"></div></details>
+          <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
+        </div>
+        <p class="hint" id="always">Toujours évités : gares, quais et couloirs de métro.</p>
+      </section>
+
+      <details class="more">
+        <summary>Plus d'options</summary>
+        <div class="moreb">
+          <div class="row" id="sig-level" style="justify-content:space-between;min-height:40px"><span>Feux rouges</span><div class="seg sm" role="group" aria-label="Intensité d'évitement des feux" style="width:190px"><button id="s-1" aria-pressed="true">Limiter</button><button id="s-2" aria-pressed="false">Au maximum</button></div></div>
+          <label class="sw">Repasser par les mêmes rues (allers-retours)<input type="checkbox" id="allow-repeat"></label>
+          <label class="sw">Éviter les cimetières<input type="checkbox" id="avoid-cem" checked></label>
+        </div>
+      </details>
+    </div>
+
+    <!-- ===== Résultats ===== -->
+    <div class="pbody" id="view-res" hidden>
+      <div class="summary">
+        <div class="txt"><b id="sum-t">—</b><small id="sum-s"></small></div>
+        <button class="editbtn" id="edit" aria-label="Modifier les réglages"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Modifier</button>
+      </div>
+      <div class="stale" id="stale" hidden><span>Réglages modifiés sur la carte.</span><button id="recalc">Recalculer</button></div>
+      <span class="lbl" id="alts-h" hidden></span>
+      <div class="alts" id="alts" role="group" aria-label="Propositions"></div>
+      <div class="notes" id="notes"></div>
+      <div class="detail" id="detail">
+        <div class="stats">
+          <div class="stat"><b id="st-km">–</b><span>Distance <i class="delta" id="st-km-d"></i></span></div>
+          <div class="stat"><b id="st-up">–</b><span>D+ <i class="delta" id="st-up-d"></i></span></div>
+          <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
+          <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
+        </div>
+        <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
+        <p class="via" id="via"></p>
+      </div>
+    </div>
+
+    <!-- ===== Courses officielles ===== -->
+    <div class="pbody" id="view-race" hidden>
+      <p class="hint">Les tracés des grandes courses parisiennes, pour s'entraîner dessus en entier ou en partie.</p>
+      <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les courses"></div>
+      <div class="alts" id="races" role="group" aria-label="Courses"></div>
+      <div id="race-detail" class="step" hidden>
+        <p class="disclaim" id="race-desc"></p>
+        <div class="portion">
+          <span class="lbl">Courir une portion</span>
+          <div class="chips wrap" id="portion-chips"></div>
+          <div class="row"><span>Du km</span><input type="number" id="p-from" min="0" step="0.5" value="0" aria-label="Début de la portion en km"><span>au km</span><input type="number" id="p-to" min="0" step="0.5" value="0" aria-label="Fin de la portion en km"><button class="link" id="p-apply">Afficher</button></div>
+        </div>
+        <div id="race-slot"></div>
+      </div>
+    </div>
+
+    <div class="pfoot" id="foot-set">
+      <button class="btn primary" id="gen">Générer 3 parcours</button>
+    </div>
+    <div class="pfoot" id="foot-res" hidden>
+      <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button></div>
+      <button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mapwrap" id="mapwrap">
+      <div class="bar" id="bar" style="width:0"></div>
+      <canvas id="map" aria-label="Carte de Paris avec le parcours"></canvas>
+      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
+      <div class="layers" role="group" aria-label="Afficher sur la carte">
+        <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
+        <button type="button" id="ly-trees" aria-pressed="false"><i class="ld tree"></i>Arbres</button>
+        <button type="button" id="show-sig" aria-pressed="false"><i class="ld sigd"></i>Feux</button>
+      </div>
+      <div class="tools" role="toolbar" aria-label="Outils de carte">
+        <button class="tool" data-tool="start" aria-pressed="false"><em id="tl-start">Placer le départ</em><i id="ti-start">D</i></button>
+        <button class="tool" data-tool="end" aria-pressed="false" hidden><em>Placer l'arrivée</em><i>B</i></button>
+        <button class="tool" data-tool="via" aria-pressed="false"><em>Passer par un lieu</em><i aria-hidden="true">+</i></button>
+        <button class="tool" data-tool="quart" aria-pressed="false"><em>Éviter une zone</em><i aria-hidden="true">▨</i></button>
+        <button class="tool" data-tool="place" aria-pressed="false"><em>Éviter un lieu</em><i aria-hidden="true">⊘</i></button>
+      </div>
+      <details class="legend" id="legend" open>
+        <summary>Légende</summary>
+        <ul>
+          <li><span class="lg route"></span>Parcours choisi</li>
+          <li><span class="lg twice"></span>Rue empruntée 2 fois (2e passage)</li>
+          <li><span class="lg dash"></span>Autres propositions</li>
+          <li><span class="lg km">1</span>Borne kilométrique</li>
+          <li><span class="lg sig"></span>Feu sur le parcours</li>
+          <li><span class="lg treel"></span>Arbre le long du parcours</li>
+          <li><span class="lg metrol">M</span>Station de métro ou RER</li>
+          <li><span class="lg zone"></span>Zone ou lieu évité</li>
+          <li><span class="lg via"></span>Lieu par où passer, lieu connu</li>
+          <li><span class="lg station"></span>Gare (toujours évitée)</li>
+          <li><span class="lg green"></span>Parc, bois</li>
+          <li><span class="lg water"></span>Seine, canaux</li>
+        </ul>
+      </details>
+      <div class="zoom"><button id="zin" aria-label="Zoomer">+</button><button id="zout" aria-label="Dézoomer">−</button><button id="zfit" aria-label="Recentrer" style="font-size:15px">⤢</button></div>
+      <div class="toast" id="toast" hidden role="status"></div>
+      <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+// RunParis routing engine — works in browser and node
+const Engine = (() => {
+  let M, G = {};
+  const DEG = Math.PI / 180;
+
+  function init(meta, buf) {
+    M = meta;
+    const o = meta.offs, nN = meta.nN, nE = meta.nE, nG = meta.nG;
+    const ny = new Uint16Array(buf, o[0], nN), nx = new Uint16Array(buf, o[1], nN);
+    const nz = new Uint16Array(buf, o[2], nN), nc = new Uint16Array(buf, o[3], nN);
+    const nq = new Uint8Array(buf, o[4], nN);
+    const ea = new Uint32Array(buf, o[5], nE), eb = new Uint32Array(buf, o[6], nE);
+    const el = new Uint16Array(buf, o[7], nE), eu = new Uint16Array(buf, o[8], nE), ed = new Uint16Array(buf, o[9], nE);
+    const ef = new Uint8Array(buf, o[10], nE), en = new Uint16Array(buf, o[11], nE);
+    const ez = new Uint8Array(buf, o[12], nE * 4);
+    const go = new Uint32Array(buf, o[13], nE + 1);
+    const gy = new Uint16Array(buf, o[14], nG), gx = new Uint16Array(buf, o[15], nG);
+    const CEM = o.length > 16 ? new Uint8Array(buf, o[16], nE) : new Uint8Array(nE);
+    const [la0, la1, lo0, lo1] = meta.bbox;
+    const latM = (la0 + la1) / 2, kx = Math.cos(latM * DEG) * 111320, ky = 110540;
+    const qlat = v => la0 + v / 65535 * (la1 - la0), qlon = v => lo0 + v / 65535 * (lo1 - lo0);
+    const NX = new Float32Array(nN), NY = new Float32Array(nN), NZ = new Float32Array(nN);
+    for (let i = 0; i < nN; i++) { NX[i] = (qlon(nx[i]) - lo0) * kx; NY[i] = (la1 - qlat(ny[i])) * ky; NZ[i] = nz[i] / 10; }
+    const GX = new Float32Array(nG), GY = new Float32Array(nG);
+    for (let i = 0; i < nG; i++) { GX[i] = (qlon(gx[i]) - lo0) * kx; GY[i] = (la1 - qlat(gy[i])) * ky; }
+    const LEN = new Float32Array(nE), C = new Uint8Array(nE), P = new Uint8Array(nE), S = new Uint8Array(nE);
+    for (let e = 0; e < nE; e++) { LEN[e] = el[e] / 2; C[e] = ef[e] & 3; P[e] = (ef[e] >> 2) & 3; S[e] = ef[e] >> 4; }
+    // CSR adjacency
+    const deg = new Uint32Array(nN + 1);
+    for (let e = 0; e < nE; e++) { deg[ea[e] + 1]++; deg[eb[e] + 1]++; }
+    for (let i = 0; i < nN; i++) deg[i + 1] += deg[i];
+    const adjE = new Uint32Array(2 * nE), fill = deg.slice(0, nN);
+    for (let e = 0; e < nE; e++) { adjE[fill[ea[e]]++] = e; adjE[fill[eb[e]]++] = e; }
+    // spatial grid (200 m)
+    const CELL = 200; let maxX = 0, maxY = 0;
+    for (let i = 0; i < nN; i++) { if (NX[i] > maxX) maxX = NX[i]; if (NY[i] > maxY) maxY = NY[i]; }
+    const GW = Math.ceil(maxX / CELL) + 1, GH = Math.ceil(maxY / CELL) + 1;
+    const cellCount = new Uint32Array(GW * GH + 1);
+    const cellOf = i => Math.floor(NY[i] / CELL) * GW + Math.floor(NX[i] / CELL);
+    for (let i = 0; i < nN; i++) cellCount[cellOf(i) + 1]++;
+    for (let i = 0; i < GW * GH; i++) cellCount[i + 1] += cellCount[i];
+    const cellNodes = new Uint32Array(nN), cf = cellCount.slice(0, GW * GH);
+    for (let i = 0; i < nN; i++) cellNodes[cf[cellOf(i)]++] = i;
+    // signal cluster centroids
+    const sc = new Map();
+    for (let i = 0; i < nN; i++) if (nc[i]) { const k = nc[i]; const a = sc.get(k) || [0, 0, 0]; a[0] += NX[i]; a[1] += NY[i]; a[2]++; sc.set(k, a); }
+    const SIG = [...sc.entries()].map(([k, a]) => ({ id: k, x: a[0] / a[2], y: a[1] / a[2] }));
+    G = { CEM, nN, nE, nG, ea, eb, eu, ed, en, ez, go, nc, nq, NX, NY, NZ, GX, GY, LEN, C, P, S, deg, adjE, CELL, GW, GH, cellCount, cellNodes, kx, ky, la1, lo0, SIG, maxX, maxY };
+    G.bad = new Uint8Array(nE); G.blocked = new Uint8Array(nE); G.nodeOk = new Uint8Array(nN).fill(1);
+    G.dist = new Float64Array(nN); G.stamp = new Uint32Array(nN); G.prev = new Int32Array(nN); G.done = new Uint32Array(nN); G.cur = 0;
+    G.used = new Uint8Array(nE);
+    return G;
+  }
+
+  const toXY = (lat, lon) => [(lon - G.lo0) * G.kx, (G.la1 - lat) * G.ky];
+  const toLL = (x, y) => [G.la1 - y / G.ky, G.lo0 + x / G.kx];
+
+  // ---------- constraints ----------
+  function segDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+    let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+  }
+  function edgePts(e) {
+    const pts = [[G.NX[G.ea[e]], G.NY[G.ea[e]]]];
+    for (let k = G.go[e]; k < G.go[e + 1]; k++) pts.push([G.GX[k], G.GY[k]]);
+    pts.push([G.NX[G.eb[e]], G.NY[G.eb[e]]]);
+    return pts;
+  }
+  function setConstraints(exclQ, places, opts = {}) {
+    const { nE, nN, blocked, nodeOk, ez, nq } = G;
+    blocked.fill(0); nodeOk.fill(1);
+    if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
+    for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
+    for (let e = 0; e < nE; e++) {
+      for (let k = 0; k < 4; k++) { const z = ez[4 * e + k]; if (z && exclQ.has(z)) { blocked[e] = 1; break; } }
+    }
+    for (const pl of places) {
+      const [px, py] = toXY(pl.lat, pl.lon), r = pl.r;
+      for (let e = 0; e < nE; e++) {
+        if (blocked[e]) continue;
+        const a = G.ea[e], b = G.eb[e];
+        const minx = Math.min(G.NX[a], G.NX[b]) - r - 400, maxx = Math.max(G.NX[a], G.NX[b]) + r + 400;
+        if (px < minx || px > maxx) continue;
+        const miny = Math.min(G.NY[a], G.NY[b]) - r - 400, maxy = Math.max(G.NY[a], G.NY[b]) + r + 400;
+        if (py < miny || py > maxy) continue;
+        const pts = edgePts(e);
+        for (let i = 1; i < pts.length; i++) if (segDist(px, py, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]) < r) { blocked[e] = 1; break; }
+      }
+      for (let i = 0; i < nN; i++) if (Math.hypot(G.NX[i] - px, G.NY[i] - py) < r) nodeOk[i] = 0;
+    }
+    // a node is usable only if it keeps an open edge
+    for (let i = 0; i < nN; i++) if (nodeOk[i]) {
+      let open = false; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) if (!blocked[G.adjE[k]]) { open = true; break; }
+      if (!open) nodeOk[i] = 0;
+    }
+    // drop small islands cut off by exclusions (e.g. a square whose exits are all in an avoided zone)
+    const comp = new Int32Array(nN).fill(-1), stack = [];
+    for (let i = 0; i < nN; i++) {
+      if (!nodeOk[i] || comp[i] >= 0) continue;
+      const members = [i]; comp[i] = i; stack.push(i);
+      while (stack.length) {
+        const u = stack.pop();
+        for (let k = G.deg[u]; k < G.deg[u + 1]; k++) {
+          const ed = G.adjE[k]; if (blocked[ed]) continue;
+          const v = G.ea[ed] === u ? G.eb[ed] : G.ea[ed];
+          if (comp[v] < 0) { comp[v] = i; stack.push(v); members.push(v); }
+        }
+      }
+      if (members.length < 300) for (const v of members) nodeOk[v] = 0;
+    }
+  }
+
+  function nearest(x, y, opts = {}) {
+    const { CELL, GW, GH, cellCount, cellNodes, NX, NY, NZ, nodeOk } = G;
+    x = Math.max(0, Math.min(G.maxX, x)); y = Math.max(0, Math.min(G.maxY, y));
+    const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+    let best = -1, bd = Infinity;
+    const hill = opts.hillRadius || 0, greenR = !hill && G.GR ? (opts.greenRadius || 0) : 0;
+    for (let r = 0; r < 60; r++) {
+      for (let gy = cy - r; gy <= cy + r; gy++) for (let gx = cx - r; gx <= cx + r; gx++) {
+        if (Math.max(Math.abs(gx - cx), Math.abs(gy - cy)) !== r) continue;
+        if (gx < 0 || gy < 0 || gx >= GW || gy >= GH) continue;
+        const c = gy * GW + gx;
+        for (let k = cellCount[c]; k < cellCount[c + 1]; k++) {
+          const i = cellNodes[k]; if (!nodeOk[i]) continue;
+          const d = Math.hypot(NX[i] - x, NY[i] - y);
+          if (hill) { if (d > hill) continue; const sc = -NZ[i] * 12 + d * 0.02; if (sc < bd) { bd = sc; best = i; } }
+          else if (greenR) { if (d > greenR) continue; let g = 0; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) g = Math.max(g, G.GR[G.adjE[k]]); const sc = -g * greenR + d * 0.5; if (sc < bd) { bd = sc; best = i; } }
+          else if (d < bd) { bd = d; best = i; }
+        }
+      }
+      if (!hill && !greenR && best >= 0 && bd < r * CELL) break;
+      if ((hill || greenR) && r * CELL > (hill || greenR) + CELL) break;
+    }
+    if ((hill || greenR) && best < 0) return nearest(x, y);
+    return best;
+  }
+
+  // ---------- A* ----------
+  let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
+  // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
+  function setWeights(w) { W = Object.assign({}, W, w); }
+
+  function stepCost(e, fromA) {
+    if (G.blocked[e]) return Infinity;
+    const L = G.LEN[e];
+    let m = 1 + W.road[G.C[e]];
+    const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
+    if (W.green && G.GR) m -= W.green * G.GR[e];
+    let cost = L * m;
+    const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
+    cost += W.climb * up;
+    if (cost < 0.3 * L) cost = 0.3 * L;
+    cost += G.S[e] * W.sig;
+    const v = fromA ? G.eb[e] : G.ea[e];
+    if (G.nc[v]) cost += W.sig;
+    if (G.used[e]) cost *= W.reuse;
+    return cost;
+  }
+
+  // binary heap
+  let hN = new Uint32Array(1 << 16), hK = new Float64Array(1 << 16), hS = 0;
+  function hpush(n, k) {
+    if (hS >= hN.length) { const a = new Uint32Array(hN.length * 2); a.set(hN); hN = a; const b = new Float64Array(hK.length * 2); b.set(hK); hK = b; }
+    let i = hS++; while (i > 0) { const p = (i - 1) >> 1; if (hK[p] <= k) break; hN[i] = hN[p]; hK[i] = hK[p]; i = p; } hN[i] = n; hK[i] = k;
+  }
+  function hpop() {
+    const n = hN[0], last = --hS; const ln = hN[last], lk = hK[last]; let i = 0;
+    while (true) { let c = 2 * i + 1; if (c >= hS) break; if (c + 1 < hS && hK[c + 1] < hK[c]) c++; if (hK[c] >= lk) break; hN[i] = hN[c]; hK[i] = hK[c]; i = c; }
+    hN[i] = ln; hK[i] = lk; return n;
+  }
+
+  function astar(s, t) {
+    const { dist, stamp, prev, done, NX, NY, deg, adjE, ea, eb } = G;
+    const cur = ++G.cur; hS = 0;
+    const hk = 0.3; // admissible lower bound factor
+    const tx = NX[t], ty = NY[t];
+    stamp[s] = cur; dist[s] = 0; prev[s] = -1; hpush(s, 0);
+    while (hS) {
+      const u = hpop();
+      if (done[u] === cur) continue; done[u] = cur;
+      if (u === t) break;
+      const du = dist[u];
+      for (let k = deg[u]; k < deg[u + 1]; k++) {
+        const e = adjE[k]; const fromA = ea[e] === u; const v = fromA ? eb[e] : ea[e];
+        if (done[v] === cur) continue;
+        const c = stepCost(e, fromA); if (c === Infinity) continue;
+        const nd = du + c;
+        if (stamp[v] !== cur || nd < dist[v]) { stamp[v] = cur; dist[v] = nd; prev[v] = e; hpush(v, nd + hk * Math.hypot(NX[v] - tx, NY[v] - ty)); }
+      }
+    }
+    if (done[t] !== cur) return null;
+    const edges = []; let v = t;
+    while (v !== s) { const e = prev[v]; const fromA = eb[e] === v; edges.push([e, fromA]); v = fromA ? ea[e] : eb[e]; }
+    return edges.reverse();
+  }
+
+  function routeThrough(nodes) {
+    G.used.fill(0);
+    const all = [];
+    for (let i = 1; i < nodes.length; i++) {
+      if (nodes[i] === nodes[i - 1]) continue;
+      const leg = astar(nodes[i - 1], nodes[i]);
+      if (!leg) return null;
+      for (const [e] of leg) G.used[e] = 1;
+      all.push(...leg);
+    }
+    return all.length ? all : null;
+  }
+
+  function stats(edges, startNode) {
+    let len = 0, up = 0, dn = 0, extraSig = 0;
+    const clusters = new Set(), quart = new Map(), names = new Map(), seen = new Map();
+    let v = startNode; const prof = [[0, G.NZ[v]]]; const nodes = [v];
+    if (G.nc[v]) clusters.add(G.nc[v]);
+    for (const [e, fromA] of edges) {
+      const L = G.LEN[e]; len += L;
+      up += (fromA ? G.eu[e] : G.ed[e]) / 10; dn += (fromA ? G.ed[e] : G.eu[e]) / 10;
+      extraSig += G.S[e];
+      v = fromA ? G.eb[e] : G.ea[e]; nodes.push(v);
+      if (G.nc[v]) clusters.add(G.nc[v]);
+      quart.set(G.nq[v], (quart.get(G.nq[v]) || 0) + L);
+      if (G.en[e]) names.set(G.en[e] - 1, (names.get(G.en[e] - 1) || 0) + L);
+      seen.set(e, (seen.get(e) || 0) + 1);
+      prof.push([len, G.NZ[v]]);
+    }
+    let overlap = 0; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
+    up = smoothClimb(prof); dn = smoothClimb(prof.map(([d, z]) => [d, -z]));
+    let cemLen = 0, gl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; }
+    return { green: len ? gl / len : 0, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
+  }
+
+  // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
+  function smoothClimb(prof, win = 60, hyst = 1) {
+    if (prof.length < 2) return 0;
+    const L = prof[prof.length - 1][0], pts = []; let j = 0;
+    for (let d = 0; d <= L; d += 10) {
+      while (j < prof.length - 2 && prof[j + 1][0] < d) j++;
+      const [d0, z0] = prof[j], [d1, z1] = prof[j + 1]; const t = d1 > d0 ? (d - d0) / (d1 - d0) : 0;
+      pts.push(z0 + Math.max(0, Math.min(1, t)) * (z1 - z0));
+    }
+    const h = Math.round(win / 20); let up = 0, ref = null;
+    for (let i = 0; i < pts.length; i++) {
+      let s = 0, n = 0; for (let k = Math.max(0, i - h); k <= Math.min(pts.length - 1, i + h); k++) { s += pts[k]; n++; }
+      const z = s / n; if (ref === null) ref = z;
+      if (z > ref + hyst) { up += z - ref; ref = z; } else if (z < ref - hyst) ref = z;
+    }
+    return up;
+  }
+
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  function score(st, target, opt) {
+    const de = Math.abs(st.len - target) / target;
+    let s = de * 200 + (de > 0.05 ? 40 : 0);
+    if (opt.dplus != null) s += Math.abs(st.up - opt.dplus) / Math.max(opt.dplus, 15) * 45;
+    else if (opt.flat) s += st.up / 2;
+    s += st.feux * (opt.sigScore || 0);
+    s += st.overlap * (opt.allowRepeat ? 0 : 120);
+    if (opt.green) s -= st.green * 90;
+    if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
+    return s;
+  }
+
+  const tick = () => new Promise(r => setTimeout(r, 0));
+
+  // ---------- alternatives: keep up to 3 good and clearly different routes ----------
+  function edgeSet(st) { const m = new Map(); for (const [e] of st.edges) m.set(e, G.LEN[e]); return m; }
+  function similarity(a, b) {
+    const A = a._set || (a._set = edgeSet(a)), B = b._set || (b._set = edgeSet(b));
+    let inter = 0, uni = 0; for (const [e, l] of A) { uni += l; if (B.has(e)) inter += l; } for (const [e, l] of B) if (!A.has(e)) uni += l;
+    return uni ? inter / uni : 0;
+  }
+  function pickAlts(cands, target, max = 3) {
+    if (!cands.length) return null;
+    const ok = cands.filter(c => Math.abs(c.len - target) / target <= 0.05);
+    const pool = (ok.length ? ok : cands).slice().sort((a, b) => a.score - b.score);
+    const picked = [];
+    for (const c of pool) { if (picked.length >= max) break; if (picked.every(p => similarity(p, c) < 0.5)) picked.push(c); }
+    const best = picked[0]; best.alts = picked; return best;
+  }
+
+  function candidateLoop(start, target, opt, rng, theta, nW) {
+    const sx = G.NX[start], sy = G.NY[start];
+    const jit = Array.from({ length: nW }, () => [(rng() - 0.5) * 0.5, 0.85 + rng() * 0.3]);
+    const n = nW + 1, perim = n * 2 * Math.sin(Math.PI / n);
+    let R = target / (perim * 1.3), cb = null;
+    for (let it = 0; it < 4; it++) {
+      const cx = sx + R * Math.cos(theta), cy = sy + R * Math.sin(theta);
+      const wps = [];
+      for (let k = 1; k <= nW; k++) {
+        const ang = theta + Math.PI + k * 2 * Math.PI / n + jit[k - 1][0], rr = R * jit[k - 1][1];
+        wps.push(nearest(cx + rr * Math.cos(ang), cy + rr * Math.sin(ang), opt.hill ? { hillRadius: Math.min(450, R * 0.5) } : opt.green ? { greenRadius: Math.min(500, R * 0.5) } : {}));
+      }
+      const r = routeThrough([start, ...wps, start]); if (!r) break;
+      const st = stats(r, start); st.kind = 'boucle';
+      if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+      if (Math.abs(st.len / target - 1) < 0.025) break;
+      R *= Math.pow(target / st.len, 0.95);
+    }
+    return cb;
+  }
+  // straight out to a point and back (only when repeating streets is allowed)
+  function candidateOutBack(start, target, opt, theta) {
+    const sx = G.NX[start], sy = G.NY[start];
+    let D = target / 2 / 1.25, cb = null;
+    for (let it = 0; it < 4; it++) {
+      const w = nearest(sx + D * Math.cos(theta), sy + D * Math.sin(theta), opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+      if (w < 0 || w === start) break;
+      G.used.fill(0);
+      const go = astar(start, w); if (!go) break;
+      const back = go.slice().reverse().map(([e, fromA]) => [e, !fromA]);
+      const st = stats(go.concat(back), start); st.kind = 'aller-retour';
+      if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+      if (Math.abs(st.len / target - 1) < 0.025) break;
+      D *= target / st.len;
+    }
+    return cb;
+  }
+  function hillTheta(sx, sy, R0, rng, theta) {
+    let bz = -1e9, best = theta;
+    for (let k = 0; k < 5; k++) {
+      const th = k ? rng() * 2 * Math.PI : theta;
+      let z = 0; for (const f of [1, 2]) { const n = nearest(sx + f * R0 * Math.cos(th), sy + f * R0 * Math.sin(th)); if (n >= 0) z += G.NZ[n]; }
+      if (z > bz) { bz = z; best = th; }
+    }
+    return best;
+  }
+
+  async function loop(start, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
+    const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
+    for (let c = 0; c < NC + NB; c++) {
+      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
+      let st;
+      if (c < NC) {
+        const nW = rng() < 0.55 ? 2 : 3;
+        if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
+        st = candidateLoop(start, target, opt, rng, theta, nW);
+      } else {
+        if (opt.hill) theta = hillTheta(sx, sy, target / 2.5, rng, theta);
+        st = candidateOutBack(start, target, opt, theta);
+      }
+      if (st) { st.score = score(st, target, opt); cands.push(st); }
+      if (onProgress) onProgress((c + 1) / (NC + NB));
+      await tick();
+    }
+    return pickAlts(cands, target);
+  }
+
+  async function aToB(A, B, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    G.used.fill(0);
+    const base = routeThrough([A, B]);
+    if (!base) return null;
+    const bst = stats(base, A); bst.kind = 'a-b'; bst.score = score(bst, target || bst.len, opt);
+    if (!target || target <= bst.len * 1.03) { bst.shortest = true; bst.alts = [bst]; return bst; }
+    const ax = G.NX[A], ay = G.NY[A], bx = G.NX[B], by = G.NY[B];
+    const d = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / d, uy = (by - ay) / d;
+    const NC = opt.candidates || 10, cands = [];
+    for (let c = 0; c < NC; c++) {
+      const side = c % 2 ? 1 : -1, along = 0.25 + ((c >> 1) % 5) * 0.12 + (rng() - 0.5) * 0.08;
+      let h = Math.sqrt(Math.max(0, (target / 2.6) ** 2 - (d / 2) ** 2)) + 50;
+      let cb = null;
+      for (let it = 0; it < 4; it++) {
+        const mx = ax + (bx - ax) * along, my = ay + (by - ay) * along;
+        const w = nearest(mx - uy * h * side, my + ux * h * side, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+        const r = routeThrough([A, w, B]); if (!r) break;
+        const st = stats(r, A); st.kind = 'a-b';
+        if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+        if (Math.abs(st.len / target - 1) < 0.025) break;
+        h *= Math.pow(target / st.len, 1.3);
+      }
+      if (cb) { cb.score = score(cb, target, opt); cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    return pickAlts(cands, target) || (bst.alts = [bst], bst);
+  }
+
+  // A → free arrival: one-way routes of the requested length in different directions
+  async function oneWay(A, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const NC = opt.candidates || (opt.endNodes ? 16 : 12), cands = [], endSet = opt.endNodes ? new Set(opt.endNodes.map(q => q.n)) : null;
+    const ax = G.NX[A], ay = G.NY[A], off = rng() * 2 * Math.PI;
+    for (let c = 0; c < NC; c++) {
+      let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
+      if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
+      let D = target / 1.3, cb = null;
+      const legs = Math.max(1, Math.ceil(D / 6000)); // Paris is ~12 km wide: long one-ways zigzag through waypoints
+      const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
+      for (let it = 0; it < 4; it++) {
+        const pts = [A]; let x = ax, y = ay, th = theta;
+        for (let k = 0; k < legs; k++) {
+          th += turns[k]; const step = D / legs;
+          x = Math.max(300, Math.min(G.maxX - 300, x + step * Math.cos(th))); y = Math.max(300, Math.min(G.maxY - 300, y + step * Math.sin(th)));
+          let n = nearest(x, y, opt.hill && k === legs - 1 ? { hillRadius: 400 } : {});
+          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finish at a metro / RER station near the planned end
+            let bd = 1e9, bn = -1; for (const q of opt.endNodes) { const dd = Math.hypot(q.x - x, q.y - y); if (dd < bd) { bd = dd; bn = q.n; } }
+            if (bn >= 0 && bd < 1500) n = bn;
+          }
+          if (n >= 0 && n !== pts[pts.length - 1]) pts.push(n);
+        }
+        const w = pts[pts.length - 1];
+        if (w < 0 || w === A) break;
+        const r = routeThrough(pts); if (!r) break;
+        const st = stats(r, A); st.kind = 'aller-simple'; st.end = w;
+        if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+        if (Math.abs(st.len / target - 1) < 0.025) break;
+        D *= target / st.len;
+      }
+      if (cb) { cb.score = score(cb, target, opt); if (endSet && !endSet.has(cb.end)) cb.score += 600; cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    if (endSet) { const at = cands.filter(c => endSet.has(c.end) && Math.abs(c.len - target) / target <= 0.05); if (at.length >= 2) return pickAlts(at, target); }
+    return pickAlts(cands, target);
+  }
+
+
+  // ---------- through places (via points) ----------
+  function orderVias(start, vias, end) {
+    // brute-force order (<= 6 vias) on straight-line distance
+    if (vias.length < 2) return vias.slice();
+    const d = (a, b) => Math.hypot(G.NX[a] - G.NX[b], G.NY[a] - G.NY[b]);
+    let best = null, bl = Infinity;
+    const perm = (arr, l) => { if (l === arr.length) { let L = 0, p = start; for (const v of arr) { L += d(p, v); p = v; } if (end != null) L += d(p, end); if (L < bl) { bl = L; best = arr.slice(); } return; }
+      for (let i = l; i < arr.length; i++) { [arr[l], arr[i]] = [arr[i], arr[l]]; perm(arr, l + 1); [arr[l], arr[i]] = [arr[i], arr[l]]; } };
+    perm(vias.slice(), 0); return best;
+  }
+  // pts: ordered nodes; end: node or 'free'. Adds one detour point to reach the target length.
+  async function through(pts, end, target, opt, onProgress) {
+    const rng = mulberry(opt.seed || 1);
+    const free = end === 'free', full = free ? pts.slice() : pts.concat([end]);
+    const base = routeThrough(full); if (!base) return null;
+    const bst = stats(base, pts[0]); bst.kind = free ? 'aller-simple' : end === pts[0] ? 'boucle' : 'a-b'; bst.score = score(bst, target, opt);
+    if (bst.len >= target * 0.97) { bst.shortest = bst.len > target * 1.03; bst.alts = [bst]; return bst; }
+    const NC = opt.candidates || 10, cands = [bst];
+    for (let c = 0; c < NC; c++) {
+      let cb = null;
+      if (free) {
+        // extend beyond the last place
+        const last = pts[pts.length - 1], prev = pts.length > 1 ? pts[pts.length - 2] : last;
+        let th = Math.atan2(G.NY[last] - G.NY[prev], G.NX[last] - G.NX[prev]); if (pts.length < 2) th = 0;
+        th += (c - NC / 2) * 0.45 + (rng() - 0.5) * 0.2;
+        let D = (target - bst.len) / 1.3;
+        for (let it = 0; it < 4; it++) {
+          const w = nearest(G.NX[last] + D * Math.cos(th), G.NY[last] + D * Math.sin(th)); if (w < 0 || w === last) break;
+          const r = routeThrough(pts.concat([w])); if (!r) break;
+          const st = stats(r, pts[0]); st.kind = 'aller-simple'; st.end = w;
+          if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+          if (Math.abs(st.len / target - 1) < 0.025) break; D *= Math.pow(target / st.len, 1.2);
+        }
+      } else {
+        // detour on one leg of the chain, alternating legs and sides
+        const legs = full.length - 1, i = c % legs, side = (c >> 0) % 2 ? 1 : -1;
+        const a = full[i], b = full[i + 1];
+        const ax = G.NX[a], ay = G.NY[a], bx = G.NX[b], by = G.NY[b];
+        const d = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / d, uy = (by - ay) / d;
+        const along = 0.3 + rng() * 0.4;
+        let h = Math.max(150, (target - bst.len) / 2.4);
+        for (let it = 0; it < 4; it++) {
+          const mx = ax + (bx - ax) * along, my = ay + (by - ay) * along;
+          const px = d > 1 ? mx - uy * h * side : ax + h * Math.cos(c), py = d > 1 ? my + ux * h * side : ay + h * Math.sin(c);
+          const w = nearest(px, py, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+          const seq = full.slice(0, i + 1).concat([w], full.slice(i + 1));
+          const r = routeThrough(seq); if (!r) break;
+          const st = stats(r, pts[0]); st.kind = bst.kind;
+          if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+          if (Math.abs(st.len / target - 1) < 0.025) break; h *= Math.pow(target / st.len, 1.3);
+        }
+      }
+      if (cb) { cb.score = score(cb, target, opt); cands.push(cb); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    return pickAlts(cands, target);
+  }
+  async function viaRoute(A, vias, end, target, opt, onProgress) {
+    const ord = orderVias(A, vias, end === 'free' ? null : end);
+    return through([A, ...ord], end, target, opt, onProgress);
+  }
+  // ---------- discovery: pass by famous places ----------
+  function sightsOn(st, sights, R = 70) {
+    const hit = [];
+    const v0 = st.nodes[0];
+    for (const s of sights) { if (s._n == null || Math.hypot(G.NX[v0] - s.x, G.NY[v0] - s.y) < 250) continue; for (const v of st.nodes) if (Math.hypot(G.NX[v] - s.x, G.NY[v] - s.y) < R) { hit.push(s.name); break; } }
+    st.sights = hit; st.sightsN = hit.length; return st;
+  }
+  async function discover(A, end, target, sights, opt, onProgress) {
+    for (const s of sights) { if (s.x == null) { const [x, y] = toXY(s.lat, s.lon); s.x = x; s.y = y; } s._n = nearest(s.x, s.y); if (s._n >= 0 && Math.hypot(G.NX[s._n] - s.x, G.NY[s._n] - s.y) > 250) s._n = null; }
+    const ok = sights.filter(s => s._n != null && s._n >= 0);
+    const rng = mulberry(opt.seed || 1), NC = 8, cands = [];
+    const ax = G.NX[A], ay = G.NY[A], off = rng() * 2 * Math.PI;
+    const o2 = Object.assign({}, opt, { candidates: 4, sights: true });
+    for (let c = 0; c < NC; c++) {
+      const th = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
+      let pick = [];
+      if (end === 'free' || end === A) {
+        const loop = end === A, R = loop ? target / (2 * Math.PI) * 0.95 : target / 1.35;
+        const cx = loop ? ax + R * Math.cos(th) : ax, cy = loop ? ay + R * Math.sin(th) : ay;
+        const cand = ok.map(s => { const dd = Math.hypot(s.x - cx, s.y - cy); const ang = Math.atan2(s.y - cy, s.x - cx);
+          const fit = loop ? Math.abs(dd - R) / R : (dd > R * 1.05 ? 9 : Math.abs(((ang - th + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) > 0.9 ? 9 : 0);
+          return { s, fit, ang, dd }; }).filter(o => o.fit < (loop ? 0.45 : 1)).sort((a, b) => a.fit - b.fit || b.s.w - a.s.w);
+        for (const o of cand) { if (pick.length >= 4) break; if (pick.every(p => Math.hypot(p.s.x - o.s.x, p.s.y - o.s.y) > Math.max(400, target / 12))) pick.push(o); }
+        pick = pick.map(o => o.s._n);
+      } else {
+        const bx = G.NX[end], by = G.NY[end], d = Math.hypot(bx - ax, by - ay) || 1, slack = Math.max(300, (target - d * 1.25) / 2.2);
+        const cand = ok.map(s => { const t = ((s.x - ax) * (bx - ax) + (s.y - ay) * (by - ay)) / (d * d); const off2 = Math.abs((s.x - ax) * (by - ay) - (s.y - ay) * (bx - ax)) / d; return { s, t, off2 }; })
+          .filter(o => o.t > 0.05 && o.t < 0.95 && o.off2 < slack * (0.6 + 0.8 * rng())).sort((a, b) => b.s.w - a.s.w);
+        for (const o of cand) { if (pick.length >= 4) break; if (pick.every(p => Math.hypot(p.s.x - o.s.x, p.s.y - o.s.y) > 400)) pick.push(o); }
+        pick = pick.sort((a, b) => a.t - b.t).map(o => o.s._n);
+      }
+      if (!pick.length) { if (onProgress) onProgress((c + 1) / NC); continue; }
+      let r = await viaRoute(A, pick, end, target, o2);
+      // too long: drop the farthest place until it fits
+      while (r && r.len > target * 1.05 && pick.length > 1) { pick.pop(); r = await viaRoute(A, pick, end, target, o2); }
+      if (r) for (const a of (r.alts || [r])) { sightsOn(a, ok); a.score = score(a, target, Object.assign({}, opt, { sights: true })); cands.push(a); }
+      if (onProgress) onProgress((c + 1) / NC);
+      await tick();
+    }
+    const best = pickAlts(cands, target);
+    if (best) for (const a of best.alts) sightsOn(a, ok);
+    return best;
+  }
+  function statsOf(edges, start) { return stats(edges, start); }
+
+  return { init, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+})();
+if (typeof module !== 'undefined') module.exports = Engine;
+
+</script>
 <script>
 (() => {
 const $ = s => document.querySelector(s);
