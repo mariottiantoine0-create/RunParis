@@ -1131,16 +1131,17 @@ const S = {
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
+const DV = '?v=e989f3bb'; // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
 let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [];
 
 // ---------- loading ----------
 async function boot() {
   try {
-    const [meta, buf] = await Promise.all([fetch('meta.json').then(r => r.json()), fetch('graph.bin').then(r => r.arrayBuffer())]);
+    const [meta, buf] = await Promise.all([fetch('meta.json' + DV).then(r => r.json()), fetch('graph.bin' + DV).then(r => r.arrayBuffer())]);
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt').then(r => r.ok ? r.text() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft, pk, dk] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
@@ -1161,7 +1162,7 @@ async function boot() {
 }
 // street trees (OSM natural=tree): x, y in metres as Int16 pairs; loaded after the first route
 function loadTrees() {
-  fetch('trees.txt').then(r => r.ok ? r.text() : null).then(t => {
+  fetch('trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();
