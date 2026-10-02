@@ -11,7 +11,7 @@ const S = {
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
-let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [];
+let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [];
 
 // ---------- loading ----------
 async function boot() {
@@ -20,10 +20,11 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [gr, rc, sg, mt, ft, pk] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json').then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
+    PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
     if (gr) E.setGreen(b64(gr)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
@@ -56,6 +57,71 @@ function routeTrees(r) {
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const i of TGRID.get(gx * 4096 + gy) || []) if (!seen.has(i) && Math.hypot(TREES[i] - x, TREES[i + 1] - y) <= 10) seen.add(i); }
   return (r._trees = [...seen]);
 }
+// ---------- park opening hours ----------
+// Ville de Paris gated gardens: 8:00 (Sa, Su 9:00; large parks 7:00) until a closing time that follows the sunset (indicative)
+function lastSunday(y, m) { const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
+function municipalOpen(p, t) {
+  const y = t.getFullYear(), day = t.getDay(), mins = t.getHours() * 60 + t.getMinutes(), md = new Date(y, t.getMonth(), t.getDate());
+  const open = p.big ? 7 * 60 : (day === 0 || day === 6 ? 9 * 60 : 8 * 60);
+  const oct = lastSunday(y, 9), mar = lastSunday(y, 2), m = t.getMonth();
+  let close;
+  if (md >= oct || m <= 1) close = 17 * 60 + 45; // last Sunday of October to February
+  else if (m === 2) close = md < mar ? 19 * 60 : 20 * 60 + 30;
+  else if (m === 3) close = 20 * 60 + 30;
+  else if (m >= 4 && m <= 7) close = 21 * 60 + 30;
+  else if (m === 8) close = 20 * 60 + 30;
+  else close = 19 * 60 + 30; // October before its last Sunday
+  return mins >= open && mins < close;
+}
+const MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 }, WD = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
+// small OpenStreetMap opening_hours reader (months, weekdays, time ranges, closed); null when the syntax is beyond it
+function ohOpen(oh, t) {
+  if (/^\s*24\/7\s*$/.test(oh)) return true;
+  if (/sun(rise|set)|\|\||"|week|easter/i.test(oh)) return null;
+  const y = t.getFullYear();
+  oh = oh.replace(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) Su\[-1\]/g, (x, mo) => `${mo} ${lastSunday(y, MON[mo]).getDate()}`); // last Sunday of the month
+  if (/\[/.test(oh)) return null;
+  const m = t.getMonth(), d = t.getDate(), wd = t.getDay(), mins = t.getHours() * 60 + t.getMinutes();
+  const val = (mo, dd) => mo * 100 + dd, cur = val(m, d);
+  const DAYN = '(?: ?\\d{1,2}(?![\\d:]))?', MO = '(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)';
+  const monRe = new RegExp(`^((?:${MO}${DAYN}(?:-${MO}?${DAYN})?,?)+)\\s*:?\\s*`);
+  let res = null;
+  // ';' starts a rule that replaces the previous ones for its days; ', ' adds to (or with "off" removes from) the current rule
+  for (const group of oh.split(/\s*;\s*/).filter(Boolean)) {
+    group.split(/,\s+(?=(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b)/).forEach((rule, idx) => {
+      let r = rule.trim(), ok = true;
+      const mm = r.match(monRe);
+      if (mm) { r = r.slice(mm[0].length); ok = mm[1].split(',').filter(Boolean).some(part => {
+          const [pa0, pb0] = part.split('-'); const pa = pa0.trim().match(/^(\w{3})(?: ?(\d+))?$/); if (!pa) return false;
+          const m1 = MON[pa[1]], d1 = +(pa[2] || 1);
+          if (pb0 === undefined) return pa[2] ? cur === val(m1, d1) : m === m1;
+          const pb = pb0.trim().match(/^(\w{3})?(?: ?(\d+))?$/) || []; const m2 = pb[1] ? MON[pb[1]] : m1, d2 = pb[2] ? +pb[2] : (pb[1] ? 31 : d1);
+          const lo = val(m1, d1), hi = val(m2, d2); return lo <= hi ? cur >= lo && cur <= hi : cur >= lo || cur <= hi; }); }
+      const dm = r.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su|PH)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?,?)+)\s+/);
+      if (dm) { r = r.slice(dm[0].length); ok = ok && dm[1].split(',').filter(Boolean).some(part => { const [a, b] = part.split('-'); if (a === 'PH') return false; const x = WD[a], z = b ? WD[b] : x; return x <= z ? wd >= x && wd <= z : wd >= x || wd <= z; }); }
+      if (!ok) return;
+      r = r.trim(); const off = /\s(off|closed)$/i.test(r) || /^(off|closed)$/i.test(r);
+      const ivs = [...r.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)];
+      const inside = ivs.length ? ivs.some(([, h1, m1, h2, m2]) => { const a = +h1 * 60 + +m1, b = +h2 * 60 + +m2; return b > a ? mins >= a && mins < b : mins >= a || mins < b; }) : off;
+      if (!ivs.length && !off) { res = res === null ? null : res; return; }
+      if (off) { if (inside) res = false; else if (idx === 0) res = false; return; }
+      res = idx === 0 ? inside : (res || inside);
+    });
+  }
+  return res;
+}
+function parkOpen(p, t) { if (p.oh) { const v = ohOpen(p.oh, t); if (v !== null) return v; } return municipalOpen(p, t); }
+// departure time chosen by the runner (today; tomorrow if that time is already well past)
+function departure() {
+  const now = new Date(); if (S.depNow !== false || !$('#dep-time').value) return now;
+  const [h, m] = $('#dep-time').value.split(':').map(Number); const t = new Date(now); t.setHours(h, m, 0, 0);
+  if (t < now - 30 * 60000) t.setDate(t.getDate() + 1); return t;
+}
+// parks closed at some point between departure and arrival
+function closedParks(t0, minutes) {
+  const out = []; for (const p of PARKS) { for (let k = 0; k <= minutes + 9; k += 10) { if (!parkOpen(p, new Date(+t0 + Math.min(k, minutes) * 60000))) { out.push(p); break; } } } return out;
+}
+const hhmm = t => `${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`;
 // drinking fountains within 30 m of the route, with their position along it (m), and the longest stretch without water
 function routeFountains(r) {
   if (!FONT.length) return null; if (r._font) return r._font;
@@ -565,6 +631,11 @@ $('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setA
 $('#ly-font').onclick = e => { S.showFont = !S.showFont; e.currentTarget.setAttribute('aria-pressed', S.showFont); draw(); };
 $('#ly-trees').onclick = e => { S.showTrees = !S.showTrees; e.currentTarget.setAttribute('aria-pressed', S.showTrees); if (S.showTrees && !TREES) toast('Arbres en cours de chargement…'); draw(); };
 $('#end-metro').onchange = () => markStale();
+S.depNow = true;
+$('#dep-now').onclick = () => { S.depNow = true; $('#dep-now').setAttribute('aria-pressed', true); $('#dep-at').setAttribute('aria-pressed', false); $('#dep-time').hidden = true; markStale(); };
+$('#dep-at').onclick = () => { S.depNow = false; $('#dep-now').setAttribute('aria-pressed', false); $('#dep-at').setAttribute('aria-pressed', true); const i = $('#dep-time'); i.hidden = false;
+  if (!i.value) { const t = new Date(Date.now() + 30 * 60000); t.setMinutes(Math.ceil(t.getMinutes() / 15) * 15 % 60, 0, 0); if (t.getMinutes() === 0 && new Date().getMinutes() > 45) t.setHours(t.getHours() + 1); i.value = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`; } i.focus(); markStale(); };
+$('#dep-time').onchange = () => markStale();
 searchBox($('#start-q'), $('#start-res'), h => { setPoint('start', h); fitRoute(true); if (!$('#start-box').hidden) $('#change-start').click(); });
 searchBox($('#end-q'), $('#end-res'), h => { setPoint('end', h); });
 searchBox($('#avoid-q'), $('#avoid-res'), h => { S.places.push({ lat: h.lat, lon: h.lon, r: h.type === 'Parc' ? 300 : 150, name: h.name }); renderPlaces(); draw(); });
@@ -777,7 +848,7 @@ function renderSummary() {
   const f = ['feux ignorés', 'feux limités', 'feux évités au max'][S.sig];
   const n = S.exclQ.size ? `${S.exclQ.size} quartier${S.exclQ.size > 1 ? 's' : ''} évité${S.exclQ.size > 1 ? 's' : ''}` : '';
   const pl = S.places.length ? `${S.places.length} lieu${S.places.length > 1 ? 'x' : ''} évité${S.places.length > 1 ? 's' : ''}` : '';
-  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : ''].filter(Boolean).join(' · ');
+  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : '', S.depNow === false && S.lastDep ? 'départ ' + hhmm(S.lastDep.dep) : ''].filter(Boolean).join(' · ');
 }
 new ResizeObserver(resize).observe(cv);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
@@ -838,7 +909,9 @@ async function generate(isAgain) {
   let r = null;
   try {
     await new Promise(res => setTimeout(res, 20));
-    E.setConstraints(S.exclQ, S.places, { avoidCemeteries: $('#avoid-cem').checked });
+    const dep = departure(), runMin = Math.round(km * pace() / 60), closed = PARKS.length ? closedParks(dep, runMin) : [];
+    S.lastDep = { dep, closed, now: S.depNow !== false };
+    E.setConstraints(S.exclQ, S.places, { avoidCemeteries: $('#avoid-cem').checked, closedEdges: closed.flatMap(p => p.e) });
     const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
@@ -927,7 +1000,13 @@ function routeNotes(r) {
   if (dplus != null && r.up < dplus * 0.8) notes.push(`D+ maximum trouvé ici : ${Math.round(r.up)} m pour ${dplus} m visés. ${hillHint()}`);
   if (r.kind === 'aller-retour') notes.push('Aller-retour : tu reviens par le même chemin.');
   if (r.cemLen > 50) notes.push(`Le parcours traverse un cimetière sur ${Math.round(r.cemLen)} m : horaires d'ouverture limités et lieu de recueillement.`);
-  if (r.quart && [...r.quart.keys()].some(q => /Bois|Muette|Bel-Air|Auteuil/.test(M.quartiers[q - 1]?.name || ''))) notes.push('Le parcours passe par un bois ou un grand parc : vérifie les horaires si tu cours tôt ou tard.');
+  const ld = S.lastDep;
+  if (ld && ld.closed.length && S.tab !== 'race') { // closed parks the route goes around
+    const P = routePts(r); const near = ld.closed.filter(p => P.some(([x, y], i) => i % 6 === 0 && Math.abs(x - p.c[0]) < 350 && Math.abs(y - p.c[1]) < 350)).sort((a, b) => b.e.length - a.e.length);
+    if (near.length) notes.push(`Fermé${near.length > 1 ? 's' : ''} à l'heure de ta sortie (départ ${hhmm(ld.dep)}), donc contourné${near.length > 1 ? 's' : ''} : ${near.slice(0, 3).map(p => p.n).join(', ')}${near.length > 3 ? '…' : '.'}`);
+  }
+  const night = ld ? (ld.dep.getHours() >= 21 || ld.dep.getHours() < 7) : false;
+  if (r.quart && [...r.quart.keys()].some(q => /Bois|Muette|Bel-Air|Auteuil/.test(M.quartiers[q - 1]?.name || '')) && night) notes.push('Le parcours passe par un bois : il reste ouvert la nuit mais n’est pas éclairé partout.');
   return notes;
 }
 const KIND = { 'boucle': 'Boucle', 'aller-retour': 'Aller-retour', 'aller-simple': 'Aller simple', 'a-b': 'A → B' };

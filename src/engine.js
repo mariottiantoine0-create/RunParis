@@ -71,6 +71,7 @@ const Engine = (() => {
     const { nE, nN, blocked, nodeOk, ez, nq } = G;
     blocked.fill(0); nodeOk.fill(1);
     if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
+    if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parks closed at the time of the run
     for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
     for (let e = 0; e < nE; e++) {
       for (let k = 0; k < 4; k++) { const z = ez[4 * e + k]; if (z && exclQ.has(z)) { blocked[e] = 1; break; } }

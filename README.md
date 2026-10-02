@@ -9,7 +9,7 @@ Génère des parcours de course à pied dans Paris en quelques secondes : la dis
 - **Trois arrivées** : retour au départ (boucle), un lieu précis (A → B), ou n'importe où (aller simple, qui peut finir à une station de métro ou RER pour rentrer).
 - **Distance ou durée**, dénivelé plat / normal / vallonné, feux rouges limités ou évités au maximum.
 - **Trois types de parcours** : Classique, Vert (parcs et rues arborées), Découverte (monuments et lieux connus). On peut aussi imposer jusqu'à 5 lieux de passage.
-- **À éviter** : arrondissements, quartiers, lieux ; gares, quais et cimetières évités par défaut.
+- **À éviter** : arrondissements, quartiers, lieux ; gares, quais et cimetières évités par défaut ; parcs et jardins fermés à l'heure de départ choisie (horaires indicatifs).
 - **Jusqu'à 3 propositions** par recherche, nommées par ce qui les distingue (le moins de feux, le plus plat…).
 - **16 courses officielles** (Marathon, Semi, 20 km de Paris, Urban Trail de Montmartre, 10 km de la Tour Eiffel…) à voir, exporter ou courir en partie.
 - **Points d'eau** : fontaines du parcours avec leur kilomètre, option « un point d'eau environ tous les 3 km ».
@@ -30,6 +30,7 @@ site/              ce que Netlify publie
   trees.txt        159 000 arbres
   metro.json       271 stations de métro et RER
   fountains.json   1 088 fontaines à eau potable
+  parks.json       243 parcs et jardins fermés la nuit (tronçons concernés, horaires)
   races.json       tracés des courses officielles
   sights.json      52 lieux connus (mode Découverte)
 src/
@@ -52,7 +53,7 @@ netlify.toml       réglages Netlify (dossier publié, cache)
 
 - Rues, arbres, fontaines, parcs, stations, gares : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright), licence ODbL.
 - Altitudes : IGN, RGE ALTI.
-- Quartiers et arrondissements : Paris Open Data.
+- Quartiers, arrondissements, jardins clôturés : Paris Open Data. Horaires : OpenStreetMap, sinon horaires types des jardins de la Ville de Paris.
 - Tracés des courses : organisateurs (10kmtoureiffel.fr), WeRun, The Post Trace.
 
 Projet d'Antoine Mariotti. Le suivi produit (spec, décisions, backlog, recette) est tenu dans Notion.

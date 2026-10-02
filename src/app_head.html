@@ -106,6 +106,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .paceline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);flex-wrap:wrap}
 .paceline input{width:74px;padding:6px 8px;font-family:var(--f-cond);font-weight:700;font-size:15px;text-align:center;color:var(--ink)}
 .paceline b{color:var(--ink);font-family:var(--f-cond)}
+.depline .seg{width:auto}.depline .seg button{padding:0 10px}
+.depline input[type=time]{width:120px;padding:6px 8px;font-family:var(--f-cond);font-weight:700;font-size:15px;color:var(--ink)}
 
 .sw{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;min-height:36px;cursor:pointer}
 .sw input{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
@@ -375,6 +377,11 @@ canvas#map.pick{cursor:crosshair}
           <button data-v="30">30</button><button data-v="45">45</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button>
         </div>
         <div class="paceline"><span id="conv">≈ 55 min</span><span>à</span><input type="text" id="pace" value="5:30" inputmode="numeric" aria-label="Allure en minutes par km"><span>/km</span></div>
+        <div class="paceline depline"><span>Départ</span>
+          <span class="seg sm" role="group" aria-label="Heure de départ"><button id="dep-now" aria-pressed="true">Maintenant</button><button id="dep-at" aria-pressed="false">À une heure</button></span>
+          <input type="time" id="dep-time" step="900" aria-label="Heure de départ" hidden>
+        </div>
+        <p class="hint" id="dep-hint">Les parcs et jardins fermés à l'heure de ta sortie sont évités (horaires indicatifs).</p>
       </section>
 
       <section class="step" aria-labelledby="h-comment">
