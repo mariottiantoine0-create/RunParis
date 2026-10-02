@@ -149,6 +149,18 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .btn.ghost{background:var(--field);border:1px solid var(--line);color:var(--ink)}
 .btnrow{display:flex;gap:8px}
 .btnrow .btn.primary{flex:1}
+.fb-link{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:10px 0 0;cursor:pointer;text-align:left}
+.fb-link:hover{color:var(--accent)}
+.fb{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:22px;width:min(460px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.fb::backdrop{background:rgba(0,0,0,.55)}
+.fb h2{font-family:var(--f-display);font-weight:800;font-size:28px;text-transform:uppercase;margin:0 0 4px}
+.fb form{display:flex;flex-direction:column;gap:12px}
+.fl{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.fl select,.fl textarea,.fl input{font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.fl textarea{resize:vertical;min-height:90px}
+.fb-err{color:var(--avoid);font-size:14px;margin:0}
+.fb .btnrow{display:flex;gap:8px;justify-content:flex-end}
+.fb .btn{flex:none;min-height:44px;padding:0 18px}
 .textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
 
 /* ---------- results ---------- */
@@ -458,6 +470,7 @@ canvas#map.pick{cursor:crosshair}
         </div>
         <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
         <p class="via" id="via"></p>
+        <button type="button" class="fb-link" id="fb-open" hidden>Un souci sur ce parcours ? Signaler un problème ou donner un avis</button>
       </div>
     </div>
 
@@ -527,6 +540,28 @@ canvas#map.pick{cursor:crosshair}
       <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
     </div>
   </main>
+  <dialog class="fb" id="fb" aria-labelledby="fb-t">
+    <form method="dialog" id="fb-form">
+      <h2 id="fb-t">Signaler un problème</h2>
+      <p class="hint">Ton message aide à améliorer RunParis. Il est lu par Antoine, l'auteur de l'app.</p>
+      <label class="fl">Type
+        <select name="type" id="fb-type">
+          <option>Passage impossible ou dangereux</option>
+          <option>Parcours bizarre ou trop long</option>
+          <option>Problème d'affichage ou bug</option>
+          <option>Idée d'amélioration</option>
+          <option>Autre</option>
+        </select>
+      </label>
+      <label class="fl">Message<textarea name="message" id="fb-msg" rows="4" placeholder="Ex. : au km 3,2 la grille du parc était fermée"></textarea></label>
+      <label class="fl">Ton e-mail (facultatif, pour te répondre)<input type="email" name="email" id="fb-mail" autocomplete="email"></label>
+      <label class="sw"><span>Joindre le parcours affiché</span><input type="checkbox" id="fb-route" checked></label>
+      <p class="fb-err" id="fb-err" hidden></p>
+      <div class="btnrow"><button type="button" class="btn ghost" id="fb-cancel">Annuler</button><button type="submit" class="btn primary" id="fb-send">Envoyer</button></div>
+    </form>
+  </dialog>
+  <!-- static copy of the form so that Netlify Forms detects it at deploy time -->
+  <form name="signalement" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="type"><textarea name="message"></textarea><input name="email"><textarea name="parcours"></textarea><input name="page"></form>
 </div>
 
 <script>
@@ -673,6 +708,7 @@ const Engine = (() => {
   // ---------- A* ----------
   let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
   // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
   function setWeights(w) { W = Object.assign({}, W, w); }
 
@@ -682,6 +718,7 @@ const Engine = (() => {
     let m = 1 + W.road[G.C[e]];
     const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
     if (W.green && G.GR) m -= W.green * G.GR[e];
+    if (W.dark && G.DK && G.DK[e]) m += W.dark; // at night, keep to lit streets
     let cost = L * m;
     const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
     cost += W.climb * up;
@@ -761,8 +798,8 @@ const Engine = (() => {
     }
     let overlap = 0; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
     up = smoothClimb(prof); dn = smoothClimb(prof.map(([d, z]) => [d, -z]));
-    let cemLen = 0, gl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; }
-    return { green: len ? gl / len : 0, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
+    let cemLen = 0, gl = 0, dl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; if (G.DK && G.DK[e]) dl += G.LEN[e]; }
+    return { green: len ? gl / len : 0, lit: G.DK && len ? 1 - dl / len : null, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
   }
 
   // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
@@ -804,6 +841,7 @@ const Engine = (() => {
     s += st.overlap * (opt.allowRepeat ? 0 : 120);
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
+    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
@@ -1075,7 +1113,7 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
 
@@ -1102,12 +1140,13 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json').then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [gr, rc, sg, mt, ft, pk, dk] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt').then(r => r.ok ? r.text() : null).catch(() => null)]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
-    if (gr) E.setGreen(b64(gr)); else $('#k-green').disabled = true;
+    if (gr) E.setGreen(b64(gr));
+    if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
   } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de Paris (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
@@ -1193,6 +1232,23 @@ function ohOpen(oh, t) {
   return res;
 }
 function parkOpen(p, t) { if (p.oh) { const v = ohOpen(p.oh, t); if (v !== null) return v; } return municipalOpen(p, t); }
+// sunrise / sunset in Paris for a given day (NOAA approximation, about ±2 min)
+function sunTimes(t) {
+  const rad = Math.PI / 180, lat = 48.8566, lon = 2.3522;
+  const start = Date.UTC(t.getFullYear(), 0, 0), n = Math.floor((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - start) / 864e5);
+  const g = 2 * Math.PI / 365 * (n - 1);
+  const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const ha = Math.acos(Math.cos(90.833 * rad) / (Math.cos(lat * rad) * Math.cos(decl)) - Math.tan(lat * rad) * Math.tan(decl)) / rad;
+  const utc = m => new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) + m * 60000);
+  return { rise: utc(720 - 4 * (lon + ha) - eq), set: utc(720 - 4 * (lon - ha) - eq) };
+}
+// is any part of the run in the dark (from 20 min after sunset to 20 min before sunrise)?
+function runInDark(t0, minutes) {
+  for (let k = 0; k <= minutes + 9; k += 10) { const t = new Date(+t0 + Math.min(k, minutes) * 60000), { rise, set } = sunTimes(t);
+    if (t > new Date(+set + 20 * 60000) || t < new Date(+rise - 20 * 60000)) return true; }
+  return false;
+}
 // departure time chosen by the runner (today; tomorrow if that time is already well past)
 function departure() {
   const now = new Date(); if (S.depNow !== false || !$('#dep-time').value) return now;
@@ -1883,7 +1939,7 @@ function renderRaces() {
     b.querySelector('.k').textContent = race.edition; if (isPast) { const p = document.createElement('span'); p.className = 'past'; p.textContent = ' · passée, tracé conservé'; b.querySelector('.k').appendChild(p); }
     b.querySelector('.t').textContent = race.name;
     b.querySelector('.s').textContent = race.geom ? `${fmt(race.official, race.official % 1 ? 1 : 0)} km · tracé GPX ${race.year} · ${Math.round(st.up)} m D+` : `${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels · tracé reconstitué ${fmt(st.len / 1000)} km · ${Math.round(st.up)} m D+`;
-    b.onclick = () => { S.race = race; showRace(race); renderRaces(); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
+    b.onclick = () => { S.race = race; showRace(race); renderRaces(); track('course', race.name); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
     box.appendChild(b);
     if (S.race === race) box.appendChild(det); // the detail opens right under the chosen race
   }
@@ -1992,14 +2048,15 @@ async function generate(isAgain) {
   try {
     await new Promise(res => setTimeout(res, 20));
     const dep = departure(), runMin = Math.round(km * pace() / 60), closed = PARKS.length ? closedParks(dep, runMin) : [];
-    S.lastDep = { dep, closed, now: S.depNow !== false };
+    S.lastDep = { dep, closed, now: S.depNow !== false, night: runInDark(dep, runMin), sun: sunTimes(dep) };
     E.setConstraints(S.exclQ, S.places, { avoidCemeteries: $('#avoid-cem').checked, closedEdges: closed.flatMap(p => p.e) });
     const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
     const green = S.kind === 'green';
-    E.setWeights({ climb, sig: [0, 150, 450][S.sig], path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] });
+    E.setWeights({ climb, sig: [0, 150, 450][S.sig], path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0 });
     const opt = { seed: S.seed * 7919 + 13, sigScore: [0, 0.5, 1.5][S.sig], dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
+    opt.night = S.lastDep.night;
     if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
       opt.water = { set, pts, every: 3000 };
@@ -2062,6 +2119,7 @@ async function generate(isAgain) {
   }
   S.lastKm = km; $('#stale').hidden = true;
   if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
+  if (r) track(isAgain ? 'autres' : 'generer', (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : 'A-B') + ' ' + Math.round(target / 1000) + ' km' + (S.depNow === false ? ' (heure choisie)' : ''));
   if (r && !errs.length) {
     S.alts = r.alts || [r]; S.baseNotes = notes; S.lastTarget = target; S.lastD = dplus;
     renderSummary(); showView('res'); selectAlt(0);
@@ -2087,8 +2145,10 @@ function routeNotes(r) {
     const P = routePts(r); const near = ld.closed.filter(p => P.some(([x, y], i) => i % 6 === 0 && Math.abs(x - p.c[0]) < 350 && Math.abs(y - p.c[1]) < 350)).sort((a, b) => b.e.length - a.e.length);
     if (near.length) notes.push(`Fermé${near.length > 1 ? 's' : ''} à l'heure de ta sortie (départ ${hhmm(ld.dep)}), donc contourné${near.length > 1 ? 's' : ''} : ${near.slice(0, 3).map(p => p.n).join(', ')}${near.length > 3 ? '…' : '.'}`);
   }
-  const night = ld ? (ld.dep.getHours() >= 21 || ld.dep.getHours() < 7) : false;
-  if (r.quart && [...r.quart.keys()].some(q => /Bois|Muette|Bel-Air|Auteuil/.test(M.quartiers[q - 1]?.name || '')) && night) notes.push('Le parcours passe par un bois : il reste ouvert la nuit mais n’est pas éclairé partout.');
+  if (ld && ld.night && S.tab !== 'race' && r.lit != null) {
+    const pct = Math.round(r.lit * 100);
+    notes.push(`Sortie de nuit (coucher du soleil à ${hhmm(ld.sun.set)}) : le parcours privilégie les rues éclairées, ${pct} % du trajet l'est.${pct < 85 ? ' Des passages restent sombres (allées de parc ou de bois, berges) : prends une lampe frontale.' : ''}`);
+  }
   return notes;
 }
 const KIND = { 'boucle': 'Boucle', 'aller-retour': 'Aller-retour', 'aller-simple': 'Aller simple', 'a-b': 'A → B' };
@@ -2159,6 +2219,7 @@ function showRoute(r, notes) {
   sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
   if (r.green != null && G.GR) sp.appendChild(document.createTextNode(` · ${Math.round(r.green * 100)} % du parcours au vert (parcs, rues arborées)`));
   if (r.sightsN) sp.appendChild(document.createTextNode(` · Lieux : ${r.sights.join(', ')}`));
+  if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));
   const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
   $('#via').appendChild(sp);
   // drinking water along the way
@@ -2222,7 +2283,7 @@ function gpx() {
 $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
   try {
-    const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`;
+    const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX course ' + S.race.name : 'GPX parcours');
     if (!window.claude) { // public site: a real .gpx file
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -2236,9 +2297,34 @@ $('#gpx').onclick = async () => {
 };
 $('#copy').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
-  try { await navigator.clipboard.writeText(g); toast('GPX copié : colle-le dans un fichier .gpx.'); } catch { toast('Copie refusée par le navigateur.'); }
+  try { await navigator.clipboard.writeText(g); toast('GPX copié : colle-le dans un fichier .gpx.'); track('copier', 'Copier GPX'); } catch { toast('Copie refusée par le navigateur.'); }
 };
 
+// ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
+const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
+const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
+if (PUBLIC) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = `https://${GC}.goatcounter.com/count`; document.head.appendChild(sc); }
+function track(ev, title) { try { if (PUBLIC && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
+// ---------- feedback (Netlify Forms) ----------
+if (PUBLIC) $('#fb-open').hidden = false;
+$('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
+$('#fb-cancel').onclick = () => $('#fb').close();
+function routeContext() {
+  if (!S.route) return '';
+  const P = routePts(S.route), step = Math.max(1, Math.floor(P.length / 40));
+  const pts = P.filter((p, i) => i % step === 0 || i === P.length - 1).map(([x, y]) => E.toLL(x, y).map(v => v.toFixed(5)).join(',')).join(' ');
+  const head = S.tab === 'race' && S.race ? `Course : ${S.race.name}, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `${$('#sum-t').textContent} | ${$('#sum-s').textContent}`;
+  return `${head} | ${fmt(S.route.len / 1000)} km | points : ${pts}`;
+}
+$('#fb-form').onsubmit = async ev => {
+  ev.preventDefault(); const msg = $('#fb-msg').value.trim(); if (!msg) { $('#fb-err').textContent = 'Écris un message.'; $('#fb-err').hidden = false; return; }
+  const body = new URLSearchParams({ 'form-name': 'signalement', type: $('#fb-type').value, message: msg, email: $('#fb-mail').value.trim(), parcours: $('#fb-route').checked ? routeContext() : '', page: location.href });
+  $('#fb-send').disabled = true;
+  try { const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!r.ok) throw new Error(r.status);
+    $('#fb').close(); $('#fb-msg').value = ''; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
+  } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
+  finally { $('#fb-send').disabled = false; }
+};
 $('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Tracés des courses : organisateurs, WeRun, The Post Trace.', 7000);
 // public site: the logo leads back to the welcome page
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }

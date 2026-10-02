@@ -14,6 +14,8 @@ Génère des parcours de course à pied dans Paris en quelques secondes : la dis
 - **16 courses officielles** (Marathon, Semi, 20 km de Paris, Urban Trail de Montmartre, 10 km de la Tour Eiffel…) à voir, exporter ou courir en partie.
 - **Points d'eau** : fontaines du parcours avec leur kilomètre, option « un point d'eau environ tous les 3 km ».
 - **Carte** : fontaines à eau et arbres le long du parcours, stations de métro et RER, rues empruntées deux fois sur des voies séparées, profil altimétrique.
+- **De nuit** : heure de départ, parcs fermés contournés, rues éclairées privilégiées.
+- **Retours** : bouton « Signaler un problème » (Netlify Forms), statistiques de visite anonymes sans cookie (GoatCounter).
 - **Export GPX** pour une montre ou Strava. Thème clair / sombre. Ordinateur et téléphone.
 
 Tout le calcul se fait dans le navigateur : pas de serveur, pas de compte, rien n'est envoyé.
@@ -31,6 +33,7 @@ site/              ce que Netlify publie
   metro.json       271 stations de métro et RER
   fountains.json   1 088 fontaines à eau potable
   parks.json       243 parcs et jardins fermés la nuit (tronçons concernés, horaires)
+  dark.txt         tronçons non éclairés (1 bit par tronçon)
   races.json       tracés des courses officielles
   sights.json      52 lieux connus (mode Découverte)
 src/
@@ -51,7 +54,7 @@ netlify.toml       réglages Netlify (dossier publié, cache)
 
 ## Sources des données
 
-- Rues, arbres, fontaines, parcs, stations, gares : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright), licence ODbL.
+- Rues, éclairage, arbres, fontaines, parcs, stations, gares : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright), licence ODbL.
 - Altitudes : IGN, RGE ALTI.
 - Quartiers, arrondissements, jardins clôturés : Paris Open Data. Horaires : OpenStreetMap, sinon horaires types des jardins de la Ville de Paris.
 - Tracés des courses : organisateurs (10kmtoureiffel.fr), WeRun, The Post Trace.

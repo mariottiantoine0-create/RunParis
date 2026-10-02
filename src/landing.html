@@ -226,10 +226,12 @@ footer p{margin:0;max-width:62em}
 <footer>
   <div class="wrap">
     <p>Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a> (ODbL) · altitudes IGN · quartiers Paris Open Data · tracés des courses : organisateurs, WeRun, The Post Trace.</p>
-    <p>RunParis · un projet d'Antoine Mariotti</p>
+    <p>RunParis · un projet d'Antoine Mariotti · statistiques de visite anonymes, sans cookie (GoatCounter)</p>
   </div>
 </footer>
 <script>
+// anonymous audience measurement, no cookie (public site only)
+if (/netlify\.app$|runparis/i.test(location.hostname)) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
 // km markers appear as the route is drawn
 (() => {
   const p = document.querySelector('.m-route'); if (!p || !p.getTotalLength) return;

@@ -143,6 +143,18 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .btn.ghost{background:var(--field);border:1px solid var(--line);color:var(--ink)}
 .btnrow{display:flex;gap:8px}
 .btnrow .btn.primary{flex:1}
+.fb-link{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:10px 0 0;cursor:pointer;text-align:left}
+.fb-link:hover{color:var(--accent)}
+.fb{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:22px;width:min(460px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.fb::backdrop{background:rgba(0,0,0,.55)}
+.fb h2{font-family:var(--f-display);font-weight:800;font-size:28px;text-transform:uppercase;margin:0 0 4px}
+.fb form{display:flex;flex-direction:column;gap:12px}
+.fl{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.fl select,.fl textarea,.fl input{font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.fl textarea{resize:vertical;min-height:90px}
+.fb-err{color:var(--avoid);font-size:14px;margin:0}
+.fb .btnrow{display:flex;gap:8px;justify-content:flex-end}
+.fb .btn{flex:none;min-height:44px;padding:0 18px}
 .textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
 
 /* ---------- results ---------- */
@@ -452,6 +464,7 @@ canvas#map.pick{cursor:crosshair}
         </div>
         <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
         <p class="via" id="via"></p>
+        <button type="button" class="fb-link" id="fb-open" hidden>Un souci sur ce parcours ? Signaler un problème ou donner un avis</button>
       </div>
     </div>
 
@@ -521,6 +534,28 @@ canvas#map.pick{cursor:crosshair}
       <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
     </div>
   </main>
+  <dialog class="fb" id="fb" aria-labelledby="fb-t">
+    <form method="dialog" id="fb-form">
+      <h2 id="fb-t">Signaler un problème</h2>
+      <p class="hint">Ton message aide à améliorer RunParis. Il est lu par Antoine, l'auteur de l'app.</p>
+      <label class="fl">Type
+        <select name="type" id="fb-type">
+          <option>Passage impossible ou dangereux</option>
+          <option>Parcours bizarre ou trop long</option>
+          <option>Problème d'affichage ou bug</option>
+          <option>Idée d'amélioration</option>
+          <option>Autre</option>
+        </select>
+      </label>
+      <label class="fl">Message<textarea name="message" id="fb-msg" rows="4" placeholder="Ex. : au km 3,2 la grille du parc était fermée"></textarea></label>
+      <label class="fl">Ton e-mail (facultatif, pour te répondre)<input type="email" name="email" id="fb-mail" autocomplete="email"></label>
+      <label class="sw"><span>Joindre le parcours affiché</span><input type="checkbox" id="fb-route" checked></label>
+      <p class="fb-err" id="fb-err" hidden></p>
+      <div class="btnrow"><button type="button" class="btn ghost" id="fb-cancel">Annuler</button><button type="submit" class="btn primary" id="fb-send">Envoyer</button></div>
+    </form>
+  </dialog>
+  <!-- static copy of the form so that Netlify Forms detects it at deploy time -->
+  <form name="signalement" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="type"><textarea name="message"></textarea><input name="email"><textarea name="parcours"></textarea><input name="page"></form>
 </div>
 
 <script>

@@ -141,6 +141,7 @@ const Engine = (() => {
   // ---------- A* ----------
   let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
   // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
   function setWeights(w) { W = Object.assign({}, W, w); }
 
@@ -150,6 +151,7 @@ const Engine = (() => {
     let m = 1 + W.road[G.C[e]];
     const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
     if (W.green && G.GR) m -= W.green * G.GR[e];
+    if (W.dark && G.DK && G.DK[e]) m += W.dark; // at night, keep to lit streets
     let cost = L * m;
     const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
     cost += W.climb * up;
@@ -229,8 +231,8 @@ const Engine = (() => {
     }
     let overlap = 0; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
     up = smoothClimb(prof); dn = smoothClimb(prof.map(([d, z]) => [d, -z]));
-    let cemLen = 0, gl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; }
-    return { green: len ? gl / len : 0, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
+    let cemLen = 0, gl = 0, dl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; if (G.DK && G.DK[e]) dl += G.LEN[e]; }
+    return { green: len ? gl / len : 0, lit: G.DK && len ? 1 - dl / len : null, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
   }
 
   // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
@@ -272,6 +274,7 @@ const Engine = (() => {
     s += st.overlap * (opt.allowRepeat ? 0 : 120);
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
+    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
@@ -543,6 +546,6 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
