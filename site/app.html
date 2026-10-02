@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <meta charset="utf-8">
-<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, tracés des courses officielles.">
+<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#0D1014">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230D1014%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%234CC3FF%27 stroke-width=%273.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -332,7 +332,7 @@ canvas#map.pick{cursor:crosshair}
 
     <div class="tabs" role="tablist" aria-label="Mode">
       <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
-      <button role="tab" id="tab-race" aria-selected="false">Courses officielles</button>
+      <button role="tab" id="tab-race" aria-selected="false">Parcours mythiques</button>
     </div>
     <!-- ===== Réglages ===== -->
     <div class="pbody" id="view-set">
@@ -474,11 +474,11 @@ canvas#map.pick{cursor:crosshair}
       </div>
     </div>
 
-    <!-- ===== Courses officielles ===== -->
+    <!-- ===== Parcours mythiques ===== -->
     <div class="pbody" id="view-race" hidden>
-      <p class="hint">Les tracés des grandes courses parisiennes, pour s'entraîner dessus en entier ou en partie.</p>
-      <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les courses"></div>
-      <div class="alts" id="races" role="group" aria-label="Courses"></div>
+      <p class="hint">Les grands parcours de course de Paris, pour s'entraîner dessus en entier ou en partie.</p>
+      <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les parcours"></div>
+      <div class="alts" id="races" role="group" aria-label="Parcours mythiques"></div>
       <div id="race-detail" class="step" hidden>
         <p class="disclaim" id="race-desc"></p>
         <div class="portion">
@@ -1925,20 +1925,19 @@ const RACE_CATS = [['all', 'Toutes'], ['10', '10 km'], ['long', 'Semi et plus'],
 function renderRaces() {
   const box = $('#races'), det = $('#race-detail'); $('#view-race').appendChild(det); box.innerHTML = '';
   if (!RACES.length) { box.innerHTML = '<p class="hint">Tracés indisponibles (données non chargées).</p>'; return; }
-  const cat = S.raceCat || 'all', today = new Date().toISOString().slice(0, 10);
+  const cat = S.raceCat || 'all';
   const fb = $('#race-filter'); fb.innerHTML = '';
   for (const [k, lab] of RACE_CATS) { const n = k === 'all' ? RACES.length : RACES.filter(r => (r.cat === 'semi' ? 'long' : r.cat === 'trail' ? 'bois' : r.cat) === k).length; if (!n) continue;
     const c = document.createElement('button'); c.type = 'button'; c.textContent = `${lab} · ${n}`; c.setAttribute('aria-pressed', cat === k); c.onclick = () => { S.raceCat = k; renderRaces(); }; fb.appendChild(c); }
   const group = r => r.cat === 'semi' ? 'long' : r.cat === 'trail' ? 'bois' : r.cat;
   const list = RACES.filter(r => cat === 'all' || group(r) === cat || r === S.race);
-  const up = list.filter(r => (r.date || '') >= today).sort((a, b) => a.date < b.date ? -1 : 1), past = list.filter(r => (r.date || '') < today).sort((a, b) => a.date > b.date ? -1 : 1);
-  for (const race of up.concat(past)) {
-    const st = raceStats(race), isPast = (race.date || '') < today;
+  for (const race of list) {
+    const st = raceStats(race);
     const b = document.createElement('button'); b.type = 'button'; b.className = 'race'; b.setAttribute('aria-pressed', S.race === race);
     b.innerHTML = '<span class="k lbl"></span><span class="t"></span><span class="s"></span>';
-    b.querySelector('.k').textContent = race.edition; if (isPast) { const p = document.createElement('span'); p.className = 'past'; p.textContent = ' · passée, tracé conservé'; b.querySelector('.k').appendChild(p); }
+    b.querySelector('.k').textContent = { long: 'Longue distance', semi: 'Semi-marathon', bois: 'Bois', trail: 'Trail', '10': '10 km' }[race.cat] || '';
     b.querySelector('.t').textContent = race.name;
-    b.querySelector('.s').textContent = race.geom ? `${fmt(race.official, race.official % 1 ? 1 : 0)} km · tracé GPX ${race.year} · ${Math.round(st.up)} m D+` : `${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels · tracé reconstitué ${fmt(st.len / 1000)} km · ${Math.round(st.up)} m D+`;
+    b.querySelector('.s').textContent = `${fmt(race.official, race.official % 1 ? 1 : 0)} km · ${Math.round(st.up)} m D+`;
     b.onclick = () => { S.race = race; showRace(race); renderRaces(); track('course', race.name); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
     box.appendChild(b);
     if (S.race === race) box.appendChild(det); // the detail opens right under the chosen race
@@ -1958,7 +1957,7 @@ function showRace(race, from, to) {
   E.sightsOn(st, SIGHTS);
   S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null; S.baseNotes = [];
   $('#race-detail').hidden = false; $('#foot-res').hidden = false;
-  $('#race-desc').textContent = race.geom ? `${race.desc} Tracé de l'édition ${race.year} (${race.source}) : ${fmt(full.len / 1000)} km pour ${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels. Site : ${race.url.replace(/^https?:\/\//, '')}` : `${race.desc} Tracé reconstitué par RunParis à partir des descriptions publiées : il peut différer du parcours officiel (fermetures de voies, tunnels). Distance du tracé : ${fmt(full.len / 1000)} km pour ${fmt(race.official, race.official % 1 ? 1 : 0)} km officiels. Site : ${race.url.replace(/^https?:\/\//, '')}`;
+  $('#race-desc').textContent = `${race.desc} Tracé de ${fmt(full.len / 1000)} km pour ${fmt(race.official, race.official % 1 ? 1 : 0)} km de référence. Les conditions réelles (fermetures de voies, tunnels) peuvent différer.`;
   $('#p-from').value = Math.round(from * 10) / 10; $('#p-to').value = Math.round(to * 10) / 10; $('#p-to').max = $('#p-from').max = (Math.round(L / 100) / 10);
   const chips = $('#portion-chips'); chips.innerHTML = '';
   const Lk = L / 1000, opts = [['En entier', 0, Lk], ['5 premiers km', 0, 5], ['10 premiers km', 0, 10], ['5 derniers km', Lk - 5, Lk], ['La moitié', 0, Lk / 2]];
@@ -1968,7 +1967,7 @@ function showRace(race, from, to) {
   for (const [lab, a, b] of opts) { if (b > Lk + 0.01 || a < 0) continue; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = lab; btn.setAttribute('aria-pressed', Math.abs(a - from) < 0.05 && Math.abs(b - to) < 0.05); btn.onclick = () => showRace(race, a, b); chips.appendChild(btn); }
   const slot = $('#race-slot'); slot.appendChild($('#notes')); slot.appendChild($('#detail'));
   showRoute(st, from > 0.01 || to < Lk - 0.01 ? [`Portion du km ${fmt(from)} au km ${fmt(to)} : ${fmt(st.len / 1000)} km.`] : []);
-  $('#st-km-d').textContent = from > 0.01 || to < Lk - 0.01 ? 'portion' : `officiel ${fmt(race.official, race.official % 1 ? 1 : 0)}`; $('#st-km-d').className = 'delta';
+  $('#st-km-d').textContent = from > 0.01 || to < Lk - 0.01 ? 'portion' : `référence ${fmt(race.official, race.official % 1 ? 1 : 0)}`; $('#st-km-d').className = 'delta';
   $('#st-sig').textContent = '—'; $('#st-sig').title = 'Course : routes fermées à la circulation';
   drawProfile(st);
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of routePts(st)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
@@ -2276,14 +2275,14 @@ function gpx() {
   const r = S.route; if (!r) return null;
   const pts = routePts(r);
   const esc = s => s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
-  const name = S.tab === 'race' && S.race ? `${S.race.name} – ${S.race.geom ? 'tracé ' + S.race.year : 'tracé reconstitué RunParis'}, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `RunParis ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
+  const name = S.tab === 'race' && S.race ? `${S.race.name} – RunParis, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `RunParis ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
   const body = pts.map(([x, y]) => { const [la, lo] = E.toLL(x, y); return `<trkpt lat="${la.toFixed(6)}" lon="${lo.toFixed(6)}"></trkpt>`; }).join('\n      ');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="RunParis" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
 }
 $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
   try {
-    const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX course ' + S.race.name : 'GPX parcours');
+    const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX parcours mythique ' + S.race.name : 'GPX parcours');
     if (!window.claude) { // public site: a real .gpx file
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -2325,7 +2324,7 @@ $('#fb-form').onsubmit = async ev => {
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }
 };
-$('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Tracés des courses : organisateurs, WeRun, The Post Trace.', 7000);
+$('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Parcours mythiques : tracés issus de fichiers GPX publics.', 7000);
 // public site: the logo leads back to the welcome page
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 boot();

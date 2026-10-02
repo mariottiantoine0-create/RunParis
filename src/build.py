@@ -9,7 +9,7 @@ rd = lambda f: (src / f).read_text(encoding='utf-8')
 
 # 1. application
 meta = ('<!doctype html>\n<html lang="fr">\n<meta charset="utf-8">\n'
-        '<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, tracés des courses officielles.">\n'
+        '<meta name="description" content="RunParis génère des parcours de course dans Paris : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">\n'
         '<meta name="theme-color" content="#0D1014">\n'
         '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230D1014%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%234CC3FF%27 stroke-width=%273.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">\n')
 app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engine.js'))
