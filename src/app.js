@@ -8,10 +8,10 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 
 const S = {
   mode: 'loop', start: null, end: null, // {lat,lon,name}
-  dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false,
+  dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
-let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null;
+let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [];
 
 // ---------- loading ----------
 async function boot() {
@@ -20,9 +20,10 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft] = await Promise.all([fetch('green.txt').then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json').then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json').then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json').then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
+    FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     if (gr) E.setGreen(b64(gr)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
@@ -54,6 +55,24 @@ function routeTrees(r) {
   for (const [x, y] of P) { const cx = Math.round(x) >> 5, cy = Math.round(y) >> 5;
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const i of TGRID.get(gx * 4096 + gy) || []) if (!seen.has(i) && Math.hypot(TREES[i] - x, TREES[i + 1] - y) <= 10) seen.add(i); }
   return (r._trees = [...seen]);
+}
+// drinking fountains within 30 m of the route, with their position along it (m), and the longest stretch without water
+function routeFountains(r) {
+  if (!FONT.length) return null; if (r._font) return r._font;
+  const P = laneInfo(r).pts, hit = new Map(); let acc = 0;
+  for (let i = 0; i < P.length; i++) { if (i) acc += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]);
+    for (const f of FONT) { if (Math.abs(f.x - P[i][0]) > 30 || Math.abs(f.y - P[i][1]) > 30) continue; const d = Math.hypot(f.x - P[i][0], f.y - P[i][1]); if (d <= 30 && (!hit.has(f) || hit.get(f).d > d)) hit.set(f, { d, at: acc }); } }
+  const list = [...hit].map(([f, h]) => ({ f, at: h.at })).sort((a, b) => a.at - b.at);
+  // a fountain met twice (out and back) counts once, at its first pass
+  const seen = new Set(), uniq = list.filter(x => !seen.has(x.f) && seen.add(x.f));
+  let gap = 0, prev = 0; for (const x of uniq) { gap = Math.max(gap, x.at - prev); prev = x.at; } gap = Math.max(gap, r.len - prev);
+  const stops = []; for (const x of uniq) if (!stops.length || x.at - stops[stops.length - 1] > 400) stops.push(x.at); // fountains less than 400 m apart = one water stop
+  return (r._font = { list: uniq, gap, stops });
+}
+function drawDrop(sx, sy, r, hi) {
+  ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = hi ? colors.font : '#fff'; ctx.fill(); ctx.lineWidth = hi ? 2 : 1.5; ctx.strokeStyle = hi ? '#fff' : colors.font; ctx.stroke();
+  const k = r * 0.55; ctx.beginPath(); ctx.moveTo(sx, sy - k * 1.25); ctx.bezierCurveTo(sx + k * 0.9, sy - k * 0.2, sx + k * 0.95, sy + k * 0.95, sx, sy + k); ctx.bezierCurveTo(sx - k * 0.95, sy + k * 0.95, sx - k * 0.9, sy - k * 0.2, sx, sy - k * 1.25);
+  ctx.fillStyle = hi ? '#fff' : colors.font; ctx.fill();
 }
 // closest metro / RER station to a point (straight line, metres)
 function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
@@ -251,7 +270,7 @@ function drawMetro(hiOnly) {
 let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function render() {
   if (!G || !paths.minor) return;
-  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem') };
+  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem') };
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
   ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr);
   const px = v => v / V.s;
@@ -286,7 +305,10 @@ function render() {
     ctx.fill(); ctx.restore();
   }
   ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawLabels(); ctx.restore();
-  ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawMetro(false); ctx.restore();
+  ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawMetro(false);
+  if (S.showFont && V.s >= 0.03) { const r = V.s > 0.2 ? 6.5 : V.s > 0.08 ? 4.5 : 2.5; for (const f of FONT) { const sx = f.x * V.s + V.tx, sy = f.y * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
+    if (r < 3) { ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.font; ctx.fill(); } else drawDrop(sx, sy, r, false); } }
+  ctx.restore();
   // route
   const R = S.route;
   if (R && S.alts && S.alts.length > 1) {
@@ -354,6 +376,7 @@ function render() {
     ctx.globalAlpha = 1;
   }
   drawMetro(true);
+  if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
   // pins
   const pin = (p, label, col) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
   if (R && S.alts) for (const a of S.alts) if (a !== R && a._label) {
@@ -539,6 +562,7 @@ seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checke
 $('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
 $('#show-sig').onclick = e => { S.showSig = !S.showSig; e.currentTarget.setAttribute('aria-pressed', S.showSig); draw(); };
 $('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setAttribute('aria-pressed', S.showMetro); draw(); };
+$('#ly-font').onclick = e => { S.showFont = !S.showFont; e.currentTarget.setAttribute('aria-pressed', S.showFont); draw(); };
 $('#ly-trees').onclick = e => { S.showTrees = !S.showTrees; e.currentTarget.setAttribute('aria-pressed', S.showTrees); if (S.showTrees && !TREES) toast('Arbres en cours de chargement…'); draw(); };
 $('#end-metro').onchange = () => markStale();
 searchBox($('#start-q'), $('#start-res'), h => { setPoint('start', h); fitRoute(true); if (!$('#start-box').hidden) $('#change-start').click(); });
@@ -753,7 +777,7 @@ function renderSummary() {
   const f = ['feux ignorés', 'feux limités', 'feux évités au max'][S.sig];
   const n = S.exclQ.size ? `${S.exclQ.size} quartier${S.exclQ.size > 1 ? 's' : ''} évité${S.exclQ.size > 1 ? 's' : ''}` : '';
   const pl = S.places.length ? `${S.places.length} lieu${S.places.length > 1 ? 'x' : ''} évité${S.places.length > 1 ? 's' : ''}` : '';
-  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : ''].filter(Boolean).join(' · ');
+  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : ''].filter(Boolean).join(' · ');
 }
 new ResizeObserver(resize).observe(cv);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
@@ -821,6 +845,10 @@ async function generate(isAgain) {
     const green = S.kind === 'green';
     E.setWeights({ climb, sig: [0, 150, 450][S.sig], path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] });
     const opt = { seed: S.seed * 7919 + 13, sigScore: [0, 0.5, 1.5][S.sig], dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
+    if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
+      const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
+      opt.water = { set, pts, every: 3000 };
+    }
     const ab = S.mode === 'ab', A = ab ? 'A' : 'le départ';
     const [sx, sy] = E.toXY(S.start.lat, S.start.lon);
     const s = E.nearest(sx, sy);
@@ -972,6 +1000,15 @@ function showRoute(r, notes) {
   if (r.sightsN) sp.appendChild(document.createTextNode(` · Lieux : ${r.sights.join(', ')}`));
   const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
   $('#via').appendChild(sp);
+  // drinking water along the way
+  const rf = routeFountains(r);
+  if (rf) { const box = document.createElement('div'); box.className = 'water-box';
+    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Points d’eau'; box.appendChild(l);
+    const t = document.createElement('span');
+    if (!rf.list.length) t.textContent = 'Aucune fontaine à moins de 30 m du parcours : pense à emporter de l’eau.';
+    else { t.innerHTML = `<strong></strong> · km ${rf.stops.slice(0, 10).map(a => fmt(a / 1000)).join(' · ')}${rf.stops.length > 10 ? '…' : ''}`; t.querySelector('strong').textContent = `${rf.list.length} fontaine${rf.list.length > 1 ? 's' : ''}, ${rf.stops.length} point${rf.stops.length > 1 ? 's' : ''} d’eau`;
+      if (r.len > 4000) { const g = document.createElement('small'); g.textContent = `Plus long passage sans eau : ${fmt(rf.gap / 1000)} km. Certaines fontaines sont coupées en hiver.`; t.appendChild(g); } }
+    box.appendChild(t); $('#via').appendChild(box); }
   // one-way routes: nearest metro / RER at the arrival, to get back home
   const P = routePts(r), a = P[0], b = P[P.length - 1]; r._metroEnd = null;
   if (METRO.st.length && Math.hypot(b[0] - a[0], b[1] - a[1]) > 300) {

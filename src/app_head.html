@@ -8,7 +8,7 @@
   color-scheme:light;
   --bg:#F5F7F9; --panel:#FFFFFF; --field:#F5F7F9; --ink:#111820; --muted:#5B6672; --line:#DCE1E6; --soft:#EEF1F4;
   --accent:#0B6FB8; --accent-ink:#FFFFFF; --accent-fill:rgba(11,111,184,.10);
-  --route:#0B6FB8; --route-2:#7B3FD0; --route-casing:#FFFFFF; --tree:#2F8F4E; --metro-bg:#FFFFFF; --metro-ink:#1B2430; --metro-ring:#1B2430;
+  --route:#0B6FB8; --route-2:#7B3FD0; --route-casing:#FFFFFF; --tree:#2F8F4E; --font:#1677D2; --metro-bg:#FFFFFF; --metro-ink:#1B2430; --metro-ring:#1B2430;
   --street:#D3D9DF; --street-major:#AEB7C0; --street-path:#7FB08F; --quart:#C5CCD3;
   --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.14); --sig:#C27A00; --pin-b:#E0584A;
   --good:#1E8E4F; --water:#CFE2EE; --green:#DDEBD8; --cem:#D5DCD2; --station:#8A93A0; --station-fill:rgba(110,116,128,.16); --label:#4A5561; --warn:#A86A12;
@@ -24,7 +24,7 @@
     color-scheme:dark;
     --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
     --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
-    --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+    --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --font:#3A9BFF; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
     --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
     --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
     --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
@@ -36,7 +36,7 @@
   color-scheme:dark;
   --bg:#0D1014; --panel:#151A20; --field:#0D1014; --ink:#E8EDF2; --muted:#8B96A3; --line:#262E37; --soft:#1C232B;
   --accent:#4CC3FF; --accent-ink:#06131C; --accent-fill:rgba(76,195,255,.12);
-  --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
+  --route:#4CC3FF; --route-2:#C79BFF; --route-casing:#0D1014; --tree:#3FB565; --font:#3A9BFF; --metro-bg:#0D1014; --metro-ink:#E8EDF2; --metro-ring:#E8EDF2;
   --street:#232B33; --street-major:#3A4652; --street-path:#2F5A45; --quart:#2A333C;
   --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#FF7A6B;
   --good:#4ADE80; --water:#12263A; --green:#14241B; --cem:#1B2126; --station:#6B7682; --station-fill:rgba(139,150,163,.14); --label:#7F8B98; --warn:#FFB020;
@@ -220,6 +220,10 @@ canvas#map.pick{cursor:crosshair}
 .ld.metro,.lg.metrol{background:var(--metro-bg);color:var(--metro-ink);border:2px solid var(--metro-ring)}
 .ld.tree{background:var(--tree);width:12px;height:12px;margin:0 3px}
 .ld.sigd{background:var(--sig);width:12px;height:12px;margin:0 3px}
+.ld.font,.lg.fontl{background:var(--font);border:2px solid #fff;width:14px;height:14px;margin:0 2px;box-sizing:border-box}
+.lg.fontl{width:16px;height:16px;border-radius:50%;margin:0 3px}
+.water-box{display:flex;flex-direction:column;gap:2px;margin-top:8px;font-size:14px;color:var(--ink)}
+.water-box small{display:block;color:var(--muted);font-size:12.5px}
 .lg.treel{width:10px;height:10px;border-radius:50%;background:var(--tree);margin:0 6px}
 .lg.metrol{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;margin:0 2px;box-sizing:border-box}
 .metro-end{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:14px;color:var(--ink)}
@@ -393,6 +397,7 @@ canvas#map.pick{cursor:crosshair}
         </div>
         <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
         <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
+        <label class="sw">Points d'eau réguliers (≈ tous les 3 km)<input type="checkbox" id="water-on"></label>
       </section>
 
       <section class="step" aria-labelledby="h-eviter">
@@ -475,6 +480,7 @@ canvas#map.pick{cursor:crosshair}
       <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
       <div class="layers" role="group" aria-label="Afficher sur la carte">
         <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
+        <button type="button" id="ly-font" aria-pressed="false"><i class="ld font"></i>Fontaines</button>
         <button type="button" id="ly-trees" aria-pressed="false"><i class="ld tree"></i>Arbres</button>
         <button type="button" id="show-sig" aria-pressed="false"><i class="ld sigd"></i>Feux</button>
       </div>
@@ -493,6 +499,7 @@ canvas#map.pick{cursor:crosshair}
           <li><span class="lg dash"></span>Autres propositions</li>
           <li><span class="lg km">1</span>Borne kilométrique</li>
           <li><span class="lg sig"></span>Feu sur le parcours</li>
+          <li><span class="lg fontl"></span>Fontaine à eau sur le parcours</li>
           <li><span class="lg treel"></span>Arbre le long du parcours</li>
           <li><span class="lg metrol">M</span>Station de métro ou RER</li>
           <li><span class="lg zone"></span>Zone ou lieu évité</li>

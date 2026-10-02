@@ -102,6 +102,11 @@ section{padding:96px 0}
 .steps li::before{content:"0" counter(s);display:block;font-family:var(--f-display);font-weight:800;font-size:56px;line-height:1;color:var(--accent);margin-bottom:10px}
 .steps h3{font-family:var(--f-cond);font-weight:800;font-size:22px;margin:0 0 6px}
 .steps p{margin:0;color:var(--muted)}
+.osm{display:flex;gap:18px;align-items:flex-start;border:1px solid var(--line);border-radius:16px;padding:22px 24px;background:var(--panel)}
+.osm svg{flex:none;width:36px;height:36px;color:var(--accent);margin-top:2px}
+.osm h3{font-family:var(--f-cond);font-weight:800;font-size:20px;margin:0 0 6px}
+.osm p{margin:0;color:var(--muted);font-size:15.5px}
+.osm a{color:var(--accent)}
 .final{text-align:center;padding:110px 0}
 .final .sec-h{max-width:14ch;margin:0 auto 18px}
 .final .sec-p{margin:0 auto 34px}
@@ -158,7 +163,7 @@ footer p{margin:0;max-width:62em}
     <div class="wrap">
       <p class="kicker">Bienvenue sur RunParis</p>
       <h1 id="titre">Ton prochain parcours, <em>tracé pour toi.</em></h1>
-      <p class="lede">Dis combien de kilomètres, d'où tu pars et ce que tu veux éviter : RunParis te propose <strong>trois parcours prêts à courir</strong> dans Paris, avec le dénivelé que tu veux, le moins de feux rouges possible et un métro pas loin pour rentrer.</p>
+      <p class="lede">Dis combien de kilomètres, d'où tu pars et ce que tu veux éviter : RunParis te propose <strong>trois parcours prêts à courir</strong> dans Paris, avec le dénivelé que tu veux, le moins de feux rouges possible, des fontaines pour boire en route et un métro pas loin pour rentrer.</p>
       <div class="ctas">
         <a class="btn primary" href="app.html">Générer mon parcours <span class="arr" aria-hidden="true">→</span></a>
         <a class="btn ghost" href="app.html#courses">Courir une course officielle</a>
@@ -167,6 +172,7 @@ footer p{margin:0;max-width:62em}
         <li><b>5 500 km</b><span>de rues connues</span></li>
         <li><b>2 496</b><span>carrefours à feux</span></li>
         <li><b>159 000</b><span>arbres recensés</span></li>
+        <li><b>1 088</b><span>fontaines à eau</span></li>
         <li><b>16</b><span>courses officielles</span></li>
       </ul>
     </div>
@@ -177,12 +183,12 @@ footer p{margin:0;max-width:62em}
       <h2 class="sec-h" id="t-fonctions">Fait pour courir à Paris</h2>
       <p class="sec-p">Pas une carte du monde entier : RunParis connaît les côtes de Montmartre, les quais, les parcs, les gares et chaque carrefour à feux de la ville.</p>
       <div class="grid">
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 3-7 7-8s5-5 9-6"/><circle cx="4" cy="18" r="2"/></svg></div><h3>Boucle, A → B ou aller simple</h3><p>Reviens à ton point de départ, va au travail en courant, ou pars droit devant à la distance voulue.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 3-7 7-8s5-5 9-6"/><circle cx="4" cy="18" r="2"/></svg></div><h3>Boucle, A → B ou aller simple</h3><p>Reviens à ton point de départ, va au travail en courant, ou pars droit devant et finis à une station de métro pour rentrer.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l6-9 4 5 3-4 5 8z"/></svg></div><h3>Le dénivelé que tu veux</h3><p>Plat pour un fractionné, vallonné pour préparer un trail : le profil s'affiche avant de partir.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2.5" width="8" height="19" rx="3"/><circle cx="12" cy="7.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="16.5" r="1.6"/></svg></div><h3>Moins de feux rouges</h3><p>Le parcours évite les carrefours à feux pour courir sans t'arrêter tous les 200 mètres.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15c-4 0-7-2.5-7-6a7 7 0 0 1 14 0c0 3.5-3 6-7 6z"/></svg></div><h3>Vert ou découverte</h3><p>Passe par les parcs, les quais et les rues arborées, ou devant les monuments et lieux connus.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></div><h3>Évite ce que tu veux</h3><p>Un arrondissement, un quartier, un lieu bondé : il n'y passe pas. Gares et quais de métro toujours exclus.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 16V8l4 5 4-5v8"/></svg></div><h3>Un métro pour rentrer</h3><p>En aller simple, le parcours finit près d'une station de métro ou de RER, lignes affichées.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3.5 4.5 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.5 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><h3>De l'eau en route</h3><p>Les fontaines du parcours sont affichées avec leur kilomètre, et tu peux demander un point d'eau environ tous les 3 km.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></div><h3>Les courses officielles</h3><p>Marathon, Semi, 20 km, Urban Trail de Montmartre… Entraîne-toi sur le vrai tracé, en entier ou en partie.</p></article>
         <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M12 8v6m-3-3l3 3 3-3"/></svg></div><h3>Dans ta montre</h3><p>Exporte le parcours en GPX pour ta montre, Strava ou Komoot, et pars courir.</p></article>
       </div>
@@ -198,7 +204,13 @@ footer p{margin:0;max-width:62em}
         <li><h3>Combien ?</h3><p>Une distance ou une durée : 5 km, 45 minutes, un semi…</p></li>
         <li><h3>Comment ?</h3><p>Plat ou vallonné, au vert, devant les monuments, en évitant ce que tu veux.</p></li>
       </ol>
-      <a class="btn primary" href="app.html">Générer mon parcours <span class="arr" aria-hidden="true">→</span></a>
+      <aside class="osm" aria-labelledby="t-osm">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+        <div>
+          <h3 id="t-osm">Construit avec les données ouvertes d'OpenStreetMap</h3>
+          <p>Les rues, les arbres, les fontaines, les parcs et les stations viennent d'<a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>, la carte du monde réalisée par des milliers de bénévoles. Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, sous licence ODbL. Altitudes : IGN. Quartiers : Paris Open Data. Une fontaine manque ? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Ajoute-la sur OpenStreetMap</a>, elle apparaîtra ici à la prochaine mise à jour.</p>
+        </div>
+      </aside>
     </div>
   </section>
 

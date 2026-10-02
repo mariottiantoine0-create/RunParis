@@ -252,6 +252,16 @@ const Engine = (() => {
 
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
+  // ---------- drinking water: longest stretch between street nodes that sit next to a fountain ----------
+  function waterGap(st, set) {
+    let acc = 0, prev = 0, gap = 0;
+    for (const [e, fromA] of st.edges) { acc += G.LEN[e]; const v = fromA ? G.eb[e] : G.ea[e]; if (set.has(v)) { gap = Math.max(gap, acc - prev); prev = acc; } }
+    return Math.max(gap, acc - prev);
+  }
+  function waterSnap(x, y, opt, R = 550) { // fountain node closest to a planned waypoint
+    let b = -1, bd = R; for (const q of opt.water.pts) { const d = Math.abs(q.x - x) + Math.abs(q.y - y); if (d < bd * 1.4 && Math.hypot(q.x - x, q.y - y) < bd) { bd = Math.hypot(q.x - x, q.y - y); b = q.n; } }
+    return b;
+  }
   function score(st, target, opt) {
     const de = Math.abs(st.len - target) / target;
     let s = de * 200 + (de > 0.05 ? 40 : 0);
@@ -261,6 +271,7 @@ const Engine = (() => {
     s += st.overlap * (opt.allowRepeat ? 0 : 120);
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
+    if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
 
@@ -292,7 +303,8 @@ const Engine = (() => {
       const wps = [];
       for (let k = 1; k <= nW; k++) {
         const ang = theta + Math.PI + k * 2 * Math.PI / n + jit[k - 1][0], rr = R * jit[k - 1][1];
-        wps.push(nearest(cx + rr * Math.cos(ang), cy + rr * Math.sin(ang), opt.hill ? { hillRadius: Math.min(450, R * 0.5) } : opt.green ? { greenRadius: Math.min(500, R * 0.5) } : {}));
+        const px = cx + rr * Math.cos(ang), py = cy + rr * Math.sin(ang), ws = opt.water ? waterSnap(px, py, opt) : -1;
+        wps.push(ws >= 0 ? ws : nearest(px, py, opt.hill ? { hillRadius: Math.min(450, R * 0.5) } : opt.green ? { greenRadius: Math.min(500, R * 0.5) } : {}));
       }
       const r = routeThrough([start, ...wps, start]); if (!r) break;
       const st = stats(r, start); st.kind = 'boucle';
@@ -337,7 +349,7 @@ const Engine = (() => {
       let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
       let st;
       if (c < NC) {
-        const nW = rng() < 0.55 ? 2 : 3;
+        let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // more waypoints = more water stops
         if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
         st = candidateLoop(start, target, opt, rng, theta, nW);
       } else {
@@ -367,7 +379,8 @@ const Engine = (() => {
       let cb = null;
       for (let it = 0; it < 4; it++) {
         const mx = ax + (bx - ax) * along, my = ay + (by - ay) * along;
-        const w = nearest(mx - uy * h * side, my + ux * h * side, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
+        const wx = mx - uy * h * side, wy = my + ux * h * side, wsn = opt.water ? waterSnap(wx, wy, opt) : -1;
+        const w = wsn >= 0 ? wsn : nearest(wx, wy, opt.hill ? { hillRadius: 400 } : opt.green ? { greenRadius: 450 } : {});
         const r = routeThrough([A, w, B]); if (!r) break;
         const st = stats(r, A); st.kind = 'a-b';
         if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
@@ -390,7 +403,7 @@ const Engine = (() => {
       let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
       if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
       let D = target / 1.3, cb = null;
-      const legs = Math.max(1, Math.ceil(D / 6000)); // Paris is ~12 km wide: long one-ways zigzag through waypoints
+      const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // Paris is ~12 km wide: long one-ways zigzag through waypoints
       const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
       for (let it = 0; it < 4; it++) {
         const pts = [A]; let x = ax, y = ay, th = theta;
@@ -398,6 +411,7 @@ const Engine = (() => {
           th += turns[k]; const step = D / legs;
           x = Math.max(300, Math.min(G.maxX - 300, x + step * Math.cos(th))); y = Math.max(300, Math.min(G.maxY - 300, y + step * Math.sin(th)));
           let n = nearest(x, y, opt.hill && k === legs - 1 ? { hillRadius: 400 } : {});
+          if (opt.water && (k < legs - 1 || !opt.endNodes)) { const ws = waterSnap(x, y, opt); if (ws >= 0) n = ws; }
           if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finish at a metro / RER station near the planned end
             let bd = 1e9, bn = -1; for (const q of opt.endNodes) { const dd = Math.hypot(q.x - x, q.y - y); if (dd < bd) { bd = dd; bn = q.n; } }
             if (bn >= 0 && bd < 1500) n = bn;
