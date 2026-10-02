@@ -2,7 +2,9 @@
 
 Génère des parcours de course à pied dans Paris en quelques secondes : la distance voulue, le dénivelé voulu, en évitant les quartiers ou lieux de ton choix et en limitant les feux rouges.
 
-**Site :** _(lien Netlify à ajouter)_
+**Site : [runparis.netlify.app](https://runparis.netlify.app)**
+
+![RunParis](site/og.jpg)
 
 ## Ce que fait l'app
 
