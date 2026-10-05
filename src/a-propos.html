@@ -16,6 +16,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">
+<script>try{const t=localStorage.getItem("runparis-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
@@ -30,12 +31,19 @@
   --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
   --ring:0 0 0 2px var(--bg),0 0 0 4px var(--accent);
 }
-@media (prefers-color-scheme: dark){:root{
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   color-scheme:dark;
   --bg:#0F1114; --bg2:#171A1F; --panel:#171A1F; --field:#22262C; --soft:#2A2E35; --ink:#F2F3F5; --muted:#9AA0A8; --line:#2E333A;
   --accent:#7B96FF; --accent-hover:#95ABFF; --accent-press:#AFC0FF; --accent-ink:#0B0B0C; --accent-fill:#1E2540;
   --map-street:#262A30; --map-major:#3B414A; --map-minor:#1B1E23; --map-water:#16222D; --map-green:#17211A; --route-casing:#121417;
 }}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1114; --bg2:#171A1F; --panel:#171A1F; --field:#22262C; --soft:#2A2E35; --ink:#F2F3F5; --muted:#9AA0A8; --line:#2E333A;
+  --accent:#7B96FF; --accent-hover:#95ABFF; --accent-press:#AFC0FF; --accent-ink:#0B0B0C; --accent-fill:#1E2540;
+  --map-street:#262A30; --map-major:#3B414A; --map-minor:#1B1E23; --map-water:#16222D; --map-green:#17211A; --route-casing:#121417;
+}
+:root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
@@ -142,6 +150,17 @@ footer p{margin:0;max-width:62em}
   .final{padding:64px 0}
 }
 @media (prefers-reduced-motion:reduce){.m-route{animation:none;stroke-dashoffset:0}.m-km{animation:none;opacity:1}html{scroll-behavior:auto}.btn{transition:none}}
+
+/* choix du thème, partagé avec l'app (runparis-theme) */
+.th{position:relative}
+.th-btn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;cursor:pointer;padding:0}
+.th-btn:hover{border-color:var(--ink)}
+.th-btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.th-pop{position:absolute;right:0;top:48px;z-index:20;background:var(--panel);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.14),0 0 0 1px var(--line);padding:10px;display:flex;flex-direction:column;gap:8px;width:230px}
+.th-pop span{font-weight:700;font-size:13px;color:var(--muted)}
+.th-seg{display:flex;background:var(--field);border-radius:4px;padding:3px;gap:3px}
+.th-seg button{flex:1;height:36px;border:0;background:none;border-radius:4px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
+.th-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 </style>
 
 <header>
@@ -152,6 +171,7 @@ footer p{margin:0;max-width:62em}
       <a href="#comment">Comment ça marche</a>
       <a href="app.html#courses">Parcours mythiques</a>
       <a class="btn primary" href="./">Générer</a>
+      <div class="th"><button type="button" class="th-btn" id="th-btn" aria-label="Apparence" aria-expanded="false" title="Apparence"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button><div class="th-pop" id="th-pop" hidden role="group" aria-label="Apparence"><span>Apparence</span><div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div></div></div>
     </nav>
   </div>
 </header>
@@ -243,6 +263,17 @@ footer p{margin:0;max-width:62em}
 <script>
 // anonymous audience measurement, no cookie (public site only)
 if (location.hostname === 'runparis.netlify.app') { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
+// thème : Auto / Clair / Sombre, même réglage que l'app
+(() => {
+  const btn = document.getElementById('th-btn'), pop = document.getElementById('th-pop'), root = document.documentElement;
+  let cur = 'auto'; try { cur = localStorage.getItem('runparis-theme') || 'auto'; } catch (e) {}
+  const set = t => { cur = t; if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t); try { localStorage.setItem('runparis-theme', t); } catch (e) {} pop.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t)); };
+  set(cur);
+  btn.onclick = e => { e.stopPropagation(); pop.hidden = !pop.hidden; btn.setAttribute('aria-expanded', !pop.hidden); };
+  pop.querySelectorAll('button').forEach(b => b.onclick = () => set(b.dataset.t));
+  document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; btn.setAttribute('aria-expanded', false); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { pop.hidden = true; btn.setAttribute('aria-expanded', false); btn.focus(); } });
+})();
 // km markers appear as the route is drawn
 (() => {
   const p = document.querySelector('.m-route'); if (!p || !p.getTotalLength) return;
