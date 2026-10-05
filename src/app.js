@@ -326,7 +326,7 @@ function setSheet(st, refit) {
 }
 (() => {
   let d = null; const panel = $('.panel');
-  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn, a.logo')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
   const move = e => { if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 4) d.moved = true; const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, d.h - dy)) + 'px'); };
   const end = () => { if (!d) return; panel.classList.remove('dragging'); const h = panel.getBoundingClientRect().height, hs = sheetHeights();
     if (!d.moved) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true);

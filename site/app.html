@@ -475,7 +475,7 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
   <aside class="panel" aria-label="Réglages et résultats">
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
-      <div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>
+      <a class="logo" href="./" aria-label="RunParis, retour à l’accueil" title="Retour à l’accueil">RUN<span>PARIS</span></a>
       <button class="iconbtn" id="theme-btn" aria-label="Apparence" aria-expanded="false" title="Apparence">◐</button>
     </div>
     <div class="themepop" id="themepop" hidden role="group" aria-label="Apparence">
@@ -1604,7 +1604,7 @@ function setSheet(st, refit) {
 }
 (() => {
   let d = null; const panel = $('.panel');
-  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn, a.logo')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
   const move = e => { if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 4) d.moved = true; const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, d.h - dy)) + 'px'); };
   const end = () => { if (!d) return; panel.classList.remove('dragging'); const h = panel.getBoundingClientRect().height, hs = sheetHeights();
     if (!d.moved) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true);
