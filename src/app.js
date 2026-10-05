@@ -172,10 +172,12 @@ function buildSearch() {
   for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
   // streets: centroid of longest edge per name
   const best = new Map();
-  for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e]; const b = best.get(n); if (!b || L > b[0]) best.set(n, [L, e]); }
-  for (const [n, [, e]] of best) {
+  // one entry per street name and town (the same name exists in several communes)
+  const town = e => { const q = M.quartiers[G.nq[G.ea[e]] - 1]; return q && q.ar > 100 ? q.name : ''; };
+  for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e], key = n + '|' + town(e); const b = best.get(key); if (!b || L > b[0]) best.set(key, [L, e, n]); }
+  for (const [key, [, e, n]] of best) {
     const a = G.ea[e], b = G.eb[e]; const [la, lo] = E.toLL((G.NX[a] + G.NX[b]) / 2, (G.NY[a] + G.NY[b]) / 2);
-    const name = M.names[n - 1]; IDX.push({ name, type: 'Rue', lat: la, lon: lo, k: norm(name) });
+    const name = M.names[n - 1], tw = key.split('|')[1]; IDX.push({ name, type: tw ? 'Rue · ' + tw : 'Rue', lat: la, lon: lo, k: norm(name + (tw ? ' ' + tw : '')) });
   }
 }
 function searchBox(inp, res, onPick) {
@@ -183,9 +185,9 @@ function searchBox(inp, res, onPick) {
     const q = norm(inp.value.trim()); if (q.length < 2) { res.hidden = true; return; }
     const words = q.split(/\s+/);
     const hits = IDX.filter(x => words.every(w => x.k.includes(w)))
-      .sort((a, b) => (a.k.startsWith(q) ? 0 : 1) - (b.k.startsWith(q) ? 0 : 1) || (a.type === 'Rue') - (b.type === 'Rue') || a.name.length - b.name.length).slice(0, 8);
+      .sort((a, b) => (a.k.startsWith(q) ? 0 : 1) - (b.k.startsWith(q) ? 0 : 1) || a.type.startsWith('Rue') - b.type.startsWith('Rue') || a.name.length - b.name.length).slice(0, 8);
     res.innerHTML = '';
-    if (!hits.length) { res.innerHTML = '<button disabled>Aucun résultat dans Paris</button>'; res.hidden = false; return; }
+    if (!hits.length) { res.innerHTML = '<button disabled>Aucun résultat sur la carte</button>'; res.hidden = false; return; }
     for (const h of hits) { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `<span></span><em></em>`; b.firstChild.textContent = h.name; b.lastChild.textContent = h.type; b.onclick = () => { onPick(h); inp.value = ''; res.hidden = true; }; res.appendChild(b); }
     res.hidden = false;
   };
@@ -208,6 +210,18 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
+  // neighbouring communes: one zone each
+  const cs = M.quartiers.filter(q => q.ar > 100);
+  if (cs.length) {
+    const h = document.createElement('div'); h.className = 'ah'; h.textContent = 'Communes voisines'; ql.appendChild(h);
+    for (const q of cs) {
+      const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" data-q="${q.id}"><span></span>`; l.lastChild.textContent = q.name;
+      l.firstChild.onchange = e => { e.target.checked ? S.exclQ.add(q.id) : S.exclQ.delete(q.id); zonesChanged(); };
+      ql.appendChild(l);
+    }
+  }
+  // initial view: Paris itself (the graph also covers the neighbouring communes)
+  { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of M.quartiers) if (q.ar <= 20) for (const [la, lo] of q.rings[0]) { const [x, y] = E.toXY(la, lo); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (x1 > x0) M.parisB = [x0, y0, x1, y1]; }
   // centroids of arrondissements for labels
   M.arrC = {};
   for (const q of M.quartiers) { const r = q.rings[0]; let x = 0, y = 0; for (const [la, lo] of r) { const p = E.toXY(la, lo); x += p[0]; y += p[1]; } const c = M.arrC[q.ar] || [0, 0, 0]; c[0] += x / r.length; c[1] += y / r.length; c[2]++; M.arrC[q.ar] = c; }
@@ -242,6 +256,7 @@ function renderAvoid() {
     if (ex.length === qs.length) mk(a === 1 ? '1er arr.' : a + 'e arr.', () => toggleArr(a));
     else for (const q of ex) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
   }
+  if (M) for (const q of M.quartiers) if (q.ar > 100 && S.exclQ.has(q.id)) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
   S.places.forEach((p, i) => {
     const c = mk(p.name, () => { S.places.splice(i, 1); renderPlaces(); draw(); }, `<select aria-label="Rayon d'évitement">${[100, 150, 300, 500].map(r => `<option value="${r}" ${r === p.r ? 'selected' : ''}>${r} m</option>`).join('')}</select>`);
     c.querySelector('select').onchange = e => { p.r = +e.target.value; markStale(); draw(); };
@@ -325,7 +340,7 @@ function raceBounds() { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const
 function fit(bounds) {
   const r = cv.getBoundingClientRect(); W = r.width || 800; H = r.height || 600;
   const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // on phones, fit into the map area left visible above the sheet
-  const [x0, y0, x1, y1] = bounds || [0, 0, G.maxX, G.maxY];
+  const [x0, y0, x1, y1] = bounds || M.parisB || [0, 0, G.maxX, G.maxY];
   const pad = MOB.matches ? 18 : 30; V.s = Math.min((W - 2 * pad - (MOB.matches ? 50 : 0)) / (x1 - x0 || 1), (Hv - 2 * pad - top) / (y1 - y0 || 1));
   V.tx = (W - (MOB.matches ? 50 : 0)) / 2 - (x0 + x1) / 2 * V.s; V.ty = (Hv + top) / 2 - (y0 + y1) / 2 * V.s; draw();
 }
@@ -457,7 +472,7 @@ function render() {
   // arrondissement numbers when zoomed out
   if (V.s < 0.12 && M.arrC) {
     ctx.font = `600 ${V.s < 0.07 ? 13 : 16}px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
-    for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
+    for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a > 100) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
     ctx.globalAlpha = 1;
   }
   drawMetro(true);
@@ -560,12 +575,12 @@ function click(sx, sy) {
   const q = M.quartiers.find(q => q.rings.some(r => pip([lat, lon], r)));
   const t = S.tool;
   if (t === 'start' || t === 'end') {
-    if (!q) return toast('Choisis un point dans Paris.');
+    if (!q) return toast('Choisis un point sur la carte (Paris et communes voisines).');
     setPoint(t, { lat, lon, name: `Point sur la carte · ${q.name}` }); setTool(null); generate(); return;
   }
-  if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast('Choisis un point dans Paris.');
-  if (t === 'via') { if (!q) return toast('Choisis un point dans Paris.'); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
-  if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name} (${q.ar}${q.ar === 1 ? 'er' : 'e'}) ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
+  if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast('Choisis un point sur la carte (Paris et communes voisines).');
+  if (t === 'via') { if (!q) return toast('Choisis un point sur la carte (Paris et communes voisines).'); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
+  if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name}${q.ar > 100 ? '' : ` (${q.ar}${q.ar === 1 ? 'er' : 'e'})`} ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
   if (t === 'place') { S.places.push({ lat, lon, r: 150, name: `Point · ${q.name}` }); renderPlaces(); draw(); toast('Lieu évité (150 m). Rayon modifiable dans « À éviter ».'); return; }
 }
 function setTool(t) {
@@ -920,7 +935,7 @@ async function generate(isAgain) {
   let dplus = null;
   if (S.dmode === 'target') { const d = readDplus(); if (d.err) { fail([{ t: d.err, err: true }]); return; } if (d.info) notes.push(d.info); dplus = d.dplus; }
   if (S.mode === 'ab' && !S.endFree && !S.end) { fail([{ t: 'Choisis le lieu d’arrivée, ou choisis « N’importe où ».', err: true }]); return; }
-  if (S.exclQ.size >= M.quartiers.length) { fail([{ t: 'Tu as exclu tout Paris. Réautorise au moins un arrondissement ou un quartier.', err: true }]); return; }
+  if (S.exclQ.size >= M.quartiers.length) { fail([{ t: 'Tu as exclu toute la carte. Réautorise au moins un arrondissement, un quartier ou une commune.', err: true }]); return; }
 
   busy = true; $('#gen').disabled = true; $('#again').disabled = true; $('#recalc').disabled = true; $('#gen').textContent = 'Calcul en cours…'; $('#again').textContent = 'Calcul en cours…';
   const bar = $('#bar'); bar.style.width = '5%';
@@ -1096,7 +1111,7 @@ function showRoute(r, notes) {
   const top = [...r.names].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([i]) => M.names[i]);
   const arrs = [...new Set([...r.quart.keys()].map(q => M.quartiers[q - 1]?.ar).filter(Boolean))].sort((a, b) => a - b);
   $('#via').innerHTML = ''; const sp = document.createElement('span');
-  sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
+  sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a > 100 ? M.quartiers.find(q => q.ar === a).name : a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
   if (r.green != null && G.GR) sp.appendChild(document.createTextNode(` · ${Math.round(r.green * 100)} % du parcours au vert (parcs, rues arborées)`));
   if (r.sightsN) sp.appendChild(document.createTextNode(` · Lieux : ${r.sights.join(', ')}`));
   if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));

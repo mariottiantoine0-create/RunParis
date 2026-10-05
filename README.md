@@ -1,6 +1,6 @@
 # RunParis
 
-Génère des parcours de course à pied dans Paris en quelques secondes : la distance voulue, le dénivelé voulu, en évitant les quartiers ou lieux de ton choix et en limitant les feux rouges.
+Génère des parcours de course à pied dans Paris et les 29 communes qui la bordent, en quelques secondes : la distance voulue, le dénivelé voulu, en évitant les quartiers ou lieux de ton choix et en limitant les feux rouges.
 
 **Site : [runparis.netlify.app](https://runparis.netlify.app)**
 
@@ -11,7 +11,7 @@ Génère des parcours de course à pied dans Paris en quelques secondes : la dis
 - **Trois arrivées** : retour au départ (boucle), un lieu précis (A → B), ou n'importe où (aller simple, qui peut finir à une station de métro ou RER pour rentrer).
 - **Distance ou durée**, dénivelé plat / normal / vallonné, feux rouges limités ou évités au maximum.
 - **Trois types de parcours** : Classique, Vert (parcs et rues arborées), Découverte (monuments et lieux connus). On peut aussi imposer jusqu'à 5 lieux de passage.
-- **À éviter** : arrondissements, quartiers, lieux ; gares, quais et cimetières évités par défaut ; parcs et jardins fermés à l'heure de départ choisie (horaires indicatifs).
+- **À éviter** : arrondissements, quartiers, communes voisines, lieux ; gares, quais et cimetières évités par défaut ; parcs et jardins fermés à l'heure de départ choisie (horaires indicatifs).
 - **Jusqu'à 3 propositions** par recherche, nommées par ce qui les distingue (le moins de feux, le plus plat…).
 - **16 parcours mythiques** (le marathon, le semi-marathon, Paris en 20 km, le trail de la Butte…) à voir, exporter ou courir en partie.
 - **Points d'eau** : fontaines du parcours avec leur kilomètre, option « un point d'eau environ tous les 3 km ».
@@ -28,13 +28,13 @@ Tout le calcul se fait dans le navigateur : pas de serveur, pas de compte, rien 
 site/              ce que Netlify publie
   index.html       page d'accueil (générée par src/build.py)
   app.html         l'application (générée par src/build.py)
-  graph.bin        réseau des rues de Paris (47 000 carrefours, 63 000 tronçons, altitudes)
-  meta.json        noms de rues, quartiers, gares, cimetières, lieux, fond de carte
+  graph.bin        réseau des rues de Paris et des 29 communes limitrophes (91 000 carrefours, 123 000 tronçons, altitudes)
+  meta.json        noms de rues, quartiers et communes, gares, cimetières, lieux, fond de carte
   green.txt        part « verte » de chaque tronçon
-  trees.txt        159 000 arbres
-  metro.json       271 stations de métro et RER
-  fountains.json   1 088 fontaines à eau potable
-  parks.json       243 parcs et jardins fermés la nuit (tronçons concernés, horaires)
+  trees.txt        210 000 arbres
+  metro.json       328 stations de métro et RER
+  fountains.json   1 541 fontaines à eau potable
+  parks.json       286 parcs et jardins fermés la nuit (tronçons concernés, horaires)
   dark.txt         tronçons non éclairés (1 bit par tronçon)
   races.json       tracés des parcours mythiques
   sights.json      52 lieux connus (mode Découverte)
@@ -45,6 +45,7 @@ src/
   landing.html     modèle de la page d'accueil
   hero.json        carte de Paris et parcours dessinés sur la page d'accueil
   build.py         assemble site/app.html et site/index.html
+  data/            extraction des données des communes voisines (OSM Geofabrik, altitudes IGN) et limites des communes
 netlify.toml       réglages Netlify (dossier publié, cache)
 ```
 
@@ -58,7 +59,7 @@ netlify.toml       réglages Netlify (dossier publié, cache)
 
 - Rues, éclairage, arbres, fontaines, parcs, stations, gares : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright), licence ODbL.
 - Altitudes : IGN, RGE ALTI.
-- Quartiers, arrondissements, jardins clôturés : Paris Open Data. Horaires : OpenStreetMap, sinon horaires types des jardins de la Ville de Paris.
+- Quartiers, arrondissements, jardins clôturés : Paris Open Data. Limites des communes : OpenStreetMap. Horaires : OpenStreetMap, sinon horaires types des jardins de la Ville de Paris.
 - Parcours mythiques : tracés issus de fichiers GPX publics.
 
 Projet d'Antoine Mariotti. Le suivi produit (spec, décisions, backlog, recette) est tenu dans Notion.

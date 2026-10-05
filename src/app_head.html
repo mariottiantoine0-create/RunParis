@@ -412,7 +412,7 @@ canvas#map.pick{cursor:crosshair}
         <div class="row" id="dplus-row" hidden>
           <span style="font-size:14px;white-space:nowrap">D+ visé</span>
           <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
-          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre).</p>
+          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
         </div>
         <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
         <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
@@ -429,7 +429,7 @@ canvas#map.pick{cursor:crosshair}
           </div>
           <span class="lbl">Arrondissements</span>
           <div class="arr" id="arr"></div>
-          <details class="q"><summary>Choisir quartier par quartier (80 quartiers)</summary><div class="qlist" id="qlist"></div></details>
+          <details class="q"><summary>Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
           <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
         </div>
         <p class="hint" id="always">Toujours évités : gares, quais et couloirs de métro.</p>
@@ -496,7 +496,7 @@ canvas#map.pick{cursor:crosshair}
   <main class="main">
     <div class="mapwrap" id="mapwrap">
       <div class="bar" id="bar" style="width:0"></div>
-      <canvas id="map" aria-label="Carte de Paris avec le parcours"></canvas>
+      <canvas id="map" aria-label="Carte de Paris et des communes voisines avec le parcours"></canvas>
       <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
       <div class="layers" role="group" aria-label="Afficher sur la carte">
         <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
