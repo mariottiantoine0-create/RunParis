@@ -37,7 +37,8 @@ async function boot() {
   renderHome();
   // D-68 : on arrive sur les réglages, rien n'est calculé avant que le coureur le demande
   showView('set'); if (/^#cours/.test(location.hash)) setTab('race');
-  if (!S.start) { $('#start-box').hidden = false; $('#change-start').setAttribute('aria-expanded', true); $('#change-start').textContent = 'Fermer'; }
+  $('#pos-go').hidden = !navigator.geolocation || !!window.claude;
+  if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
 }
@@ -598,6 +599,39 @@ function setTool(t) {
 document.querySelectorAll('.tool').forEach(b => b.onclick = () => setTool(b.dataset.tool));
 $('#pick-start').onclick = () => setTool('start');
 $('#change-start').onclick = () => { const b = $('#start-box'); b.hidden = !b.hidden; $('#change-start').setAttribute('aria-expanded', !b.hidden); $('#change-start').textContent = b.hidden ? 'Changer' : 'Fermer'; if (!b.hidden) $('#start-q').focus(); };
+// ---------- départ : ouvrir la recherche, « Autour de moi » (D-70) ----------
+function openStart(focus) { $('#start-box').hidden = false; $('#change-start').setAttribute('aria-expanded', true); $('#change-start').textContent = 'Fermer'; if (focus) $('#start-q').focus(); }
+function locate() {
+  return new Promise(res => {
+    if (!navigator.geolocation) { toast('Ta position n’est pas disponible sur cet appareil : choisis un départ.', 4000); openStart(false); return res(false); }
+    toast('Recherche de ta position…', 10000);
+    navigator.geolocation.getCurrentPosition(p => {
+      const la = p.coords.latitude, lo = p.coords.longitude, [x, y] = E.toXY(la, lo), n = E.nearest(x, y);
+      if (n < 0 || Math.hypot(G.NX[n] - x, G.NY[n] - y) > 800) { toast('Tu sembles hors de Paris et des communes voisines : choisis un départ.', 4500); openStart(false); return res(false); }
+      $('#toast').hidden = true; setPoint('start', { lat: la, lon: lo, name: 'Ma position' }); if (!$('#start-box').hidden) $('#change-start').click(); fitRoute(true); res(true);
+    }, e => { toast(e.code === 1 ? 'Position refusée : choisis un départ dans la recherche.' : 'Position introuvable : choisis un départ dans la recherche.', 4500); openStart(false); res(false); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  });
+}
+$('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') generate(); });
+// réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
+function applyParams() {
+  const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
+  const rid = Q.get('race');
+  if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
+  if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
+  else if (Q.has('km')) { setUnit('km'); $('#km').value = clampKm(parseFloat(Q.get('km')) || 10); }
+  updateConv();
+  const arr = Q.get('arr');
+  if (['back', 'place', 'free'].includes(arr)) setArrival(arr);
+  if (arr === 'place') { S.end = null; $('#end-name').textContent = 'Choisis ton arrivée'; draw(); }
+  const ty = Q.get('type');
+  if (ty === 'green' || ty === 'discover') $('#k-' + ty).click(); else if (ty === 'flat') $('#d-flat').click();
+  const go = Q.get('go') === '1' && arr !== 'place', dep = Q.get('dep');
+  if (dep === 'pos') { locate().then(ok => { if (ok && go) generate(); else if (ok && arr === 'place') $('#end-q').focus(); }); return true; }
+  if (dep === 'pick') { openStart(true); return true; }
+  if (dep === 'home' && S.start) { if (go) generate(); return true; }
+  return false;
+}
 $('#home-go').onclick = () => { const h = getHome(); if (!h) return; setPoint('start', { lat: h.lat, lon: h.lon, name: 'Chez moi · ' + h.name.replace(/^Chez moi · /, '') }); if (S.mode === 'loop') generate(); };
 $('#home-save').onclick = () => {
   const b = $('#home-save');
@@ -932,14 +966,14 @@ function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary()
 async function generate(isAgain) {
   if (!G || busy) return;
   const notes = [], errs = [];
-  if (!S.start) { showView('set'); $('#start-box').hidden = false; $('#change-start').textContent = 'Fermer'; $('#change-start').setAttribute('aria-expanded', true); $('#start-q').focus(); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
+  if (!S.start) { showView('set'); openStart(true); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
   const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
   if (k.info) notes.push(k.info);
   const km = k.km, target = km * 1000;
   if (!parsePace($('#pace').value)) notes.push('Allure non reconnue (exemple : 5:30) : le temps est estimé à 5:30 /km.');
   let dplus = null;
   if (S.dmode === 'target') { const d = readDplus(); if (d.err) { fail([{ t: d.err, err: true }]); return; } if (d.info) notes.push(d.info); dplus = d.dplus; }
-  if (S.mode === 'ab' && !S.endFree && !S.end) { fail([{ t: 'Choisis le lieu d’arrivée, ou choisis « N’importe où ».', err: true }]); return; }
+  if (S.mode === 'ab' && !S.endFree && !S.end) { showView('set'); $('#end-q').focus(); toast('Choisis d’abord ton arrivée, ou « N’importe où ».'); return; }
   if (S.exclQ.size >= M.quartiers.length) { fail([{ t: 'Tu as exclu toute la carte. Réautorise au moins un arrondissement, un quartier ou une commune.', err: true }]); return; }
 
   busy = true; $('#gen').disabled = true; $('#again').disabled = true; $('#recalc').disabled = true; $('#gen').textContent = 'Calcul en cours…'; $('#again').textContent = 'Calcul en cours…';

@@ -4,7 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RunParis · Ton parcours de course dans Paris</title>
 <meta name="description" content="RunParis génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
-<meta name="theme-color" content="#0D1014">
+<meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="RunParis · Ton parcours de course dans Paris">
 <meta property="og:description" content="Choisis ta distance, RunParis trace ton parcours : dénivelé, moins de feux rouges, parcs, fontaines, métro pour rentrer. Gratuit, sans compte.">
 <meta property="og:type" content="website">
@@ -14,7 +15,7 @@
 <meta property="og:image:height" content="627">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230D1014%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%234CC3FF%27 stroke-width=%273.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
@@ -141,16 +142,84 @@ footer p{margin:0;max-width:62em}
   .final{padding:64px 0}
 }
 @media (prefers-reduced-motion:reduce){.m-route{animation:none;stroke-dashoffset:0}.m-km{animation:none;opacity:1}html{scroll-behavior:auto}.btn{transition:none}}
+
+/* ---------- accueil utile (D-70) ---------- */
+.hero{min-height:auto;align-items:flex-start;padding:104px 0 56px}
+.hero h1{font-size:clamp(50px,6.2vw,80px);max-width:9ch;margin:0 0 22px}
+.ideas-s{padding-top:32px}
+.ask{background:var(--panel);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.10),0 0 0 1px var(--line);padding:24px;max-width:640px;display:flex;flex-direction:column;gap:18px}
+.sentence{margin:0;font-stretch:75%;font-weight:800;font-size:36px;line-height:1.5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+.sentence>span{white-space:nowrap}
+.fld{position:relative;display:inline-flex;align-items:center}
+.fld select{appearance:none;-webkit-appearance:none;font:inherit;font-stretch:75%;font-weight:800;color:var(--ink);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E6166' stroke-width='2.4' stroke-linecap='square'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 10px center/18px;border:0;border-bottom:3px solid var(--accent);border-radius:4px 4px 0 0;height:50px;padding:0 38px 0 12px;cursor:pointer;line-height:1}
+.fld select:hover{background-color:var(--soft)}
+.fld select:focus-visible{outline:none;box-shadow:var(--ring)}
+.fld.pos select{padding-left:40px}
+.fld.pos::before{content:"";position:absolute;left:12px;top:50%;width:20px;height:20px;margin-top:-10px;background:var(--accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}
+.ask .btn{width:100%;height:56px;font-size:17px}
+.ask-hint{margin:-6px 0 0;font-size:14px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px}
+.chips>span{font-weight:700;font-size:13px;color:var(--muted);margin-right:4px}
+.chip{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:background-color .12s,border-color .12s}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent-fill);border:2px solid var(--accent);color:var(--accent);padding:0 13px}
+.chip:focus-visible{outline:none;box-shadow:var(--ring)}
+.sec-top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.sec-top .sec-h{margin:0}
+.more{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--accent);text-decoration:none;font-size:16px}
+.more:hover{text-decoration:underline;text-underline-offset:4px}
+.more svg,.go svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.ideas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.idea{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px;text-decoration:none;color:inherit;transition:border-color .12s}
+.idea:hover{border-color:var(--ink)}
+.idea .ic{color:var(--accent);height:24px}
+.idea .ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.idea b{font-size:18px;margin-top:6px}
+.idea p{margin:0;color:var(--muted);font-size:15px}
+.idea .go{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}
+.idea .go em{font-style:normal;color:var(--accent);display:inline-flex;gap:6px;align-items:center;font-size:15px}
+.myths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.myth{display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;text-decoration:none;color:inherit;transition:border-color .12s}
+.myth:hover{border-color:var(--ink)}
+.myth svg{flex:none;width:110px;height:80px;background:var(--bg);border-radius:4px}
+.myth .tr-c{fill:none;stroke:var(--panel);stroke-width:5.4;stroke-linejoin:round;stroke-linecap:round}
+.myth .tr{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.myth .tr-d{fill:var(--accent);stroke:var(--panel);stroke-width:2}
+.myth small{display:block;font-weight:700;font-size:12px;color:var(--muted)}
+.myth b{display:block;font-size:16px;line-height:1.2;margin:2px 0 4px}
+.myth span{font-stretch:75%;font-weight:800;font-size:20px}
+.about{background:var(--bg2);border-top:1px solid var(--line)}
+.about .wrap{display:grid;grid-template-columns:420px 1fr;gap:56px}
+.feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 32px;align-content:start}
+.feat svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.feat b{display:block;font-size:16px;margin:8px 0 4px}
+.feat p{margin:0;color:var(--muted);font-size:15px}
+.about .osm-p{color:var(--muted);font-size:14px;margin:18px 0 0}
+.about .osm-p a{color:var(--accent)}
+@media (max-width:900px){.ideas,.myths{grid-template-columns:1fr 1fr}.about .wrap{grid-template-columns:1fr;gap:36px}}
+@media (max-width:760px){
+  .hero{padding:76px 0 32px}
+  .hero h1{font-size:clamp(40px,11.5vw,56px);margin-bottom:16px;max-width:none}
+  .chips>span{display:none}
+  .myth:nth-child(n+5){display:none}
+  .ask{padding:16px;gap:14px}
+  .sentence{font-size:28px;gap:8px 10px}
+  .fld select{height:42px}
+  .ask .btn{height:52px;font-size:16px}
+  .ideas{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px -16px 0;padding:0 16px 4px}
+  .idea{flex:none;width:250px;scroll-snap-align:start}
+  .myths{grid-template-columns:1fr;gap:10px}
+  .myth svg{width:96px;height:70px}
+  .feats{grid-template-columns:1fr;gap:22px}
+}
 </style>
 
 <header>
   <div class="wrap">
     <a class="logo" href="./" aria-label="RunParis, accueil">RUN<span>PARIS</span></a>
     <nav aria-label="Navigation">
-      <a href="#fonctions">Ce qu'il fait</a>
+      <a href="#mythiques">Parcours mythiques</a>
       <a href="#comment">Comment ça marche</a>
-      <a href="app.html#courses">Parcours mythiques</a>
-      <a class="btn primary" href="app.html">Générer</a>
     </nav>
   </div>
 </header>
@@ -171,64 +240,70 @@ footer p{margin:0;max-width:62em}
       </svg>
     </div>
     <div class="wrap">
-      <p class="kicker">Bienvenue sur RunParis</p>
-      <h1 id="titre">Ton prochain parcours, <em>tracé pour toi.</em></h1>
-      <p class="lede">Dis combien de kilomètres, d'où tu pars et ce que tu veux éviter : RunParis te propose <strong>trois parcours prêts à courir</strong> dans Paris et les 29 communes qui la bordent (Boulogne, Montreuil, Vincennes, Saint-Denis…), avec le dénivelé que tu veux, le moins de feux rouges possible, des fontaines pour boire en route et un métro pas loin pour rentrer.</p>
-      <div class="ctas">
-        <a class="btn primary" href="app.html">Générer mon parcours</a>
-        <a class="btn secondary" href="app.html#courses">Courir un parcours mythique</a>
-      </div>
-      <ul class="facts" aria-label="RunParis en chiffres">
-        <li><b>5 400 km</b><span>de rues et chemins</span></li>
-        <li><b>3 539</b><span>carrefours à feux</span></li>
-        <li><b>210 000</b><span>arbres recensés</span></li>
-        <li><b>1 541</b><span>fontaines à eau</span></li>
-        <li><b>16</b><span>parcours mythiques</span></li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="features" id="fonctions" aria-labelledby="t-fonctions">
-    <div class="wrap">
-      <h2 class="sec-h" id="t-fonctions">Fait pour courir à Paris</h2>
-      <p class="sec-p">Pas une carte du monde entier : RunParis connaît les côtes de Montmartre, les quais, les parcs, les gares et chaque carrefour à feux, de Paris jusqu'aux communes limitrophes.</p>
-      <div class="grid">
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 3-7 7-8s5-5 9-6"/><circle cx="4" cy="18" r="2"/></svg></div><h3>Boucle, A → B ou aller simple</h3><p>Reviens à ton point de départ, va au travail en courant, ou pars droit devant et finis à une station de métro pour rentrer.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l6-9 4 5 3-4 5 8z"/></svg></div><h3>Le dénivelé que tu veux</h3><p>Plat pour un fractionné, vallonné pour préparer un trail : le profil s'affiche avant de partir.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2.5" width="8" height="19" rx="3"/><circle cx="12" cy="7.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="16.5" r="1.6"/></svg></div><h3>Moins de feux rouges</h3><p>Le parcours évite les carrefours à feux pour courir sans t'arrêter tous les 200 mètres.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15c-4 0-7-2.5-7-6a7 7 0 0 1 14 0c0 3.5-3 6-7 6z"/></svg></div><h3>Vert ou découverte</h3><p>Passe par les parcs, les quais et les rues arborées, ou devant les monuments et lieux connus.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></div><h3>Évite ce que tu veux</h3><p>Un arrondissement, un quartier, un lieu bondé : il n'y passe pas. Et selon ton heure de départ, il contourne les parcs déjà fermés.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3.5 4.5 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.5 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><h3>De l'eau en route</h3><p>Les fontaines du parcours sont affichées avec leur kilomètre, et tu peux demander un point d'eau environ tous les 3 km.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></div><h3>Les parcours mythiques</h3><p>Le marathon, le semi, Paris en 20 km, le trail de la Butte… Entraîne-toi sur les grands parcours parisiens, en entier ou en partie.</p></article>
-        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M12 8v6m-3-3l3 3 3-3"/></svg></div><h3>Dans ta montre</h3><p>Exporte le parcours en GPX pour ta montre, Strava ou Komoot, et pars courir.</p></article>
+      <h1 id="titre">Où cours-tu <em>aujourd’hui ?</em></h1>
+      <form class="ask" id="ask" action="app.html">
+        <p class="sentence">
+          <span>Je cours</span>
+          <span class="fld"><select id="q-dist" aria-label="Distance ou durée">
+            <option value="km:5">5 km</option><option value="km:8">8 km</option><option value="km:10" selected>10 km</option><option value="km:12">12 km</option><option value="km:15">15 km</option><option value="km:21.1">un semi</option><option value="km:30">30 km</option>
+            <option value="min:30">30 min</option><option value="min:45">45 min</option><option value="min:60">1 h</option><option value="min:90">1 h 30</option>
+          </select></span>
+          <span class="fld"><select id="q-arr" aria-label="Arrivée">
+            <option value="back" selected>en boucle</option><option value="free">droit devant</option><option value="place">jusqu’à un lieu</option>
+          </select></span>
+          <span>depuis</span>
+          <span class="fld pos"><select id="q-dep" aria-label="Départ">
+            <option value="pos" selected>autour de moi</option><option value="pick">une adresse</option>
+          </select></span>
+        </p>
+        <button class="btn primary" type="submit">Générer mes parcours</button>
+        <p class="ask-hint" id="ask-hint">Gratuit, sans compte. « Droit devant » finit près d’un métro pour rentrer.</p>
+      </form>
+      <div class="chips" role="group" aria-label="Raccourcis"><span>Raccourcis</span>
+        <button type="button" class="chip" data-v="km:5">5 km</button><button type="button" class="chip" data-v="km:10">10 km</button><button type="button" class="chip" data-v="km:21.1">Semi</button><button type="button" class="chip" data-v="min:45">45 min</button>
       </div>
     </div>
   </section>
 
-  <section id="comment" aria-labelledby="t-comment">
+  <section class="ideas-s" aria-labelledby="t-idees">
     <div class="wrap">
-      <h2 class="sec-h" id="t-comment">Trois questions, trois parcours</h2>
-      <p class="sec-p">Pas de compte à créer, rien à installer : tout se calcule dans ton navigateur, en une seconde.</p>
-      <ol class="steps">
-        <li><h3>Où ?</h3><p>Ton point de départ, et si tu reviens au même endroit, vas quelque part ou cours droit devant.</p></li>
-        <li><h3>Combien ?</h3><p>Une distance ou une durée : 5 km, 45 minutes, un semi…</p></li>
-        <li><h3>Comment ?</h3><p>Plat ou vallonné, au vert, devant les monuments, en évitant ce que tu veux.</p></li>
-      </ol>
-      <aside class="osm" aria-labelledby="t-osm">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
-        <div>
-          <h3 id="t-osm">Construit avec les données ouvertes d'OpenStreetMap</h3>
-          <p>Les rues, les arbres, les fontaines, les parcs et les stations viennent d'<a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>, la carte du monde réalisée par des milliers de bénévoles. Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, sous licence ODbL. Altitudes : IGN. Quartiers : Paris Open Data. Limites des communes : OpenStreetMap. Une fontaine manque ? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Ajoute-la sur OpenStreetMap</a>, elle apparaîtra ici à la prochaine mise à jour.</p>
+      <div class="sec-top"><h2 class="sec-h" id="t-idees">Des idées pour aujourd’hui</h2><p class="sec-p" id="idea-ctx" style="margin:0">10 km en boucle, autour de toi</p></div>
+      <div class="ideas">
+        <a class="idea" data-type="green" href="app.html"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l6 9H6z"/><path d="M12 12v9"/><path d="M8 21h8"/></svg></span><b>Au vert</b><p>Parcs, quais et rues bordées d’arbres, quitte à faire quelques détours.</p><span class="go"><span></span><em>Courir <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></em></span></a>
+        <a class="idea" data-type="discover" href="app.html"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg></span><b>Découverte</b><p>Passe devant les monuments et lieux connus à portée de ta distance.</p><span class="go"><span></span><em>Courir <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></em></span></a>
+        <a class="idea" data-type="flat" href="app.html"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18"/><path d="M3 19h18"/></svg></span><b>Le plus plat</b><p>Pour une sortie tranquille, un fractionné ou des jambes lourdes.</p><span class="go"><span></span><em>Courir <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></em></span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="mythiques" aria-labelledby="t-myth" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-top"><h2 class="sec-h" id="t-myth">Parcours mythiques</h2><a class="more" href="app.html#courses">Voir les 16 parcours <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></div>
+      <p class="sec-p" style="margin:0">Les tracés des grandes courses parisiennes, à courir en entier ou en partie.</p>
+      <div class="myths">{{MYTH}}</div>
+    </div>
+  </section>
+
+  <section class="about" id="comment" aria-labelledby="t-about">
+    <div class="wrap">
+      <div>
+        <h2 class="sec-h" id="t-about">Fait pour courir à Paris</h2>
+        <p class="sec-p" style="margin-bottom:24px">Pas une carte du monde entier : RunParis connaît chaque carrefour à feux, les quais, les parcs et les côtes de Montmartre, de Paris jusqu’aux 29 communes qui la bordent. Gratuit, sans compte, tout se calcule dans ton navigateur.</p>
+        <ul class="facts" aria-label="RunParis en chiffres">
+          <li><b>5 400 km</b><span>de rues et chemins</span></li>
+          <li><b>3 539</b><span>carrefours à feux</span></li>
+          <li><b>1 541</b><span>fontaines</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="feats">
+          <div class="feat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v18H8z"/><circle cx="12" cy="8" r="1.4"/><circle cx="12" cy="13" r="1.4"/><circle cx="12" cy="18" r="1.4"/></svg><b>Moins de feux rouges</b><p>Le parcours évite les carrefours à feux pour courir sans t’arrêter tous les 200 m.</p></div>
+          <div class="feat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-9 4 5 3-4 5 8z"/></svg><b>Le dénivelé que tu veux</b><p>Plat, normal ou vallonné, calculé comme une montre GPS.</p></div>
+          <div class="feat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.5 4.5 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 2.5-6.5 6-11z"/></svg><b>De l’eau en route</b><p>Les fontaines du parcours, avec leur kilomètre.</p></div>
+          <div class="feat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 12l8-8"/><path d="M4 20L20 4"/><path d="M12 20l8-8"/></svg><b>Évite ce que tu veux</b><p>Un quartier, un lieu, les parcs fermés le soir : le parcours passe ailleurs.</p></div>
         </div>
-      </aside>
-    </div>
-  </section>
-
-  <section class="final features" aria-labelledby="t-final">
-    <div class="wrap">
-      <h2 class="sec-h" id="t-final">Prêt à sortir courir ?</h2>
-      <p class="sec-p">Ton parcours t'attend, quelque part entre les quais et les buttes.</p>
-      <a class="btn primary" href="app.html">Générer mon parcours</a>
+        <p class="osm-p">Rues, arbres, fontaines, parcs et stations : <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>, la carte faite par des bénévoles. Une fontaine manque ? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Ajoute-la</a>, elle apparaîtra ici à la prochaine mise à jour.</p>
+      </div>
     </div>
   </section>
 </main>
@@ -242,6 +317,33 @@ footer p{margin:0;max-width:62em}
 <script>
 // anonymous audience measurement, no cookie (public site only)
 if (location.hostname === 'runparis.netlify.app') { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
+// formulaire de l'accueil (D-70) : construit le lien vers l'app
+(() => {
+  const $ = s => document.querySelector(s), dist = $('#q-dist'), arr = $('#q-arr'), dep = $('#q-dep');
+  let home = null; try { home = JSON.parse(localStorage.getItem('runparis-home') || 'null'); } catch (e) {}
+  if (home && isFinite(home.lat)) { const o = new Option('chez moi', 'home'); dep.add(o, 0); dep.value = 'home'; }
+  if (!navigator.geolocation) { const o = dep.querySelector('option[value="pos"]'); if (o) o.remove(); }
+  const params = type => {
+    const [u, v] = dist.value.split(':'), q = new URLSearchParams();
+    q.set(u === 'km' ? 'km' : 'min', v); q.set('arr', arr.value); q.set('dep', dep.value);
+    if (type) q.set('type', type);
+    if (arr.value !== 'place' && dep.value !== 'pick') q.set('go', '1');
+    return 'app.html?' + q.toString();
+  };
+  const label = () => {
+    const d = dist.options[dist.selectedIndex].text, a = { back: 'en boucle', free: 'droit devant', place: 'jusqu’à un lieu' }[arr.value];
+    const f = { pos: 'autour de toi', home: 'depuis chez toi', pick: 'depuis l’adresse de ton choix' }[dep.value];
+    $('#idea-ctx').textContent = `${d[0].toUpperCase() + d.slice(1)} ${a}, ${f}`;
+    document.querySelectorAll('.idea').forEach(a => a.href = params(a.dataset.type));
+    document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.v === dist.value));
+    const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: '« Droit devant » finit près d’un métro pour rentrer.', back: 'Gratuit, sans compte. Trois parcours au choix.' }[arr.value];
+    $('#ask-hint').textContent = dep.value === 'pick' ? 'Tu choisiras ton départ sur la carte ou dans la recherche.' : hint;
+  };
+  [dist, arr, dep].forEach(s => s.addEventListener('change', label));
+  document.querySelectorAll('.chip').forEach(c => c.onclick = () => { dist.value = c.dataset.v; label(); });
+  $('#ask').addEventListener('submit', e => { e.preventDefault(); location.href = params(); });
+  label();
+})();
 // km markers appear as the route is drawn
 (() => {
   const p = document.querySelector('.m-route'); if (!p || !p.getTotalLength) return;
