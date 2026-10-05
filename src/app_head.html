@@ -11,7 +11,7 @@
   --route:#1F4FE0; --route-2:#8A3FD1; --route-casing:#FFFFFF; --tree:#1E8E4F; --font:#0B9DB5; --metro-bg:#FFFFFF; --metro-ink:#0B0B0C; --metro-ring:#0B0B0C;
   --street:#DEDEDA; --street-major:#C2C2BD; --street-path:#B9C7B1; --quart:#D0D0CC;
   --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.12); --sig:#D98A00; --pin-b:#0B0B0C;
-  --good:#1E8E4F; --water:#D5DFE6; --green:#E1E7DC; --cem:#E6E6E2; --station:#8A8D93; --station-fill:rgba(110,113,120,.14); --label:#6A6D72; --warn:#B26B00;
+  --good:#1E8E4F; --poi:#C2338A; --water:#D5DFE6; --green:#E1E7DC; --cem:#E6E6E2; --station:#8A8D93; --station-fill:rgba(110,113,120,.14); --label:#6A6D72; --warn:#B26B00;
   --warn-bg:#FFF4E0; --warn-line:#F0D29A; --err:#C2362D; --err-bg:#FDEDEC; --err-line:#F2BDB8; --info-bg:#EEF2FD; --ok:#1E7A44; --ok-fill:#E6F4EA; --toast:#0B0B0C;
   --map-bg:#F4F4F2; --shadow:0 1px 4px rgba(0,0,0,.18); --shadow-pop:0 4px 14px rgba(0,0,0,.10); --shadow-sheet:0 -2px 12px rgba(0,0,0,.12);
   --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
@@ -27,7 +27,7 @@
     --route:#7B96FF; --route-2:#C79BFF; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
     --street:#262A30; --street-major:#3B414A; --street-path:#2E4233; --quart:#2E333A;
     --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
-    --good:#4ADE80; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
+    --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
     --warn-bg:#2A2111; --warn-line:#5A4415; --err:#FF7B72; --err-bg:#2A1615; --err-line:#6A2B2B; --info-bg:#1A2035; --ok:#6EE7A0; --ok-fill:#15291D; --toast:#2A2E35;
     --map-bg:#121417; --shadow:0 1px 6px rgba(0,0,0,.55); --shadow-pop:0 6px 18px rgba(0,0,0,.5); --shadow-sheet:0 -2px 14px rgba(0,0,0,.5);
   }
@@ -39,7 +39,7 @@
   --route:#7B96FF; --route-2:#C79BFF; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
   --street:#262A30; --street-major:#3B414A; --street-path:#2E4233; --quart:#2E333A;
   --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
-  --good:#4ADE80; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
+  --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
   --warn-bg:#2A2111; --warn-line:#5A4415; --err:#FF7B72; --err-bg:#2A1615; --err-line:#6A2B2B; --info-bg:#1A2035; --ok:#6EE7A0; --ok-fill:#15291D; --toast:#2A2E35;
   --map-bg:#121417; --shadow:0 1px 6px rgba(0,0,0,.55); --shadow-pop:0 6px 18px rgba(0,0,0,.5); --shadow-sheet:0 -2px 14px rgba(0,0,0,.5);
 }
@@ -463,6 +463,10 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
   .stat:first-child b{font-size:56px} .stat b{font-size:26px}
 }
 @media (prefers-reduced-motion:reduce){.btn:active{transform:none}}
+
+/* D-69 : lieux (connus, de passage) en losange magenta, distincts des arbres (ronds verts) */
+.lg.via{width:11px;height:11px;border-radius:0;background:var(--poi);transform:rotate(45deg);margin:0 5px}
+.alt .v{color:var(--muted)}
 </style>
 
 <div class="app">
@@ -681,7 +685,7 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
           <li><span class="lg treel"></span>Arbre</li>
           <li><span class="lg metrol">M</span>Métro, RER</li>
           <li><span class="lg zone"></span>Zone ou lieu évité</li>
-          <li><span class="lg via"></span>Lieu de passage</li>
+          <li><span class="lg via"></span>Lieu connu, lieu de passage</li>
           <li><span class="lg station"></span>Gare (évitée)</li>
           <li><span class="lg green"></span>Parc, bois</li>
           <li><span class="lg water"></span>Eau</li>

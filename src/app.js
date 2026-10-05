@@ -371,7 +371,7 @@ function drawMetro(hiOnly) {
 let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function render() {
   if (!G || !paths.minor) return;
-  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem'), pinB: css('--pin-b'), accentInk: css('--accent-ink') };
+  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), poi: css('--poi'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem'), pinB: css('--pin-b'), accentInk: css('--accent-ink') };
   if (!colors.hatch || colors.hatchKey !== colors.avoid) { const pc = document.createElement('canvas'); pc.width = pc.height = 8; const g = pc.getContext('2d'); g.strokeStyle = colors.avoid; g.globalAlpha = 0.55; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke(); colors.hatch = ctx.createPattern(pc, 'repeat'); colors.hatchKey = colors.avoid; }
   if (colors.hatch && colors.hatch.setTransform) colors.hatch.setTransform(new DOMMatrix().scale(1 / (V.s || 1)));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
@@ -481,6 +481,8 @@ function render() {
   drawMetro(true);
   if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
   // pins
+  // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
+  const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
   const pin = (p, label, col, txt) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = txt || '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
   if (R && S.alts) for (const a of S.alts) if (a !== R && a._label) {
     const [x, y, n] = a._label, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
@@ -491,14 +493,14 @@ function render() {
   if (R && R.sightsN) {
     ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     for (const nm of R.sights) { const sg = SIGHTS.find(x => x.name === nm); if (!sg) continue; const sx = sg.x * V.s + V.tx, sy = sg.y * V.s + V.ty;
-      ctx.beginPath(); ctx.arc(sx, sy, 6, 0, 7); ctx.fillStyle = colors.good; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke();
+      dia(sg, '', 8); ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
       ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(nm, sx + 10, sy); ctx.fillStyle = colors.ink; ctx.fillText(nm, sx + 10, sy); }
   }
   if (S.tab === 'race') {
     if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.route, colors.accentInk); pin(ll(b), 'A', colors.pinB, colors.panel); }
     return;
   }
-  S.vias.forEach((v, i) => pin(v, String(i + 1), colors.good));
+  S.vias.forEach((v, i) => dia(v, String(i + 1), 13));
   pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.route, colors.accentInk);
   if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.pinB, colors.panel);
   if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.pinB, colors.panel); }
