@@ -38,6 +38,7 @@ async function boot() {
   // D-68 : on arrive sur les réglages, rien n'est calculé avant que le coureur le demande
   showView('set'); if (/^#cours/.test(location.hash)) setTab('race');
   $('#pos-go').hidden = !navigator.geolocation || !!window.claude;
+  if (window.claude) $('#mlinks').hidden = true; // pas d'accueil dans l'artifact
   if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();

@@ -468,6 +468,12 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 /* D-69 : lieux (connus, de passage) en losange magenta, distincts des arbres (ronds verts) */
 .lg.via{width:11px;height:11px;border-radius:0;background:var(--poi);transform:rotate(45deg);margin:0 5px}
 .alt .v{color:var(--muted)}
+
+/* menu du panneau : pages du site + apparence (D-72) */
+.iconbtn svg{display:block}
+.mlinks{display:flex;flex-direction:column;border-bottom:1px solid var(--line);padding-bottom:6px}
+.mlinks a{display:flex;align-items:center;height:44px;padding:0 8px;border-radius:4px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.mlinks a:hover{background:var(--field)}
 </style>
 
 <div class="app">
@@ -475,9 +481,10 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
       <div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>
-      <button class="iconbtn" id="theme-btn" aria-label="Apparence" aria-expanded="false" title="Apparence">◐</button>
+      <button class="iconbtn" id="theme-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
     </div>
-    <div class="themepop" id="themepop" hidden role="group" aria-label="Apparence">
+    <div class="themepop" id="themepop" hidden>
+      <nav class="mlinks" id="mlinks" aria-label="Pages"><a href="./">Accueil</a><a href="a-propos.html">Comment ça marche</a></nav>
       <span class="lbl">Apparence</span>
       <div class="seg sm">
         <button id="t-auto" aria-pressed="true">Auto</button>

@@ -136,7 +136,7 @@ footer p{margin:0;max-width:62em}
   .wrap{padding:0 16px}
   header .wrap{height:60px}
   .logo{font-size:24px}
-  nav a:not(.btn){display:none}
+  nav > a:not(.btn){display:none}
   .hero{min-height:auto;padding:76px 0 40px;align-items:flex-start}
   .map{bottom:auto;height:min(80vw,420px)}
   h1{font-size:clamp(44px,12.5vw,64px)}
@@ -152,6 +152,10 @@ footer p{margin:0;max-width:62em}
 @media (prefers-reduced-motion:reduce){.m-route{animation:none;stroke-dashoffset:0}.m-km{animation:none;opacity:1}html{scroll-behavior:auto}.btn{transition:none}}
 
 /* choix du thème, partagé avec l'app (runparis-theme) */
+
+.th-links{display:flex;flex-direction:column;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px}
+.th-links a{display:flex;align-items:center;height:44px;padding:0 8px;border-radius:4px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.th-links a:hover{background:var(--field)}
 [hidden]{display:none!important}
 .th{position:relative}
 .th-btn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;cursor:pointer;padding:0}
@@ -172,7 +176,7 @@ footer p{margin:0;max-width:62em}
       <a href="#comment">Comment ça marche</a>
       <a href="app.html#courses">Parcours mythiques</a>
       <a class="btn primary" href="./">Générer</a>
-      <div class="th"><button type="button" class="th-btn" id="th-btn" aria-label="Apparence" aria-expanded="false" title="Apparence"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button><div class="th-pop" id="th-pop" hidden role="group" aria-label="Apparence"><span>Apparence</span><div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div></div></div>
+      <div class="th"><button type="button" class="th-btn" id="th-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button><div class="th-pop" id="th-pop" hidden><div class="th-links" role="navigation" aria-label="Pages"><a href="./">Accueil</a><a href="app.html#courses">Parcours mythiques</a></div><span>Apparence</span><div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div></div></div>
     </nav>
   </div>
 </header>
@@ -273,6 +277,7 @@ if (location.hostname === 'runparis.netlify.app') { const sc = document.createEl
   btn.onclick = e => { e.stopPropagation(); pop.hidden = !pop.hidden; btn.setAttribute('aria-expanded', !pop.hidden); };
   pop.querySelectorAll('button').forEach(b => b.onclick = () => { set(b.dataset.t); pop.hidden = true; btn.setAttribute('aria-expanded', false); });
   document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; btn.setAttribute('aria-expanded', false); } });
+  pop.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { pop.hidden = true; }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { pop.hidden = true; btn.setAttribute('aria-expanded', false); btn.focus(); } });
 })();
 if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');
