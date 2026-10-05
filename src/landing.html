@@ -223,6 +223,7 @@ footer p{margin:0;max-width:62em}
 }
 
 /* choix du thème, partagé avec l'app (runparis-theme) */
+[hidden]{display:none!important}
 .th{position:relative}
 .th-btn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;cursor:pointer;padding:0}
 .th-btn:hover{border-color:var(--ink)}
@@ -372,7 +373,7 @@ if (location.hostname === 'runparis.netlify.app') { const sc = document.createEl
   const set = t => { cur = t; if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t); try { localStorage.setItem('runparis-theme', t); } catch (e) {} pop.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t)); };
   set(cur);
   btn.onclick = e => { e.stopPropagation(); pop.hidden = !pop.hidden; btn.setAttribute('aria-expanded', !pop.hidden); };
-  pop.querySelectorAll('button').forEach(b => b.onclick = () => set(b.dataset.t));
+  pop.querySelectorAll('button').forEach(b => b.onclick = () => { set(b.dataset.t); pop.hidden = true; btn.setAttribute('aria-expanded', false); });
   document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; btn.setAttribute('aria-expanded', false); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { pop.hidden = true; btn.setAttribute('aria-expanded', false); btn.focus(); } });
 })();

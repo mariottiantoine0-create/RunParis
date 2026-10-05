@@ -1837,7 +1837,7 @@ function applyTheme(t) {
   try { localStorage.setItem('runparis-theme', t); } catch (e) {}
   draw(); if (S.route) drawProfile(S.route);
 }
-['auto', 'light', 'dark'].forEach(k => $('#t-' + k).onclick = () => applyTheme(k));
+['auto', 'light', 'dark'].forEach(k => $('#t-' + k).onclick = () => { applyTheme(k); $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); });
 $('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); };
 document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
 try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
