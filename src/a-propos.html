@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunParis · Comment ça marche</title>
+<meta name="description" content="RunParis génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
+<meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="RunParis · Ton parcours de course dans Paris">
+<meta property="og:description" content="Choisis ta distance, RunParis trace ton parcours : dénivelé, moins de feux rouges, parcs, fontaines, métro pour rentrer. Gratuit, sans compte.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://runparis.netlify.app/a-propos.html">
+<meta property="og:image" content="https://runparis.netlify.app/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
+<link rel="prefetch" href="app.html">
+<style>
+/* v2 (D-58 à D-67) : Archivo, cobalt, formes nettes, carte gris neutre */
+:root{
+  color-scheme:light;
+  --bg:#F4F4F2; --bg2:#FFFFFF; --panel:#FFFFFF; --field:#F3F3F1; --soft:#ECECE9; --ink:#0B0B0C; --muted:#5E6166; --line:#E4E4E1;
+  --accent:#1F4FE0; --accent-hover:#1941B8; --accent-press:#15379C; --accent-ink:#FFFFFF; --accent-fill:#E4EAFB;
+  --map-street:#DEDEDA; --map-major:#C2C2BD; --map-minor:#E9E9E6; --map-water:#D5DFE6; --map-green:#E1E7DC; --route-casing:#FFFFFF;
+  --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ring:0 0 0 2px var(--bg),0 0 0 4px var(--accent);
+}
+@media (prefers-color-scheme: dark){:root{
+  color-scheme:dark;
+  --bg:#0F1114; --bg2:#171A1F; --panel:#171A1F; --field:#22262C; --soft:#2A2E35; --ink:#F2F3F5; --muted:#9AA0A8; --line:#2E333A;
+  --accent:#7B96FF; --accent-hover:#95ABFF; --accent-press:#AFC0FF; --accent-ink:#0B0B0C; --accent-fill:#1E2540;
+  --map-street:#262A30; --map-major:#3B414A; --map-minor:#1B1E23; --map-water:#16222D; --map-green:#17211A; --route-casing:#121417;
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.narrow{font-stretch:75%;font-weight:800}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 22px;border-radius:4px;font-size:17px;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap;border:0;transition:background-color .12s ease-out,transform 80ms ease-out}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.primary:active{background:var(--accent-press)}
+.btn.secondary{background:var(--panel);color:var(--ink);border:2px solid var(--ink)}
+.btn.secondary:hover{background:var(--field)}
+.btn.secondary:active{background:var(--soft)}
+:focus-visible{outline:none;box-shadow:var(--ring);border-radius:4px}
+
+/* header */
+header{position:absolute;top:0;left:0;right:0;z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{font-stretch:75%;font-weight:800;font-size:28px;text-decoration:none;line-height:1}
+.logo span{color:var(--accent)}
+nav{display:flex;align-items:center;gap:20px}
+nav a{font-weight:600;font-size:15px;text-decoration:none;color:var(--muted)}
+nav a:hover{color:var(--ink)}
+nav .btn{height:44px;font-size:15px;padding:0 16px;color:var(--accent-ink)}
+nav .btn:hover{color:var(--accent-ink)}
+
+/* hero */
+.hero{position:relative;min-height:min(100svh,880px);display:flex;align-items:center;overflow:hidden;padding:104px 0 56px}
+.map{position:absolute;inset:0;z-index:0;background:var(--bg)}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.m-minor,.m-street,.m-major,.m-start,.m-km circle{vector-effect:non-scaling-stroke}
+.map::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 92%,transparent) 32%,color-mix(in srgb,var(--bg) 20%,transparent) 62%,transparent 100%),linear-gradient(0deg,var(--bg) 0%,transparent 22%)}
+.m-minor{fill:none;stroke:var(--map-minor);stroke-width:.9;stroke-linecap:round;stroke-linejoin:round}
+.m-street{fill:none;stroke:var(--map-street);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.m-major{fill:none;stroke:var(--map-major);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.m-water{fill:var(--map-water)} .m-green{fill:var(--map-green)}
+.m-route-case{fill:none;stroke:var(--route-casing);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.m-route{fill:none;stroke:var(--accent);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 3.2s .5s cubic-bezier(.45,.05,.3,1) forwards}
+.m-start{fill:var(--accent);stroke:var(--route-casing);stroke-width:3}
+.m-start-t{fill:var(--accent-ink);font-family:var(--f);font-weight:800;text-anchor:middle;dominant-baseline:central}
+.m-km{opacity:0;animation:pop .3s forwards}
+.m-km circle{fill:var(--panel);stroke:var(--accent);stroke-width:2.5}
+.m-km text{fill:var(--ink);font-family:var(--f);font-weight:800;text-anchor:middle;dominant-baseline:central}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.m-km{transform-box:fill-box;transform-origin:center}
+.hero .wrap{position:relative;z-index:2;width:100%}
+.kicker{font-weight:700;font-size:15px;color:var(--accent);margin:0 0 12px}
+h1{font-stretch:75%;font-weight:800;font-size:clamp(52px,7vw,96px);line-height:.95;margin:0 0 20px;max-width:11ch}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{font-size:clamp(18px,1.6vw,20px);line-height:1.45;color:var(--muted);max-width:34em;margin:0 0 28px}
+.lede strong{color:var(--ink);font-weight:700}
+.ctas{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:36px}
+.facts{display:flex;flex-wrap:wrap;gap:10px 32px;margin:0;padding:12px 0 0;list-style:none;border-top:2px solid var(--ink);width:max-content;max-width:100%}
+.facts li{display:flex;flex-direction:column}
+.facts b{font-stretch:75%;font-weight:800;font-size:34px;line-height:1}
+.facts span{font-weight:700;font-size:12px;color:var(--muted)}
+
+/* sections */
+section{padding:88px 0}
+.sec-h{font-stretch:75%;font-weight:800;font-size:clamp(38px,5vw,56px);line-height:.98;margin:0 0 12px}
+.sec-p{color:var(--muted);max-width:36em;margin:0 0 36px}
+.features{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 18px 20px}
+.features .card{background:var(--bg)}
+.card .ic{color:var(--accent);margin-bottom:12px;height:24px}
+.card .ic svg{width:24px;height:24px;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.card h3{font-weight:700;font-size:17px;line-height:1.25;margin:0 0 6px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;counter-reset:s;margin:0 0 40px;padding:0;list-style:none}
+.steps li{counter-increment:s;border-top:2px solid var(--ink);padding-top:12px}
+.steps li::before{content:"0" counter(s);display:block;font-stretch:75%;font-weight:800;font-size:48px;line-height:1;color:var(--accent);margin-bottom:8px}
+.steps h3{font-weight:700;font-size:19px;margin:0 0 4px}
+.steps p{margin:0;color:var(--muted)}
+.osm{display:flex;gap:16px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:18px 20px;background:var(--panel)}
+.osm svg{flex:none;width:28px;height:28px;color:var(--accent);margin-top:2px;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.osm h3{font-weight:700;font-size:17px;margin:0 0 6px}
+.osm p{margin:0;color:var(--muted);font-size:15px}
+.osm a{color:var(--accent)}
+.final{text-align:center;padding:96px 0}
+.final .sec-h{max-width:14ch;margin:0 auto 14px}
+.final .sec-p{margin:0 auto 28px}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:13.5px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 30px;justify-content:space-between}
+footer p{margin:0;max-width:62em}
+@media (max-width:760px){
+  body{font-size:16px}
+  .wrap{padding:0 16px}
+  header .wrap{height:60px}
+  .logo{font-size:24px}
+  nav a:not(.btn){display:none}
+  .hero{min-height:auto;padding:76px 0 40px;align-items:flex-start}
+  .map{bottom:auto;height:min(80vw,420px)}
+  h1{font-size:clamp(44px,12.5vw,64px)}
+  .map::after{background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 55%,transparent) 0%,transparent 22%,transparent 72%,var(--bg) 100%)}
+  .hero .wrap{padding-top:calc(min(80vw,420px) - 70px)}
+  .ctas .btn{width:100%}
+  .facts{width:auto;gap:10px 24px}
+  .facts b{font-size:28px}
+  section{padding:56px 0}
+  .steps{grid-template-columns:1fr;gap:20px}
+  .final{padding:64px 0}
+}
+@media (prefers-reduced-motion:reduce){.m-route{animation:none;stroke-dashoffset:0}.m-km{animation:none;opacity:1}html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="./" aria-label="RunParis, accueil">RUN<span>PARIS</span></a>
+    <nav aria-label="Navigation">
+      <a href="#fonctions">Ce qu'il fait</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="app.html#courses">Parcours mythiques</a>
+      <a class="btn primary" href="./">Générer</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="titre">
+    <div class="map" aria-hidden="true">
+      <svg viewBox="{{VB}}" preserveAspectRatio="xMidYMid slice">
+        <path class="m-green" d="{{GREEN}}"/>
+        <path class="m-water" d="{{WATER}}"/>
+        <path class="m-minor" d="{{MINOR}}"/>
+        <path class="m-street" d="{{C1}}"/>
+        <path class="m-major" d="{{C2}}{{C3}}"/>
+        <path class="m-route-case" d="{{ROUTE}}"/>
+        <path class="m-route" d="{{ROUTE}}" style="--len:{{RLEN}}" pathLength="{{RLEN}}"/>
+        {{KM}}
+        <circle class="m-start" cx="{{SX}}" cy="{{SY}}" r="6"/><text class="m-start-t" x="{{SX}}" y="{{SY}}">D</text>
+      </svg>
+    </div>
+    <div class="wrap">
+      <p class="kicker">Comment ça marche</p>
+      <h1 id="titre">Ton prochain parcours, <em>tracé pour toi.</em></h1>
+      <p class="lede">Dis combien de kilomètres, d'où tu pars et ce que tu veux éviter : RunParis te propose <strong>trois parcours prêts à courir</strong> dans Paris et les 29 communes qui la bordent (Boulogne, Montreuil, Vincennes, Saint-Denis…), avec le dénivelé que tu veux, le moins de feux rouges possible, des fontaines pour boire en route et un métro pas loin pour rentrer.</p>
+      <div class="ctas">
+        <a class="btn primary" href="./">Générer mon parcours</a>
+        <a class="btn secondary" href="app.html#courses">Courir un parcours mythique</a>
+      </div>
+      <ul class="facts" aria-label="RunParis en chiffres">
+        <li><b>5 400 km</b><span>de rues et chemins</span></li>
+        <li><b>3 539</b><span>carrefours à feux</span></li>
+        <li><b>210 000</b><span>arbres recensés</span></li>
+        <li><b>1 541</b><span>fontaines à eau</span></li>
+        <li><b>16</b><span>parcours mythiques</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="features" id="fonctions" aria-labelledby="t-fonctions">
+    <div class="wrap">
+      <h2 class="sec-h" id="t-fonctions">Fait pour courir à Paris</h2>
+      <p class="sec-p">Pas une carte du monde entier : RunParis connaît les côtes de Montmartre, les quais, les parcs, les gares et chaque carrefour à feux, de Paris jusqu'aux communes limitrophes.</p>
+      <div class="grid">
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 3-7 7-8s5-5 9-6"/><circle cx="4" cy="18" r="2"/></svg></div><h3>Boucle, A → B ou aller simple</h3><p>Reviens à ton point de départ, va au travail en courant, ou pars droit devant et finis à une station de métro pour rentrer.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l6-9 4 5 3-4 5 8z"/></svg></div><h3>Le dénivelé que tu veux</h3><p>Plat pour un fractionné, vallonné pour préparer un trail : le profil s'affiche avant de partir.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2.5" width="8" height="19" rx="3"/><circle cx="12" cy="7.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="16.5" r="1.6"/></svg></div><h3>Moins de feux rouges</h3><p>Le parcours évite les carrefours à feux pour courir sans t'arrêter tous les 200 mètres.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15c-4 0-7-2.5-7-6a7 7 0 0 1 14 0c0 3.5-3 6-7 6z"/></svg></div><h3>Vert ou découverte</h3><p>Passe par les parcs, les quais et les rues arborées, ou devant les monuments et lieux connus.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></div><h3>Évite ce que tu veux</h3><p>Un arrondissement, un quartier, un lieu bondé : il n'y passe pas. Et selon ton heure de départ, il contourne les parcs déjà fermés.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3.5 4.5 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.5 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><h3>De l'eau en route</h3><p>Les fontaines du parcours sont affichées avec leur kilomètre, et tu peux demander un point d'eau environ tous les 3 km.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></div><h3>Les parcours mythiques</h3><p>Le marathon, le semi, Paris en 20 km, le trail de la Butte… Entraîne-toi sur les grands parcours parisiens, en entier ou en partie.</p></article>
+        <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M12 8v6m-3-3l3 3 3-3"/></svg></div><h3>Dans ta montre</h3><p>Exporte le parcours en GPX pour ta montre, Strava ou Komoot, et pars courir.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment" aria-labelledby="t-comment">
+    <div class="wrap">
+      <h2 class="sec-h" id="t-comment">Trois questions, trois parcours</h2>
+      <p class="sec-p">Pas de compte à créer, rien à installer : tout se calcule dans ton navigateur, en une seconde.</p>
+      <ol class="steps">
+        <li><h3>Où ?</h3><p>Ton point de départ, et si tu reviens au même endroit, vas quelque part ou cours droit devant.</p></li>
+        <li><h3>Combien ?</h3><p>Une distance ou une durée : 5 km, 45 minutes, un semi…</p></li>
+        <li><h3>Comment ?</h3><p>Plat ou vallonné, au vert, devant les monuments, en évitant ce que tu veux.</p></li>
+      </ol>
+      <aside class="osm" aria-labelledby="t-osm">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>
+        <div>
+          <h3 id="t-osm">Construit avec les données ouvertes d'OpenStreetMap</h3>
+          <p>Les rues, les arbres, les fontaines, les parcs et les stations viennent d'<a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>, la carte du monde réalisée par des milliers de bénévoles. Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, sous licence ODbL. Altitudes : IGN. Quartiers : Paris Open Data. Limites des communes : OpenStreetMap. Une fontaine manque ? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Ajoute-la sur OpenStreetMap</a>, elle apparaîtra ici à la prochaine mise à jour.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="final features" aria-labelledby="t-final">
+    <div class="wrap">
+      <h2 class="sec-h" id="t-final">Prêt à sortir courir ?</h2>
+      <p class="sec-p">Ton parcours t'attend, quelque part entre les quais et les buttes.</p>
+      <a class="btn primary" href="./">Générer mon parcours</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a> (ODbL) · altitudes IGN · quartiers Paris Open Data · parcours mythiques : tracés issus de fichiers GPX publics.</p>
+    <p>RunParis · un projet d'Antoine Mariotti · statistiques de visite anonymes, sans cookie (GoatCounter)</p>
+  </div>
+</footer>
+<script>
+// anonymous audience measurement, no cookie (public site only)
+if (location.hostname === 'runparis.netlify.app') { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
+// km markers appear as the route is drawn
+(() => {
+  const p = document.querySelector('.m-route'); if (!p || !p.getTotalLength) return;
+  const L = p.getTotalLength(), real = {{REALM}}, per = L * 1000 / real, svg = p.ownerSVGElement, ns = 'http://www.w3.org/2000/svg';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const s = (svg.getScreenCTM() || { a: 1 }).a || 1; // px per map unit: markers keep a constant on-screen size
+  svg.querySelector('.m-route').style.strokeWidth = (5 / s) + 'px'; svg.querySelector('.m-route-case').style.strokeWidth = (10 / s) + 'px';
+  const st = svg.querySelector('.m-start'), stt = svg.querySelector('.m-start-t'); st.setAttribute('r', 13 / s); stt.style.fontSize = (15 / s) + 'px';
+  for (let k = 1; k * 1000 < real - 400; k++) {
+    const pt = p.getPointAtLength(k * per), g = document.createElementNS(ns, 'g'); g.setAttribute('class', 'm-km');
+    if (!reduce) g.style.animationDelay = (0.5 + 3.2 * (k * per / L) ** 0.9) + 's';
+    const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y); c.setAttribute('r', 10.5 / s);
+    const t = document.createElementNS(ns, 'text'); t.setAttribute('x', pt.x); t.setAttribute('y', pt.y + .5 / s); t.style.fontSize = (11.5 / s) + 'px'; t.textContent = k;
+    g.append(c, t); svg.insertBefore(g, svg.querySelector('.m-start'));
+  }
+})();
+</script>

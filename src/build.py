@@ -52,4 +52,10 @@ for k, v in rep.items(): t = t.replace('{{%s}}' % k, v)
 t = t.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
 assert '{{' not in t
 (root / 'site' / 'index.html').write_text(t, encoding='utf-8')
+# ancienne accueil gardée comme page explicative (D-71)
+a = rd('a-propos.html')
+for k, v in rep.items(): a = a.replace('{{%s}}' % k, v)
+a = a.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
+assert '{{' not in a
+(root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
 print('site/app.html', len(app), '· site/index.html', len(t))

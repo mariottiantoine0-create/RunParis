@@ -27,6 +27,7 @@ Tout le calcul se fait dans le navigateur : pas de serveur, pas de compte, rien 
 ```
 site/              ce que Netlify publie
   index.html       page d'accueil (générée par src/build.py)
+  a-propos.html    « Comment ça marche », l'ancienne accueil (générée par src/build.py)
   app.html         l'application (générée par src/build.py)
   graph.bin        réseau des rues de Paris et des 29 communes limitrophes (91 000 carrefours, 123 000 tronçons, altitudes)
   meta.json        noms de rues, quartiers et communes, gares, cimetières, lieux, fond de carte
@@ -43,8 +44,9 @@ src/
   app_head.html    structure et styles de la page
   app.js           interface
   landing.html     modèle de la page d'accueil
+  a-propos.html    modèle de la page « Comment ça marche »
   hero.json        carte de Paris et parcours dessinés sur la page d'accueil
-  build.py         assemble site/app.html et site/index.html
+  build.py         assemble site/app.html, site/index.html et site/a-propos.html
   data/            extraction des données des communes voisines (OSM Geofabrik, altitudes IGN) et limites des communes
 netlify.toml       réglages Netlify (dossier publié, cache)
 ```
