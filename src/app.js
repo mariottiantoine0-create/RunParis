@@ -34,9 +34,10 @@ async function boot() {
   buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; renderAvoid(); renderVias(); renderRaces(); updateConv();
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
-  else { const rep = M.poi.find(p => p[0] === 'Place de la République') || ['Place de la République', 'square', 48.8674, 2.3636]; setPoint('start', { lat: rep[2], lon: rep[3], name: rep[0] }); }
   renderHome();
-  if (/^#cours/.test(location.hash)) { showView('set'); setTab('race'); } else generate();
+  // D-68 : on arrive sur les réglages, rien n'est calculé avant que le coureur le demande
+  showView('set'); if (/^#cours/.test(location.hash)) setTab('race');
+  if (!S.start) { $('#start-box').hidden = false; $('#change-start').setAttribute('aria-expanded', true); $('#change-start').textContent = 'Fermer'; }
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
 }
@@ -280,7 +281,7 @@ function renderHome() {
   go.hidden = !h;
   const isHome = h && S.start && Math.abs(S.start.lat - h.lat) < 1e-6 && Math.abs(S.start.lon - h.lon) < 1e-6;
   save.textContent = isHome ? 'Retirer « Chez moi »' : h ? 'Remplacer « Chez moi » par ce départ' : 'Enregistrer ce départ comme « Chez moi »';
-  save.dataset.mode = isHome ? 'remove' : 'save';
+  save.dataset.mode = isHome ? 'remove' : 'save'; save.hidden = !S.start;
   go.hidden = !h || isHome;
 }
 
@@ -929,7 +930,7 @@ function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary()
 async function generate(isAgain) {
   if (!G || busy) return;
   const notes = [], errs = [];
-  if (!S.start) { fail([{ t: 'Choisis un départ : recherche un lieu ou une rue, ou clique « Sur la carte ».', err: true }]); return; }
+  if (!S.start) { showView('set'); $('#start-box').hidden = false; $('#change-start').textContent = 'Fermer'; $('#change-start').setAttribute('aria-expanded', true); $('#start-q').focus(); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
   const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
   if (k.info) notes.push(k.info);
   const km = k.km, target = km * 1000;
