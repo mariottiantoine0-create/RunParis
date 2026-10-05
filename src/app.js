@@ -370,7 +370,9 @@ function drawMetro(hiOnly) {
 let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function render() {
   if (!G || !paths.minor) return;
-  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem') };
+  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem'), pinB: css('--pin-b'), accentInk: css('--accent-ink') };
+  if (!colors.hatch || colors.hatchKey !== colors.avoid) { const pc = document.createElement('canvas'); pc.width = pc.height = 8; const g = pc.getContext('2d'); g.strokeStyle = colors.avoid; g.globalAlpha = 0.55; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke(); colors.hatch = ctx.createPattern(pc, 'repeat'); colors.hatchKey = colors.avoid; }
+  if (colors.hatch && colors.hatch.setTransform) colors.hatch.setTransform(new DOMMatrix().scale(1 / (V.s || 1)));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
   ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr);
   const px = v => v / V.s;
@@ -379,7 +381,7 @@ function render() {
   if (M.cemPath) { ctx.fillStyle = colors.cem; ctx.fill(M.cemPath, 'evenodd'); }
   if (M.waterPath) { ctx.fillStyle = colors.water; ctx.fill(M.waterPath, 'evenodd'); }
   // excluded quartiers
-  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.fillStyle = colors.avoidFill; ctx.fill(q.path); }
+  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.fillStyle = colors.avoidFill; ctx.fill(q.path); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(q.path); } }
   if (M.stationPath) { ctx.fillStyle = colors.stationFill; ctx.fill(M.stationPath, 'nonzero'); }
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const z = V.s; // px per metre
@@ -392,11 +394,11 @@ function render() {
   ctx.strokeStyle = colors.quart; ctx.lineWidth = px(1); ctx.setLineDash([px(5), px(4)]);
   for (const q of M.quartiers) ctx.stroke(q.path);
   ctx.setLineDash([]);
-  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(1.5); ctx.stroke(q.path); }
+  if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(q.path); }
   // avoided places
-  if (S.tab !== 'race') for (const p of S.places) { const [x, y] = E.toXY(p.lat, p.lon); ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fillStyle = colors.avoidFill; ctx.fill(); ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(1.5); ctx.stroke(); }
+  if (S.tab !== 'race') for (const p of S.places) { const [x, y] = E.toXY(p.lat, p.lon); ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fillStyle = colors.avoidFill; ctx.fill(); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(); } ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(); }
   // signals
-  if (S.showSig) { ctx.fillStyle = colors.sig; for (const s of G.SIG) { ctx.beginPath(); ctx.arc(s.x, s.y, px(z > 0.2 ? 3 : 1.8), 0, 7); ctx.fill(); } }
+  if (S.showSig) { ctx.fillStyle = colors.sig; const h = px(z > 0.2 ? 3 : 1.8); ctx.beginPath(); for (const s of G.SIG) ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); }
   // all street trees, as small dots (a density map when zoomed out)
   if (S.showTrees && TREES) {
     const x0 = -V.tx / V.s, y0 = -V.ty / V.s, x1 = (W - V.tx) / V.s, y1 = (H - V.ty) / V.s, r = px(z > 0.4 ? 2.4 : z > 0.15 ? 1.6 : 1);
@@ -425,7 +427,7 @@ function render() {
     const LI = laneInfo(R), U = 3 / V.s;
     const OP = LI.any ? LI.pts.map(([x, y], i) => [x - LI.ty[i] * LI.lane[i] * U, y + LI.tx[i] * LI.lane[i] * U]) : LI.pts;
     const stroke = (a, b, col) => { const p = new Path2D(); for (let i = a; i <= b; i++) i === a ? p.moveTo(OP[i][0], OP[i][1]) : p.lineTo(OP[i][0], OP[i][1]);
-      ctx.strokeStyle = colors.casing; ctx.lineWidth = px(LI.any ? 7 : 8); ctx.stroke(p); ctx.strokeStyle = col; ctx.lineWidth = px(LI.any ? 4 : 4.5); ctx.stroke(p); };
+      ctx.strokeStyle = colors.casing; ctx.lineWidth = px(LI.any ? 7 : 8); ctx.stroke(p); ctx.strokeStyle = col; ctx.lineWidth = px(LI.any ? 4 : 4.5); if (col === colors.route2) { ctx.lineCap = 'butt'; ctx.setLineDash([px(7), px(5)]); } ctx.stroke(p); ctx.setLineDash([]); ctx.lineCap = 'round'; };
     // trees along the route, like the feux: small dots drawn UNDER the line, at street zoom only,
     // thinned to one dot per ~8 px so a tree-lined avenue reads as a green fringe, not noise
     const rt = z > 0.22 && !S.showTrees ? routeTrees(R) : null;
@@ -438,10 +440,10 @@ function render() {
       stroke(a, b, LI.pass[a] % 2 ? colors.route2 : colors.route); a = b; }
     // feux on route
     const ids = new Set(S.tab === 'race' ? [] : R.clusterIds); ctx.fillStyle = colors.sig; ctx.strokeStyle = colors.casing; ctx.lineWidth = px(1.5);
-    for (const s of G.SIG) if (ids.has(s.id)) { ctx.beginPath(); ctx.arc(s.x, s.y, px(4.5), 0, 7); ctx.fill(); ctx.stroke(); }
+    for (const s of G.SIG) if (ids.has(s.id)) { const h = px(4.5); ctx.beginPath(); ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // direction chevrons every ~70 px along the line
-    { const P = LI.pts; let run = 35; ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (V.s >= 0.09) { const P = LI.pts; let run = 35; ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (let i = 1; i < P.length; i++) { run += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]) * V.s;
         if (run < 70 || i < 2 || i > P.length - 3) continue; run = 0;
         const sx = OP[i][0] * V.s + V.tx, sy = OP[i][1] * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
@@ -449,7 +451,7 @@ function render() {
         ctx.beginPath(); ctx.moveTo(sx - dx * k - dy * k, sy - dy * k + dx * k); ctx.lineTo(sx + dx * k, sy + dy * k); ctx.lineTo(sx - dx * k + dy * k, sy - dy * k - dx * k); ctx.stroke(); } }
     // km markers, placed on the lane of the pass they belong to
     let acc = 0, next = 1000;
-    ctx.font = `600 11px ${css('--f-mono')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `800 11px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     {
       const pts = LI.pts;
       for (let i = 1; i < pts.length; i++) {
@@ -471,14 +473,14 @@ function render() {
   if (M.stationPath) { ctx.save(); ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr); ctx.strokeStyle = colors.station; ctx.lineWidth = 1.2 / V.s; ctx.setLineDash([4 / V.s, 3 / V.s]); ctx.stroke(M.stationPath); ctx.restore(); }
   // arrondissement numbers when zoomed out
   if (V.s < 0.12 && M.arrC) {
-    ctx.font = `600 ${V.s < 0.07 ? 13 : 16}px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
+    ctx.font = `800 ${V.s < 0.07 ? 14 : 17}px ${css('--f-display')}`; if ('fontStretch' in ctx) ctx.fontStretch = 'condensed'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
     for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a > 100) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1; if ('fontStretch' in ctx) ctx.fontStretch = 'normal';
   }
   drawMetro(true);
   if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
   // pins
-  const pin = (p, label, col) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
+  const pin = (p, label, col, txt) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = txt || '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
   if (R && S.alts) for (const a of S.alts) if (a !== R && a._label) {
     const [x, y, n] = a._label, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
     ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
@@ -492,13 +494,13 @@ function render() {
       ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(nm, sx + 10, sy); ctx.fillStyle = colors.ink; ctx.fillText(nm, sx + 10, sy); }
   }
   if (S.tab === 'race') {
-    if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.good); pin(ll(b), 'A', colors.avoid); }
+    if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.route, colors.accentInk); pin(ll(b), 'A', colors.pinB, colors.panel); }
     return;
   }
   S.vias.forEach((v, i) => pin(v, String(i + 1), colors.good));
-  pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.good);
-  if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.avoid);
-  if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.avoid); }
+  pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.route, colors.accentInk);
+  if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.pinB, colors.panel);
+  if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.pinB, colors.panel); }
 }
 
 // ---------- street names ----------
@@ -620,7 +622,7 @@ function setArrival(k) {
 ['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
 function applyModeLabels() {
   const ab = S.mode === 'ab';
-  $('#start-pin').textContent = ab ? 'A' : 'D'; $('#ti-start').textContent = ab ? 'A' : 'D';
+  $('#start-pin').textContent = ab ? 'A' : 'D';
   $('#start-sub').textContent = ab ? 'Départ (A)' : 'Départ et arrivée';
   $('#start-q').placeholder = ab ? 'Rechercher le départ A (lieu, rue, métro…)' : 'Rechercher un départ (lieu, rue, métro…)';
   $('#tl-start').textContent = ab ? 'Placer A (départ)' : 'Placer le départ';
@@ -679,8 +681,8 @@ $('#km').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); }
 $('#again').onclick = () => { S.seed++; generate(true); };
 $('#recalc').onclick = () => generate(true);
 // legend: open by default on large screens, closed on phones; remembered on this device
-try { const lg = localStorage.getItem('runparis-legend'); $('#legend').open = lg ? lg === 'open' : !matchMedia('(max-width: 860px)').matches; } catch (e) { $('#legend').open = !matchMedia('(max-width: 860px)').matches; }
-$('#legend').addEventListener('toggle', () => { try { localStorage.setItem('runparis-legend', $('#legend').open ? 'open' : 'closed'); } catch (e) {} });
+$('#legend').open = false; // légende intégrée (D-65) : le « ? » ouvre la liste complète
+document.addEventListener('click', e => { const lg = $('#legend'); if (lg.open && !lg.contains(e.target)) lg.open = false; });
 $('#edit').onclick = e => { e.stopPropagation(); showView('set'); };
 $('.summary').onclick = () => showView('set');
 function showView(v) {
@@ -1096,7 +1098,7 @@ function fitRoute(onlyStart) {
   fit([x0, y0, x1, y1]);
 }
 function showRoute(r, notes) {
-  const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
+  const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
   $('#detail').hidden = !r;
   if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
   $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
@@ -1198,8 +1200,9 @@ $('#copy').onclick = async () => {
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
-if (PUBLIC) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = `https://${GC}.goatcounter.com/count`; document.head.appendChild(sc); }
-function track(ev, title) { try { if (PUBLIC && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
+const STATS = PUBLIC && location.hostname === 'runparis.netlify.app'; // pas de stats sur staging ni en local
+if (STATS) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = `https://${GC}.goatcounter.com/count`; document.head.appendChild(sc); }
+function track(ev, title) { try { if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
 // ---------- feedback (Netlify Forms) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };

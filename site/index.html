@@ -238,7 +238,7 @@ footer p{margin:0;max-width:62em}
 </footer>
 <script>
 // anonymous audience measurement, no cookie (public site only)
-if (/netlify\.app$|runparis/i.test(location.hostname)) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
+if (location.hostname === 'runparis.netlify.app') { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
 if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');
 // km markers appear as the route is drawn
 (() => {
