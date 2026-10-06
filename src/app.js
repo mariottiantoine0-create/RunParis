@@ -751,6 +751,15 @@ seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-ro
 let sigLevel = 1;
 seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checked ? sigLevel : 0; });
 $('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
+// ---------- calques regroupés (D-76) ----------
+function lyCount() { const n = [...document.querySelectorAll('#ly-pop button[aria-pressed="true"]')].length; $('#ly-n').textContent = n; $('#ly-n').hidden = !n; }
+function lyClose() { $('#ly-pop').hidden = true; $('#ly-btn').setAttribute('aria-expanded', false); }
+$('#ly-btn').onclick = e => { e.stopPropagation(); const p = $('#ly-pop'); p.hidden = !p.hidden; $('#ly-btn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden && $('#legend').open) $('#legend').open = false; };
+$('#ly-pop').addEventListener('click', e => { e.stopPropagation(); setTimeout(lyCount, 0); });
+document.addEventListener('click', e => { if (!$('#ly-pop').hidden && !e.target.closest('#layers')) lyClose(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#ly-pop').hidden) { lyClose(); $('#ly-btn').focus(); } });
+$('#legend').addEventListener('toggle', () => { if ($('#legend').open) lyClose(); });
+setTimeout(lyCount, 0);
 $('#show-sig').onclick = e => { S.showSig = !S.showSig; e.currentTarget.setAttribute('aria-pressed', S.showSig); draw(); };
 $('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setAttribute('aria-pressed', S.showMetro); draw(); };
 $('#ly-font').onclick = e => { S.showFont = !S.showFont; e.currentTarget.setAttribute('aria-pressed', S.showFont); draw(); };

@@ -528,6 +528,28 @@ button,a,label,summary{touch-action:manipulation}
   .panel,.msheet{touch-action:pan-y}
   .msheet-grab{margin:10px auto 8px;width:44px;height:5px}
 }
+
+/* calques regroupés sous un bouton (D-76) */
+.layers{position:absolute;left:16px;top:16px;right:auto;display:block;max-width:none;overflow:visible;z-index:6}
+.ly-btn{position:relative;width:44px;height:44px;border:0;border-radius:4px;background:var(--panel);color:var(--ink);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;padding:0}
+.ly-btn:hover{background:var(--field)}
+.ly-btn[aria-expanded="true"]{background:var(--ink);color:var(--panel)}
+.ly-btn .n{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;display:grid;place-items:center;box-sizing:border-box}
+.ly-pop{position:absolute;left:0;top:52px;width:250px;background:var(--panel);border-radius:8px;box-shadow:var(--shadow-pop);padding:8px;display:flex;flex-direction:column;gap:2px}
+.ly-h{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:20px;line-height:1;padding:6px 8px 8px;color:var(--ink)}
+.layers .ly-pop button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0;padding:0 8px;border:0;border-radius:4px;background:none;box-shadow:none;color:var(--ink);font-family:var(--f-body);font-weight:600;font-size:15px;text-align:left;flex:none}
+.layers .ly-pop button[aria-pressed="true"]{background:none;color:var(--ink)}
+.layers .ly-pop button[aria-pressed="true"] .ld.metro{background:var(--metro-bg);color:var(--metro-ink);border-color:var(--metro-ring)}
+.layers .ly-pop button[aria-pressed] .ld{opacity:1}
+.layers .ly-pop button::after{content:"";margin-left:auto;flex:none;width:38px;height:22px;border-radius:11px;background:radial-gradient(circle at 11px 11px,#fff 8px,transparent 8.6px),var(--line-strong);transition:background .12s}
+.layers .ly-pop button[aria-pressed="true"]::after{background:radial-gradient(circle at 27px 11px,#fff 8px,transparent 8.6px),var(--accent)}
+.layers .ly-pop button:disabled{opacity:.45}
+@media (hover:hover){.layers .ly-pop button:hover,.layers .ly-pop button[aria-pressed="true"]:hover{background:var(--field)}}
+@media (max-width:860px){
+  .layers{left:10px;top:10px;right:auto;max-width:none;overflow:visible;z-index:12}
+  .legend{top:62px}
+  html.sheet-full .layers{display:none}
+}
 </style>
 
 <div class="app">
@@ -729,11 +751,14 @@ button,a,label,summary{touch-action:manipulation}
       <div class="bar" id="bar" style="width:0"></div>
       <canvas id="map" aria-label="Carte de Paris et des communes voisines avec le parcours"></canvas>
       <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
-      <div class="layers" role="group" aria-label="Afficher sur la carte">
+      <div class="layers" id="layers">
+        <button type="button" class="ly-btn" id="ly-btn" aria-expanded="false" aria-controls="ly-pop" aria-label="Calques : afficher sur la carte" title="Calques"><svg class="ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg><span class="n" id="ly-n" hidden></span></button>
+        <div class="ly-pop" id="ly-pop" hidden role="group" aria-label="Afficher sur la carte"><span class="ly-h">Afficher sur la carte</span>
         <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
         <button type="button" id="ly-font" aria-pressed="false"><i class="ld font"></i>Eau</button>
         <button type="button" id="ly-trees" aria-pressed="false"><i class="ld tree"></i>Arbres</button>
         <button type="button" id="show-sig" aria-pressed="false"><i class="ld sigd"></i>Feux</button>
+        </div>
       </div>
       <div class="tools" role="toolbar" aria-label="Outils de carte">
         <button class="tool" data-tool="start" aria-pressed="false"><em id="tl-start">Placer le départ</em><i id="ti-start"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><path d="M12 8.5v5"/><path d="M9.5 11h5"/></svg></i></button>
@@ -2103,6 +2128,15 @@ seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-ro
 let sigLevel = 1;
 seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checked ? sigLevel : 0; });
 $('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
+// ---------- calques regroupés (D-76) ----------
+function lyCount() { const n = [...document.querySelectorAll('#ly-pop button[aria-pressed="true"]')].length; $('#ly-n').textContent = n; $('#ly-n').hidden = !n; }
+function lyClose() { $('#ly-pop').hidden = true; $('#ly-btn').setAttribute('aria-expanded', false); }
+$('#ly-btn').onclick = e => { e.stopPropagation(); const p = $('#ly-pop'); p.hidden = !p.hidden; $('#ly-btn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden && $('#legend').open) $('#legend').open = false; };
+$('#ly-pop').addEventListener('click', e => { e.stopPropagation(); setTimeout(lyCount, 0); });
+document.addEventListener('click', e => { if (!$('#ly-pop').hidden && !e.target.closest('#layers')) lyClose(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#ly-pop').hidden) { lyClose(); $('#ly-btn').focus(); } });
+$('#legend').addEventListener('toggle', () => { if ($('#legend').open) lyClose(); });
+setTimeout(lyCount, 0);
 $('#show-sig').onclick = e => { S.showSig = !S.showSig; e.currentTarget.setAttribute('aria-pressed', S.showSig); draw(); };
 $('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setAttribute('aria-pressed', S.showMetro); draw(); };
 $('#ly-font').onclick = e => { S.showFont = !S.showFont; e.currentTarget.setAttribute('aria-pressed', S.showFont); draw(); };
