@@ -38,6 +38,7 @@ async function boot() {
   // D-68 : on arrive sur les réglages, rien n'est calculé avant que le coureur le demande
   showView('set'); if (/^#cours/.test(location.hash)) setTab('race');
   $('#pos-go').hidden = !navigator.geolocation || !!window.claude;
+  $('#run-go').hidden = !navigator.geolocation || !!window.claude;
   if (window.claude) $('#mlinks').hidden = true; // pas d'accueil dans l'artifact
   if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
@@ -467,7 +468,7 @@ function render() {
   ctx.restore();
   // route
   const R = S.route;
-  if (R && S.alts && S.alts.length > 1) {
+  if (R && S.alts && S.alts.length > 1 && !NAV.on) {
     ctx.save(); ctx.globalAlpha = 0.45; ctx.strokeStyle = colors.route; ctx.lineWidth = px(2.5); ctx.setLineDash([px(6), px(5)]);
     for (const a of S.alts) { if (a === R) continue; const p = new Path2D(); let f = true;
       for (const [e, fromA] of a.edges) { const pts = E.edgePts(e); if (!fromA) pts.reverse(); pts.forEach(([x, y], i) => { if (f) { p.moveTo(x, y); f = false; } else if (i) p.lineTo(x, y); }); }
@@ -492,6 +493,7 @@ function render() {
     else for (let a = 0; a < OP.length - 1;) { // short chunks so later passes are drawn over earlier ones; 2nd pass in its own colour
       let b = a + 1; while (b < OP.length - 1 && b - a < 24 && LI.pass[b] === LI.pass[a]) b++;
       stroke(a, b, LI.pass[a] % 2 ? colors.route2 : colors.route); a = b; }
+    navDrawDone(px);
     // feux on route
     const ids = new Set(S.tab === 'race' ? [] : R.clusterIds); ctx.fillStyle = colors.sig; ctx.strokeStyle = colors.casing; ctx.lineWidth = px(1.5);
     for (const s of G.SIG) if (ids.has(s.id)) { const h = px(4.5); ctx.beginPath(); ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
@@ -537,7 +539,7 @@ function render() {
   // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
   const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
   const pin = (p, label, col, txt) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = txt || '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
-  if (R && S.alts) for (const a of S.alts) if (a !== R && a._label) {
+  if (R && S.alts && !NAV.on) for (const a of S.alts) if (a !== R && a._label) {
     const [x, y, n] = a._label, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
     ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = colors.route; ctx.font = `700 12px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), sx, sy + 1);
@@ -551,12 +553,13 @@ function render() {
   }
   if (S.tab === 'race') {
     if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.route, colors.accentInk); pin(ll(b), 'A', colors.pinB, colors.panel); }
-    return;
+    navDrawMe(); return;
   }
   S.vias.forEach((v, i) => dia(v, String(i + 1), 13));
   pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.route, colors.accentInk);
   if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.pinB, colors.panel);
   if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.pinB, colors.panel); }
+  navDrawMe();
 }
 
 // ---------- street names ----------
@@ -615,7 +618,7 @@ cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptr
 cv.addEventListener('pointermove', e => {
   if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
   if (pinch && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const k = Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d; zoomAt(pinch.cx, pinch.cy, pinch.s * k, pinch); return; }
-  if (drag) { const dx = e.offsetX - drag.x, dy = e.offsetY - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved) { V.tx = drag.tx + dx; V.ty = drag.ty + dy; draw(); } }
+  if (drag) { const dx = e.offsetX - drag.x, dy = e.offsetY - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved) { V.tx = drag.tx + dx; V.ty = drag.ty + dy; if (NAV.on && NAV.follow) { NAV.follow = false; $('#run-pos').setAttribute('aria-pressed', false); } draw(); } }
 });
 cv.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (drag && !drag.moved) click(e.offsetX, e.offsetY); drag = null; });
 cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); drag = null; pinch = null; });
@@ -1311,11 +1314,14 @@ function shareData() {
   const d = new Date(); const date = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
   return { pts, km, up: Math.round(r.up || 0), loop, dep, arr, race: S.tab === 'race' && !!S.race, date };
 }
-function shOpen() {
+function shOpen(secs, doneM) {
+  const meas = typeof secs === 'number';
   const d = shareData(); if (!d) return toast("Génère d'abord un parcours.");
+  if (meas && typeof doneM === 'number' && doneM > 100) d.km = doneM / 1000;
   SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
-  $('#shx-time').value = fmtClock(d.km * pace());
-  $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}. Immortalise ta sortie et partage-la.`;
+  $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
+  $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
+  $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
   try { const k = 'runparis-done', L = JSON.parse(localStorage.getItem(k) || '[]'); L.unshift({ d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop }); localStorage.setItem(k, JSON.stringify(L.slice(0, 200))); } catch (e) {}
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
@@ -1419,6 +1425,206 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#shx')
 $('#done').hidden = false; $('#copy-m').hidden = false;
 if (document.fonts && document.fonts.load) { document.fonts.load('800 100px Archivo'); }
 
+// ---------- mode course : suivre le tracé en direct, sans montre (mobile) ----------
+// Le téléphone compare sa position au tracé : prochain virage, km faits / restants, hors tracé, arrivée.
+// Tout reste dans le téléphone. Limite d'un site : rien ne se passe écran verrouillé, d'où l'écran gardé allumé.
+const NAV = { on: false };
+const RUN_IC = {
+  right: '<path d="M7 21V12h10"/><path d="M13 8l4 4-4 4"/>', left: '<path d="M17 21V12H7"/><path d="M11 8l-4 4 4 4"/>',
+  sright: '<path d="M8 21v-7l7-7"/><path d="M10 7h5v5"/>', sleft: '<path d="M16 21v-7L9 7"/><path d="M14 7H9v5"/>',
+  uturn: '<path d="M8 21V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 21V4"/><path d="M7 9l5-5 5 5"/>',
+  flag: '<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', start: '<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>'
+};
+const runIco = k => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${RUN_IC[k]}</svg>`;
+function navBuild(r) {
+  const pts = routePts(r).map(p => [p[0], p[1]]), cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const L = cum[cum.length - 1];
+  const idx = d => { let lo = 0, hi = cum.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] <= d) lo = m; else hi = m; } return lo; };
+  const at = d => { d = Math.max(0, Math.min(L, d)); const i = Math.min(idx(d), pts.length - 2), t = (d - cum[i]) / Math.max(1e-6, cum[i + 1] - cum[i]); return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; };
+  const turn = (d, w) => { const a = at(d - w), b = at(d), c = at(d + w); let t = (Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0])) * 180 / Math.PI; while (t > 180) t -= 360; while (t < -180) t += 360; return t; };
+  const nameNear = d => { const [x, y] = at(d), v = E.nearest(x, y); if (v < 0) return ''; for (let k = G.deg[v]; k < G.deg[v + 1]; k++) { const e = G.adjE[k]; if (G.en[e]) return M.names[G.en[e] - 1]; } return ''; };
+  let man = [];
+  if (r.edges && r.edges.length) { // parcours généré : un virage possible à chaque carrefour
+    const segs = []; let d = 0;
+    for (const [e, fromA] of r.edges) { const p = E.edgePts(e); let len = 0; for (let i = 1; i < p.length; i++) len += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); segs.push([d, d + len, G.en[e] ? M.names[G.en[e] - 1] : '']); d += len; }
+    for (let i = 0; i < segs.length - 1; i++) {
+      const dd = segs[i][1]; if (dd < 15 || dd > L - 15) continue;
+      const a = turn(dd, 18); if (Math.abs(a) < 35) continue;
+      let nm = ''; for (let j = i + 1; j < segs.length && segs[j][0] < dd + 60; j++) if (segs[j][2]) { nm = segs[j][2]; break; }
+      man.push({ d: dd, a, name: nm });
+    }
+  } else { // trace publiée : là où le cap change nettement
+    let best = null;
+    for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
+  }
+  man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
+  man.push({ d: L, a: 0, arrive: true, name: '' });
+  return { pts, cum, L, idx, at, man };
+}
+function navDir(m) {
+  if (m.arrive) return ['flag', 'Arrivée'];
+  const a = m.a, s = a > 0 ? 'droite' : 'gauche', k = a > 0 ? 'right' : 'left';
+  if (Math.abs(a) >= 160) return ['uturn', 'Demi-tour'];
+  if (Math.abs(a) < 60) return ['s' + k, 'Légèrement à ' + s];
+  return [k, 'À ' + s];
+}
+const navDistTxt = d => d >= 1000 ? fmt(d / 1000, 1) + ' km' : (d >= 100 ? Math.round(d / 50) * 50 : Math.max(10, Math.round(d / 10) * 10)) + ' m';
+const navSayDist = d => d >= 1000 ? fmt(d / 1000, 1) + ' kilomètre' + (d >= 2000 ? 's' : '') : (d >= 100 ? Math.round(d / 50) * 50 : Math.round(d / 10) * 10) + ' mètres';
+function navSay(t) { if (!NAV.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {} }
+function navElapsed() { if (!NAV.t0) return 0; return ((NAV.paused ? NAV.pauseAt : Date.now()) - NAV.t0 - NAV.pausedMs) / 1000; }
+async function navWake() { if (!NAV.on || !NAV.wake || !('wakeLock' in navigator) || document.hidden) return; try { NAV.lock = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function navMsg(kind, title, text, ms) {
+  const n = $('#run-msg'); clearTimeout(NAV.msgT);
+  if (!kind) { n.hidden = true; return; }
+  n.className = 'note' + (kind === 'err' ? ' err' : kind === 'info' ? ' info' : ''); n.innerHTML = ''; const b = document.createElement('b'); b.textContent = title; n.append(b, text); n.hidden = false;
+  $('#run-nav').hidden = kind === 'err';
+  if (ms) NAV.msgT = setTimeout(() => { n.hidden = true; $('#run-nav').hidden = false; }, ms);
+}
+function runPrep() {
+  if (!S.route) return toast("Génère d'abord un parcours.");
+  if (!navigator.geolocation) return toast('Ta position n’est pas disponible sur cet appareil.', 3500);
+  NAV.n = navBuild(S.route);
+  $('#runp-far').hidden = true; $('#runp').hidden = false;
+  navigator.geolocation.getCurrentPosition(p => { // prévenir si on n'est pas encore au départ
+    const [x, y] = E.toXY(p.coords.latitude, p.coords.longitude), [sx, sy] = NAV.n.pts[0], d = Math.hypot(x - sx, y - sy);
+    if (d > 60 && !$('#runp').hidden) { const f = $('#runp-far'); f.innerHTML = ''; const b = document.createElement('b'); b.textContent = `Tu es à ${navDistTxt(d)} du départ.`; f.append(b, ' Rejoins le point D : le chrono démarre quand tu y es.'); f.hidden = false; }
+  }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
+}
+function runStart() {
+  $('#runp').hidden = true;
+  Object.assign(NAV, { on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0 });
+  $('#run-vol').setAttribute('aria-pressed', NAV.voice); $('#run-pos').setAttribute('aria-pressed', true);
+  document.documentElement.classList.add('running'); $('#run').hidden = false; navMsg(null);
+  if (NAV.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} } // iOS : la voix doit démarrer après un geste
+  navSay('Suivi du parcours activé.');
+  navWake(); resize();
+  V.s = Math.max(V.s, 0.9); navUI();
+  NAV.watch = navigator.geolocation.watchPosition(navFix, e => { if (e.code === 1) { toast('Position refusée : le suivi ne peut pas fonctionner.', 4000); runStop(); } }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  NAV.tick = setInterval(navUI, 1000);
+  track('suivi', 'Suivi lancé ' + Math.round(NAV.n.L / 1000) + ' km');
+}
+function runStop() {
+  if (NAV.watch != null) navigator.geolocation.clearWatch(NAV.watch); NAV.watch = null; clearInterval(NAV.tick);
+  try { NAV.lock && NAV.lock.release(); } catch (e) {} NAV.lock = null;
+  try { speechSynthesis.cancel(); } catch (e) {}
+  NAV.on = false; $('#run').hidden = true; $('#runz').hidden = true; document.documentElement.classList.remove('running');
+  setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
+}
+function runFinish(arrived) {
+  const secs = navElapsed(), started = !!NAV.t0, done = NAV.prog;
+  if (arrived) navSay('Bravo, parcours terminé.');
+  runStop();
+  if (!started) return;
+  track('suivi-fin', arrived ? 'Arrivée détectée' : 'Terminé avant l’arrivée');
+  shOpen(secs, arrived ? null : done);
+}
+function navProject(x, y, d0, d1) {
+  const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
+  for (let i = i0; i <= i1; i++) { const [ax, ay] = n.pts[i], [bx, by] = n.pts[i + 1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1e-9;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)), px = ax + vx * t, py = ay + vy * t, dd = Math.hypot(x - px, y - py);
+    if (!best || dd < best.dd) best = { dd, d: n.cum[i] + t * Math.sqrt(l2), px, py }; }
+  return best;
+}
+function navFix(p) {
+  if (!NAV.on) return;
+  const c = p.coords; if (c.accuracy > 60) return; // trop imprécis : on attend la suivante
+  const [x, y] = E.toXY(c.latitude, c.longitude), n = NAV.n;
+  const prevPos = NAV.pos; NAV.pos = [x, y];
+  NAV.head = c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.8 ? c.heading : null;
+  // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
+  if (!NAV.t0) {
+    const b = navProject(x, y, 0, 150), toStart = Math.hypot(x - n.pts[0][0], y - n.pts[0][1]);
+    if (toStart <= 40 || (b && b.dd <= 25)) { NAV.t0 = Date.now(); NAV.prog = b ? b.d : 0; NAV.proj = b; navSay('C’est parti.'); }
+    else { NAV.toStart = toStart; NAV.proj = null; }
+    navUI(); return;
+  }
+  if (NAV.paused) { navUI(); return; }
+  const tol = Math.max(35, Math.min(60, c.accuracy * 1.2));
+  let b = navProject(x, y, NAV.prog - 60, NAV.prog + (NAV.reacq ? 2500 : 400));
+  if (b && b.dd > tol && NAV.off >= 2) { const w = navProject(x, y, NAV.prog - 200, NAV.prog + 3000); if (w && w.dd < b.dd) b = w; } // on a pu couper ou sauter un bout
+  NAV.reacq = false;
+  if (!b) return;
+  if (b.dd > tol) {
+    NAV.off++; NAV.proj = b;
+    if (NAV.off >= 2 && !NAV.offOn) { NAV.offOn = true; navSay('Tu t’es écarté du parcours.'); }
+  } else {
+    if (NAV.offOn) { navSay('Tu es de retour sur le parcours.'); }
+    NAV.off = 0; NAV.offOn = false; NAV.proj = b;
+    if (b.d > NAV.prog) NAV.prog = b.d;
+  }
+  // annonces : virages et kilomètres
+  while (NAV.mi < n.man.length - 1 && n.man[NAV.mi].d < NAV.prog + 5) NAV.mi++;
+  const m = n.man[NAV.mi], dm = m.d - NAV.prog;
+  if (!m.arrive && !NAV.offOn) {
+    const [k] = navDir(m), verb = k === 'uturn' ? 'fais demi-tour' : (k[0] === 's' ? 'tourne légèrement à ' : 'tourne à ') + (m.a > 0 ? 'droite' : 'gauche');
+    if (dm <= 120 && dm > 40 && NAV.a1 !== NAV.mi) { NAV.a1 = NAV.mi; navSay(`Dans ${navSayDist(dm)}, ${verb}${m.name ? ', ' + m.name : ''}.`); }
+    else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; navSay(verb[0].toUpperCase() + verb.slice(1) + '.'); }
+  }
+  if (NAV.prog >= NAV.km * 1000 && NAV.km * 1000 < n.L - 200) { const pc = navElapsed() / (NAV.prog / 1000); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(NAV.prog / 1000) + 1; }
+  // arrivée
+  if (NAV.prog >= n.L - 30 || (NAV.prog > n.L * 0.9 && Math.hypot(x - n.pts[n.pts.length - 1][0], y - n.pts[n.pts.length - 1][1]) < 25)) { NAV.prog = n.L; navUI(); return runFinish(true); }
+  navUI();
+}
+function navUI() {
+  if (!NAV.on) return;
+  const n = NAV.n, secs = navElapsed(), km = NAV.prog / 1000;
+  $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km';
+  $('#rs-time').textContent = fmtClock(secs); $('#rs-pace').textContent = km > 0.2 ? fmtClock(secs / km) : '–';
+  $('#run-bar').style.width = (100 * NAV.prog / n.L).toFixed(1) + '%';
+  $('#run-pause').disabled = !NAV.t0;
+  let ic, big, small;
+  if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
+  else { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = navDistTxt(Math.max(0, m.d - NAV.prog)); small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : ''); }
+  if (NAV.icK !== ic) { $('#run-ic').innerHTML = runIco(ic); NAV.icK = ic; }
+  $('#run-dist').textContent = big; $('#run-street').textContent = small;
+  if (NAV.offOn) { const d = NAV.proj ? NAV.proj.dd : 0; navMsg('err', 'Tu t’es écarté du parcours', `Le tracé est à ${navDistTxt(d)} : suis le pointillé rouge pour le rejoindre.`); NAV.errShown = true; }
+  else if (NAV.errShown) { NAV.errShown = false; navMsg(null); $('#run-nav').hidden = false; }
+  if (NAV.follow && NAV.pos) navCenter(); else draw();
+}
+function navCenter() {
+  const r = cv.getBoundingClientRect(), top = $('.run-top').getBoundingClientRect().bottom - r.top, bot = $('.run-panel').getBoundingClientRect().top - r.top;
+  const [x, y] = NAV.pos;
+  if (!NAV.t0) { // avant le départ : on cadre ta position et le point D
+    const [sx, sy] = NAV.n.pts[0], w = Math.abs(sx - x) + 160, h = Math.abs(sy - y) + 160;
+    V.s = Math.max(0.15, Math.min(1.2, (r.width - 32) / w, (bot - top - 32) / h)); V.tx = r.width / 2 - (x + sx) / 2 * V.s; V.ty = (top + bot) / 2 - (y + sy) / 2 * V.s; return draw();
+  }
+  if (NAV.wasPre) { NAV.wasPre = false; V.s = Math.max(V.s, 0.9); }
+  V.tx = r.width / 2 - x * V.s; V.ty = (top + bot) / 2 + 20 - y * V.s; draw();
+}
+// dessin sur la carte (appelé depuis render) : partie déjà courue, position, écart au tracé
+function navDrawDone(px) {
+  if (!NAV.on || !NAV.t0 || NAV.prog <= 0) return;
+  const n = NAV.n, k = n.idx(NAV.prog), p = new Path2D(); p.moveTo(n.pts[0][0], n.pts[0][1]);
+  for (let i = 1; i <= k; i++) p.lineTo(n.pts[i][0], n.pts[i][1]); const e = n.at(NAV.prog); p.lineTo(e[0], e[1]);
+  ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(p); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(p);
+}
+function navDrawMe() {
+  if (!NAV.on || !NAV.pos) return;
+  const [x, y] = NAV.pos, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
+  if (NAV.offOn && NAV.proj) { const qx = NAV.proj.px * V.s + V.tx, qy = NAV.proj.py * V.s + V.ty; ctx.save(); ctx.strokeStyle = css('--err'); ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(qx, qy); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(qx, qy, 5, 0, 7); ctx.fillStyle = colors.panel; ctx.fill(); ctx.stroke(); ctx.restore(); }
+  let h = NAV.head; if (h == null) { const n = NAV.n, a = NAV.t0 ? n.at(NAV.prog) : NAV.pos, b = NAV.t0 ? n.at(NAV.prog + 15) : n.pts[0]; h = Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI; } // cap : 0 = nord, sens horaire
+  ctx.save(); ctx.beginPath(); ctx.arc(sx, sy, 22, 0, 7); ctx.fillStyle = colors.ink; ctx.globalAlpha = 0.1; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.translate(sx, sy); ctx.rotate(h * Math.PI / 180); ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(10, 11); ctx.lineTo(0, 5); ctx.lineTo(-10, 11); ctx.closePath();
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = colors.panel; ctx.stroke(); ctx.fillStyle = colors.ink; ctx.fill(); ctx.restore();
+}
+if (/[?&]navtest=1/.test(location.search)) window.RP_NAV = NAV; // recette automatique uniquement
+$('#run-go').onclick = runPrep;
+$('#runp-x').onclick = $('#runp-back').onclick = () => { $('#runp').hidden = true; };
+$('#runp-go').onclick = runStart;
+$('#run-vol').onclick = () => { NAV.voice = !NAV.voice; $('#run-vol').setAttribute('aria-pressed', NAV.voice); if (!NAV.voice) try { speechSynthesis.cancel(); } catch (e) {} };
+$('#run-pos').onclick = () => { NAV.follow = true; $('#run-pos').setAttribute('aria-pressed', true); if (NAV.pos) navCenter(); };
+$('#run-pause').onclick = () => { if (!NAV.t0) return; NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
+const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; } $('#runz').hidden = true; navUI(); };
+$('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
+$('#runz-end').onclick = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.pauseAt = 0; } runFinish(false); };
+document.addEventListener('visibilitychange', () => {
+  if (!NAV.on) return;
+  if (document.hidden) { NAV.hiddenAt = Date.now(); return; }
+  navWake(); const gap = NAV.hiddenAt ? (Date.now() - NAV.hiddenAt) / 1000 : 0; NAV.hiddenAt = 0;
+  if (gap > 15 && NAV.t0 && !NAV.paused) { NAV.reacq = true; navMsg('warn', `Suivi interrompu ${gap >= 90 ? Math.round(gap / 60) + ' min' : Math.round(gap) + ' s'}`, 'L’écran s’est verrouillé. Ta position a repris, la distance est recalculée.', 8000); }
+});
+addEventListener('beforeunload', e => { if (NAV.on && NAV.t0) { e.preventDefault(); e.returnValue = ''; } });
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
@@ -1508,7 +1714,7 @@ document.querySelectorAll('#mset [data-sh]').forEach(b => b.onclick = () => mOpe
 $('#mback').onclick = mClose; $('#msheet-x').onclick = mClose; $('#msheet-ok').onclick = mClose;
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClose(); });
 ['click', 'change', 'input'].forEach(ev => document.addEventListener(ev, () => setTimeout(msync, 0)));
-const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); };
+const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); $('#gpx').classList.toggle('primary', !MOB.matches); $('#gpx').classList.toggle('ghost', MOB.matches); };
 MOB.addEventListener('change', mApply);
 
 boot();

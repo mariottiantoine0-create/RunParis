@@ -8,7 +8,7 @@
   color-scheme:light;
   --bg:#F4F4F2; --panel:#FFFFFF; --field:#F3F3F1; --ink:#0B0B0C; --muted:#5E6166; --line:#E4E4E1; --soft:#ECECE9; --line-strong:#C9C9C5;
   --accent:#1F4FE0; --accent-hover:#1941B8; --accent-press:#15379C; --accent-ink:#FFFFFF; --accent-fill:#E4EAFB; --disabled-bg:#ECECE9; --disabled-ink:#9A9DA2;
-  --route:#1F4FE0; --route-2:#8A3FD1; --route-casing:#FFFFFF; --tree:#1E8E4F; --font:#0B9DB5; --metro-bg:#FFFFFF; --metro-ink:#0B0B0C; --metro-ring:#0B0B0C;
+  --route:#1F4FE0; --route-2:#8A3FD1; --route-done:#A3A6AB; --route-casing:#FFFFFF; --tree:#1E8E4F; --font:#0B9DB5; --metro-bg:#FFFFFF; --metro-ink:#0B0B0C; --metro-ring:#0B0B0C;
   --street:#DEDEDA; --street-major:#C2C2BD; --street-path:#B9C7B1; --quart:#D0D0CC;
   --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.12); --sig:#D98A00; --pin-b:#0B0B0C;
   --good:#1E8E4F; --poi:#C2338A; --water:#D5DFE6; --green:#E1E7DC; --cem:#E6E6E2; --station:#8A8D93; --station-fill:rgba(110,113,120,.14); --label:#6A6D72; --warn:#B26B00;
@@ -24,7 +24,7 @@
     color-scheme:dark;
     --bg:#0F1114; --panel:#171A1F; --field:#22262C; --ink:#F2F3F5; --muted:#9AA0A8; --line:#2E333A; --soft:#2A2E35; --line-strong:#464C55;
     --accent:#7B96FF; --accent-hover:#95ABFF; --accent-press:#AFC0FF; --accent-ink:#0B0B0C; --accent-fill:#1E2540; --disabled-bg:#2A2E35; --disabled-ink:#6B7178;
-    --route:#7B96FF; --route-2:#C79BFF; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
+    --route:#7B96FF; --route-2:#C79BFF; --route-done:#5A6068; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
     --street:#262A30; --street-major:#3B414A; --street-path:#2E4233; --quart:#2E333A;
     --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
     --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
@@ -36,7 +36,7 @@
   color-scheme:dark;
   --bg:#0F1114; --panel:#171A1F; --field:#22262C; --ink:#F2F3F5; --muted:#9AA0A8; --line:#2E333A; --soft:#2A2E35; --line-strong:#464C55;
   --accent:#7B96FF; --accent-hover:#95ABFF; --accent-press:#AFC0FF; --accent-ink:#0B0B0C; --accent-fill:#1E2540; --disabled-bg:#2A2E35; --disabled-ink:#6B7178;
-  --route:#7B96FF; --route-2:#C79BFF; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
+  --route:#7B96FF; --route-2:#C79BFF; --route-done:#5A6068; --route-casing:#121417; --tree:#4ADE80; --font:#3FD0E6; --metro-bg:#121417; --metro-ink:#F2F3F5; --metro-ring:#F2F3F5;
   --street:#262A30; --street-major:#3B414A; --street-path:#2E4233; --quart:#2E333A;
   --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
   --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
@@ -546,6 +546,52 @@ button,a,label,summary{touch-action:manipulation}
   html.sheet-full .layers{display:none}
 }
 
+/* mode course : suivre le tracé en direct (mobile) */
+#run-go{display:none}
+@media (max-width:860px){ #run-go{display:inline-flex;gap:10px;width:100%;margin-bottom:8px} #run-go[hidden]{display:none} }
+#run-go .ico,#runp-go .ico,#runz-go .ico{color:var(--accent-ink)}
+@media (max-width:860px){ #foot-res .btnrow>.btn:not([hidden]){flex:1} }
+.msheet-h .iconbtn,.shx .iconbtn{width:44px;height:44px}
+.run-opts{display:flex;flex-direction:column}
+.run-opts .sw{border-bottom:1px solid var(--line);padding:8px 0;align-items:center}
+.run-opts .sw span{display:flex;flex-direction:column;gap:2px}
+.run-opts .sw b{font-weight:600;font-size:16px}
+.run-opts .sw small{font-size:13px;color:var(--muted)}
+.run-priv{display:flex;gap:10px;align-items:center;margin:4px 0 0;font-size:13px;color:var(--muted)}
+.run-priv .ico{color:var(--muted);width:18px;height:18px}
+.msheet-f .btn{gap:10px}
+.run-zf{display:flex;flex-direction:column;gap:8px}
+.run-zs{display:flex;gap:28px;align-items:flex-end;border-top:2px solid var(--ink);padding-top:8px}
+.run-zs b{display:block;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:30px;line-height:1}
+.run-zs div:first-child b{font-size:48px}
+.run-zs span{font-size:12px;font-weight:700;color:var(--muted)}
+html.running .panel,html.running .tools,html.running .layers,html.running .zoom,html.running .legend,html.running .attrib{display:none!important}
+.run{position:fixed;inset:0;z-index:40;pointer-events:none}
+.run>*{pointer-events:auto}
+.run-top{position:absolute;top:max(16px,env(safe-area-inset-top));left:16px;right:16px;display:flex;flex-direction:column;gap:8px}
+.run-nav{display:flex;align-items:center;gap:14px;background:var(--toast);color:#fff;border-radius:8px;padding:12px 14px;box-shadow:var(--shadow-pop)}
+.run-ic{flex:none;width:44px;height:44px;display:grid;place-items:center}
+.run-ic .ico{width:44px;height:44px;color:#fff;stroke-width:2.6}
+.run-dist{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:40px;line-height:1}
+.run-street{font-weight:700;font-size:17px;margin-top:2px}
+.run-top .note{box-shadow:var(--shadow-pop)}
+.run-top .note b{display:block;font-size:15px;margin-bottom:4px}
+.run-tools{position:absolute;right:16px;top:calc(max(16px,env(safe-area-inset-top)) + 104px);display:flex;flex-direction:column;gap:8px}
+.run-tools button{width:44px;height:44px;border:0;border-radius:4px;background:var(--panel);color:var(--ink);box-shadow:var(--shadow-float);display:grid;place-items:center;padding:0}
+.run-tools button .ico{color:currentColor}
+.run-tools button[aria-pressed="true"]#run-vol{background:var(--accent);color:var(--accent-ink)}
+.run-tools button[aria-pressed="false"]#run-pos{color:var(--muted)}
+.run-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);color:var(--ink);border-radius:8px 8px 0 0;box-shadow:var(--shadow-sheet);padding:14px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
+.run-prog{height:4px;background:var(--field);border-radius:2px;overflow:hidden}
+.run-prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.run-stats{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.run-stats b{display:block;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.run-stats .big b{font-size:40px}
+.run-stats span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:3px}
+.run-panel .btn{width:100%;height:52px;gap:10px}
+.run-panel .btn .ico{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.run-prog i{transition:none}}
+.run-nav[hidden]{display:none}
 /* fin de parcours et image à partager (D-77) */
 .foot-links{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
 #done .ico{width:18px;height:18px}
@@ -772,6 +818,7 @@ button,a,label,summary{touch-action:manipulation}
       <button class="btn primary" id="gen">Générer 3 parcours</button>
     </div>
     <div class="pfoot" id="foot-res" hidden>
+      <button type="button" class="btn primary" id="run-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Suivre le parcours</button>
       <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button><button class="btn ghost" id="done" hidden><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Je l’ai fait</button></div>
       <div class="foot-links"><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
     </div>
@@ -829,6 +876,47 @@ button,a,label,summary{touch-action:manipulation}
     <div class="msheet-f" id="msheet-f"><button type="button" class="btn primary" id="msheet-ok">Valider</button></div>
   </div>
 
+  <!-- mode course : suivre le tracé en direct (mobile) -->
+  <div class="shx" id="runp" hidden>
+    <div class="shx-back" id="runp-back"></div>
+    <section class="shx-bravo" role="dialog" aria-modal="true" aria-labelledby="runp-t">
+      <div class="msheet-grab" aria-hidden="true"></div>
+      <div class="msheet-h"><h2 id="runp-t">Prêt ?</h2><button type="button" class="iconbtn" id="runp-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+      <div class="shx-b">
+        <div class="note info" id="runp-far" hidden></div>
+        <div class="run-opts">
+          <label class="sw"><span><b>Guidage vocal</b><small>Les virages et chaque kilomètre annoncés</small></span><input type="checkbox" id="run-voice" checked></label>
+          <label class="sw"><span><b>Garder l’écran allumé</b><small>Le suivi s’arrête si le téléphone se verrouille</small></span><input type="checkbox" id="run-wake" checked></label>
+        </div>
+        <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>Ta position reste dans ton téléphone, elle n’est jamais envoyée.</p>
+      </div>
+      <div class="msheet-f"><button type="button" class="btn primary" id="runp-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>C’est parti</button></div>
+    </section>
+  </div>
+  <div class="run" id="run" hidden>
+    <div class="run-top">
+      <div class="run-nav" id="run-nav" role="status" aria-live="polite"><span class="run-ic" id="run-ic"></span><div><div class="run-dist" id="run-dist">–</div><div class="run-street" id="run-street"></div></div></div>
+      <div class="note" id="run-msg" role="alert" hidden></div>
+    </div>
+    <div class="run-tools">
+      <button type="button" id="run-pos" aria-pressed="true" aria-label="Suivre ma position"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></button>
+      <button type="button" id="run-vol" aria-pressed="true" aria-label="Guidage vocal"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9c1.5 1.5 1.5 4.5 0 6"/><path d="M18.5 6.5c3 3 3 8 0 11"/></svg></button>
+    </div>
+    <section class="run-panel" aria-label="Ta course">
+      <div class="run-prog" aria-hidden="true"><i id="run-bar"></i></div>
+      <div class="run-stats"><div class="big"><b id="rs-done">0,0 km</b><span>faits</span></div><div><b id="rs-rest">–</b><span>restants</span></div><div><b id="rs-time">0:00</b><span>temps</span></div><div><b id="rs-pace">–</b><span>allure /km</span></div></div>
+      <button type="button" class="btn ghost" id="run-pause"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3v16H7z"/><path d="M14 4h3v16h-3z"/></svg>Pause</button>
+    </section>
+  </div>
+  <div class="shx" id="runz" hidden>
+    <div class="shx-back" id="runz-back"></div>
+    <section class="shx-bravo" role="dialog" aria-modal="true" aria-labelledby="runz-t">
+      <div class="msheet-grab" aria-hidden="true"></div>
+      <div class="msheet-h"><h2 id="runz-t">En pause</h2><button type="button" class="iconbtn" id="runz-x" aria-label="Reprendre"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+      <div class="shx-b"><div class="run-zs"><div><b id="rz-done">0 km</b><span id="rz-of">faits</span></div><div><b id="rz-time">0:00</b><span>temps (arrêté)</span></div></div></div>
+      <div class="msheet-f run-zf"><button type="button" class="btn primary" id="runz-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Reprendre</button><button type="button" class="btn ghost" id="runz-end"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg>Terminer ici</button></div>
+    </section>
+  </div>
   <!-- fin de parcours : « Je l'ai fait », photo, image à partager (D-77) -->
   <div class="shx" id="shx" hidden>
     <div class="shx-back" id="shx-back"></div>
