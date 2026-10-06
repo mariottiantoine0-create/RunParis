@@ -524,9 +524,11 @@ button,a,label,summary{touch-action:manipulation}
 
 /* calques regroupés sous un bouton (D-76) */
 .layers{position:absolute;left:16px;top:16px;right:auto;display:block;max-width:none;overflow:visible;z-index:6}
+.ly-btn svg{display:block}
+.layers .ly-btn{display:grid;place-items:center;padding:0;margin:0;min-height:44px;width:44px;height:44px;border:0;border-radius:4px;gap:0}
 .ly-btn{position:relative;width:44px;height:44px;border:0;border-radius:4px;background:var(--panel);color:var(--ink);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;padding:0}
-.ly-btn:hover{background:var(--field)}
-.ly-btn[aria-expanded="true"]{background:var(--ink);color:var(--panel)}
+.layers .ly-btn:hover{background:var(--field)}
+.layers .ly-btn[aria-expanded="true"]{background:var(--ink);color:var(--panel)}
 .ly-btn .n{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;display:grid;place-items:center;box-sizing:border-box}
 .ly-pop{position:absolute;left:0;top:52px;width:250px;background:var(--panel);border-radius:8px;box-shadow:var(--shadow-pop);padding:8px;display:flex;flex-direction:column;gap:2px}
 .ly-h{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:20px;line-height:1;padding:6px 8px 8px;color:var(--ink)}
@@ -745,7 +747,7 @@ button,a,label,summary{touch-action:manipulation}
       <canvas id="map" aria-label="Carte de Paris et des communes voisines avec le parcours"></canvas>
       <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
       <div class="layers" id="layers">
-        <button type="button" class="ly-btn" id="ly-btn" aria-expanded="false" aria-controls="ly-pop" aria-label="Calques : afficher sur la carte" title="Calques"><svg class="ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg><span class="n" id="ly-n" hidden></span></button>
+        <button type="button" class="ly-btn" id="ly-btn" aria-expanded="false" aria-controls="ly-pop" aria-label="Calques : afficher sur la carte" title="Calques"><svg class="ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 3.5l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16l9 4.5 9-4.5"/></svg></button>
         <div class="ly-pop" id="ly-pop" hidden role="group" aria-label="Afficher sur la carte"><span class="ly-h">Afficher sur la carte</span>
         <button type="button" id="ly-metro" aria-pressed="true"><i class="ld metro">M</i>Métro et RER</button>
         <button type="button" id="ly-font" aria-pressed="false"><i class="ld font"></i>Eau</button>

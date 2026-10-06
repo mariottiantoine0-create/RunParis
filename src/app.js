@@ -752,7 +752,7 @@ let sigLevel = 1;
 seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checked ? sigLevel : 0; });
 $('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
 // ---------- calques regroupés (D-76) ----------
-function lyCount() { const n = [...document.querySelectorAll('#ly-pop button[aria-pressed="true"]')].length; $('#ly-n').textContent = n; $('#ly-n').hidden = !n; }
+function lyCount() {} // pastille retirée (D-76)
 function lyClose() { $('#ly-pop').hidden = true; $('#ly-btn').setAttribute('aria-expanded', false); }
 $('#ly-btn').onclick = e => { e.stopPropagation(); const p = $('#ly-pop'); p.hidden = !p.hidden; $('#ly-btn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden && $('#legend').open) $('#legend').open = false; };
 $('#ly-pop').addEventListener('click', e => { e.stopPropagation(); setTimeout(lyCount, 0); });
