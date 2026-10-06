@@ -332,13 +332,60 @@ function setSheet(st, refit) {
 }
 (() => {
   let d = null; const panel = $('.panel');
-  const start = e => { if (!MOB.matches || e.target.closest('#theme-btn, a.logo')) return; d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const start = e => { if (!MOB.matches || e.pointerType !== 'mouse' || e.target.closest('#theme-btn, a.logo')) return; /* au doigt : geste tactile plus bas (D-75) */ d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
   const move = e => { if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 4) d.moved = true; const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, d.h - dy)) + 'px'); };
   const end = () => { if (!d) return; panel.classList.remove('dragging'); const h = panel.getBoundingClientRect().height, hs = sheetHeights();
     if (!d.moved) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true);
     else { const st = Object.entries(hs).sort((a, b) => Math.abs(a[1] - h) - Math.abs(b[1] - h))[0][0]; setSheet(st, st !== 'full'); }
     d = null; };
   for (const el of [$('#grab'), $('.phead')]) { el.addEventListener('pointerdown', start); el.addEventListener('pointermove', move); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
+  // ----- geste tactile sur la feuille (D-75) -----
+  // On tire la feuille depuis la poignée, l'en-tête, les onglets, le résumé ou la phrase ; depuis le contenu,
+  // un glissement vers le bas quand on est tout en haut la réduit, un glissement vers le haut l'agrandit tant qu'elle n'est pas pleine.
+  // Un geste rapide passe à la position suivante ; sinon on va à la position la plus proche.
+  const ORDER = ['peek', 'half', 'full'];
+  let t = null, noClick = false;
+  const H = () => panel.getBoundingClientRect().height;
+  panel.addEventListener('touchstart', e => {
+    if (!MOB.matches || e.touches.length !== 1) { t = null; return; }
+    const tg = e.target; if (tg.closest('input, select, textarea, #theme-btn, a.logo, .themepop, .chips, #race-filter, #portion-chips')) { t = null; return; }
+    const y = e.touches[0].clientY, x = e.touches[0].clientX;
+    t = { y0: y, x0: x, h0: H(), body: tg.closest('.pbody'), handle: !!tg.closest('#grab, .phead, .tabs, .summary, #mset'), on: false, ys: [[y, performance.now()]] };
+  }, { passive: true });
+  panel.addEventListener('touchmove', e => {
+    if (!t) return; const y = e.touches[0].clientY, x = e.touches[0].clientX, dy = y - t.y0;
+    if (!t.on) {
+      if (Math.abs(dy) < 8) return;
+      if (Math.abs(x - t.x0) > Math.abs(dy)) { t = null; return; }
+      const atTop = !t.body || t.body.scrollTop <= 0;
+      if (t.handle || (dy > 0 && atTop) || (dy < 0 && sheet !== 'full')) { t.on = true; panel.classList.add('dragging'); }
+      else { t = null; return; }
+    }
+    e.preventDefault();
+    const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, t.h0 - (y - t.y0))) + 'px');
+    t.ys.push([y, performance.now()]); if (t.ys.length > 6) t.ys.shift();
+  }, { passive: false });
+  const tend = () => {
+    if (!t) return; const was = t; t = null; if (!was.on) return;
+    panel.classList.remove('dragging'); noClick = true; setTimeout(() => noClick = false, 350);
+    const [a, b] = [was.ys[0], was.ys[was.ys.length - 1]], v = (b[0] - a[0]) / Math.max(1, b[1] - a[1]); // px/ms, > 0 = vers le bas
+    const hs = sheetHeights(), h = H(); let st;
+    if (Math.abs(v) > 0.45) st = v < 0 ? (ORDER.find(k => hs[k] > h + 10) || 'full') : ([...ORDER].reverse().find(k => hs[k] < h - 10) || 'peek'); // geste rapide : position suivante dans le sens du geste
+    else st = Object.entries(hs).sort((p, q) => Math.abs(p[1] - h) - Math.abs(q[1] - h))[0][0];
+    setSheet(st, st !== 'full');
+  };
+  panel.addEventListener('touchend', tend); panel.addEventListener('touchcancel', tend);
+  panel.addEventListener('click', e => { if (noClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+  $('#grab').addEventListener('click', () => { if (MOB.matches && !noClick) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true); });
+  // feuilles des réglages : glisser vers le bas pour fermer
+  const ms = $('#msheet'); let m = null;
+  ms.addEventListener('touchstart', e => { if (e.touches.length !== 1 || e.target.closest('input, select, textarea, .chips')) { m = null; return; } const b = $('#msheet-b'); m = { y0: e.touches[0].clientY, top: !e.target.closest('#msheet-b') || b.scrollTop <= 0, on: false, ys: [] }; }, { passive: true });
+  ms.addEventListener('touchmove', e => { if (!m) return; const dy = e.touches[0].clientY - m.y0;
+    if (!m.on) { if (dy < 8) { if (dy < -8) m = null; return; } if (!m.top) { m = null; return; } m.on = true; m.y0 = e.touches[0].clientY; ms.style.transition = 'none'; }
+    e.preventDefault(); const d2 = Math.max(0, e.touches[0].clientY - m.y0); ms.style.transform = `translateY(${d2}px)`; m.ys.push([d2, performance.now()]); if (m.ys.length > 6) m.ys.shift(); }, { passive: false });
+  const mend = () => { if (!m) return; const w = m; m = null; if (!w.on) return; const a = w.ys[0] || [0, 0], b = w.ys[w.ys.length - 1] || [0, 1], v = (b[0] - a[0]) / Math.max(1, b[1] - a[1]);
+    ms.style.transition = 'transform .2s ease'; if (b[0] > 110 || v > 0.45) { ms.style.transform = 'translateY(100%)'; setTimeout(() => { mClose(); ms.style.transform = ''; ms.style.transition = ''; }, 200); } else { ms.style.transform = ''; setTimeout(() => ms.style.transition = '', 220); } };
+  ms.addEventListener('touchend', mend); ms.addEventListener('touchcancel', mend);
   MOB.addEventListener('change', () => { setSheet(sheet); if (MOB.matches) $('#legend').open = false; });
   if (MOB.matches) { $('#legend').open = false; setSheet('half'); }
   addEventListener('resize', () => MOB.matches && setSheet(sheet));
