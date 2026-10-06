@@ -1025,6 +1025,7 @@ function readDplus() {
 // ---------- generate ----------
 function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
 async function generate(isAgain) {
+  if ($('#done')) $('#done').setAttribute('aria-pressed', false);
   if (!G || busy) return; mClose();
   const notes = [], errs = [];
   if (!S.start) { showView('set'); openStart(true); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
@@ -1312,7 +1313,7 @@ function shareData() {
 }
 function shOpen() {
   const d = shareData(); if (!d) return toast("Génère d'abord un parcours.");
-  SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big';
+  SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
   $('#shx-time').value = fmtClock(d.km * pace());
   $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
