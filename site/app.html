@@ -564,6 +564,7 @@ button,a,label,summary{touch-action:manipulation}
 .run-opts .sw span{display:flex;flex-direction:column;gap:2px}
 .run-opts .sw b{font-weight:600;font-size:16px}
 .run-opts .sw small{font-size:13px;color:var(--muted)}
+#runp-far b{display:block;font-size:15px;margin-bottom:4px}
 .run-priv{display:flex;gap:10px;align-items:center;margin:4px 0 0;font-size:13px;color:var(--muted)}
 .run-priv .ico{color:var(--muted);width:18px;height:18px}
 .msheet-f .btn{gap:10px}
@@ -3009,15 +3010,25 @@ function navMsg(kind, title, text, ms) {
   $('#run-nav').hidden = kind === 'err';
   if (ms) NAV.msgT = setTimeout(() => { n.hidden = true; $('#run-nav').hidden = false; }, ms);
 }
+// position bloquée : on dit où l'autoriser (message bloquant du design system)
+function navDenied(n) {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
+  const how = ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
+    : and ? 'Touche le cadenas à gauche de l’adresse → Autorisations → Position : autoriser, et vérifie que la localisation du téléphone est activée. Recharge ensuite la page.'
+    : 'Autorise la position pour ce site dans les réglages du navigateur, puis recharge la page.';
+  n.className = 'note err'; n.innerHTML = ''; const b = document.createElement('b'); b.textContent = 'Ta position est bloquée'; n.append(b, how); n.hidden = false;
+  NAV.denied = true; const g = $('#runp-go'); NAV.goHTML = NAV.goHTML || g.innerHTML; g.textContent = 'Recharger la page';
+}
 function runPrep() {
   if (!S.route) return toast("Génère d'abord un parcours.");
   if (!navigator.geolocation) return toast('Ta position n’est pas disponible sur cet appareil.', 3500);
   NAV.n = navBuild(S.route);
-  $('#runp-far').hidden = true; $('#runp').hidden = false;
+  $('#runp-far').hidden = true; $('#runp-far').className = 'note info'; $('#runp').hidden = false;
+  NAV.denied = false; if (NAV.goHTML) $('#runp-go').innerHTML = NAV.goHTML;
   navigator.geolocation.getCurrentPosition(p => { // prévenir si on n'est pas encore au départ
     const [x, y] = E.toXY(p.coords.latitude, p.coords.longitude), [sx, sy] = NAV.n.pts[0], d = Math.hypot(x - sx, y - sy);
     if (d > 60 && !$('#runp').hidden) { const f = $('#runp-far'); f.innerHTML = ''; const b = document.createElement('b'); b.textContent = `Tu es à ${navDistTxt(d)} du départ.`; f.append(b, ' Rejoins le point D : le chrono démarre quand tu y es.'); f.hidden = false; }
-  }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
+  }, e => { if (e.code === 1) navDenied($('#runp-far')); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
 }
 function runStart() {
   $('#runp').hidden = true;
@@ -3028,7 +3039,7 @@ function runStart() {
   navSay('Suivi du parcours activé.');
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
-  NAV.watch = navigator.geolocation.watchPosition(navFix, e => { if (e.code === 1) { toast('Position refusée : le suivi ne peut pas fonctionner.', 4000); runStop(); } }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  NAV.watch = navigator.geolocation.watchPosition(navFix, e => { if (e.code === 1) { runStop(); runPrep(); } }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
   NAV.tick = setInterval(navUI, 1000);
   track('suivi', 'Suivi lancé ' + Math.round(NAV.n.L / 1000) + ' km');
 }
@@ -3139,7 +3150,7 @@ function navDrawMe() {
 if (/[?&]navtest=1/.test(location.search)) window.RP_NAV = NAV; // recette automatique uniquement
 $('#run-go').onclick = runPrep;
 $('#runp-x').onclick = $('#runp-back').onclick = () => { $('#runp').hidden = true; };
-$('#runp-go').onclick = runStart;
+$('#runp-go').onclick = () => { if (NAV.denied) { NAV.denied = false; return location.reload(); } runStart(); };
 $('#run-vol').onclick = () => { NAV.voice = !NAV.voice; $('#run-vol').setAttribute('aria-pressed', NAV.voice); if (!NAV.voice) try { speechSynthesis.cancel(); } catch (e) {} };
 $('#run-pos').onclick = () => { NAV.follow = true; $('#run-pos').setAttribute('aria-pressed', true); if (NAV.pos) navCenter(); };
 $('#run-pause').onclick = () => { if (!NAV.t0) return; NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
