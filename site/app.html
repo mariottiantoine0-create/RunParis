@@ -522,7 +522,7 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 button,a,label,summary{touch-action:manipulation}
 @media (max-width:860px){
   html,body{touch-action:pan-x pan-y}
-  input,select,textarea{font-size:16px!important}
+  input:not(#km):not(#dur),select,textarea{font-size:16px!important}
   .grab{height:30px}
   .grab span{width:44px;height:5px}
   .panel,.msheet{touch-action:pan-y}
