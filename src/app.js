@@ -31,7 +31,7 @@ async function boot() {
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
   } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de Paris (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
-  buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; renderAvoid(); renderVias(); renderRaces(); updateConv();
+  mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; renderAvoid(); renderVias(); renderRaces(); updateConv();
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
   renderHome();
@@ -275,6 +275,7 @@ function markStale() { if (S.view === 'res' && S.route) $('#stale').hidden = fal
 // ---------- points ----------
 function setPoint(which, p) {
   S[which] = p; $(`#${which}-name`).textContent = p.name; draw(); if (which === 'start') renderHome();
+  if (MPHR && ((MCUR === 'dep' && which === 'start') || (MCUR === 'arr' && which === 'end'))) mClose(); if (MPHR) msync();
 }
 // ---------- « Chez moi » (stored only in this browser) ----------
 function getHome() { try { const h = JSON.parse(localStorage.getItem('runparis-home') || 'null'); return h && isFinite(h.lat) && isFinite(h.lon) ? h : null; } catch (e) { return null; } }
@@ -318,7 +319,10 @@ function sheetPx() { return MOB.matches ? $('.panel').getBoundingClientRect().he
 function sheetHeights() {
   const foot = [...document.querySelectorAll('.pfoot')].find(f => !f.hidden);
   const peek = $('#grab').offsetHeight + $('.phead').offsetHeight + $('.tabs').offsetHeight + (foot ? foot.offsetHeight : 0);
-  return { peek, half: Math.max(peek + 170, Math.round(innerHeight * 0.56)), full: innerHeight - 56 };
+  const full = innerHeight - 56;
+  // réglages en phrase (D-74) : la feuille s'arrête juste sous la phrase, la carte reste visible
+  if (MPHR && S.view === 'set' && S.tab !== 'race') return { peek, half: Math.min(full, peek + $('#mset').offsetHeight + 30), full };
+  return { peek, half: Math.max(peek + 170, Math.round(innerHeight * 0.56)), full };
 }
 function setSheet(st, refit) {
   if (!MOB.matches) { document.documentElement.style.removeProperty('--sheet-h'); return; }
@@ -591,7 +595,7 @@ function click(sx, sy) {
   if (t === 'place') { S.places.push({ lat, lon, r: 150, name: `Point · ${q.name}` }); renderPlaces(); draw(); toast('Lieu évité (150 m). Rayon modifiable dans « À éviter ».'); return; }
 }
 function setTool(t) {
-  S.tool = S.tool === t ? null : t;
+  S.tool = S.tool === t ? null : t; if (S.tool && MPHR) mClose();
   document.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === S.tool));
   cv.classList.toggle('pick', !!S.tool);
   const msg = { start: 'Clique sur la carte pour placer le départ.', end: "Clique sur la carte pour placer l'arrivée.", quart: 'Clique sur un quartier pour l’éviter ou le réautoriser.', place: 'Clique sur la carte pour éviter un lieu (150 m autour).', via: 'Clique sur la carte pour ajouter un lieu par où passer.' };
@@ -601,7 +605,7 @@ document.querySelectorAll('.tool').forEach(b => b.onclick = () => setTool(b.data
 $('#pick-start').onclick = () => setTool('start');
 $('#change-start').onclick = () => { const b = $('#start-box'); b.hidden = !b.hidden; $('#change-start').setAttribute('aria-expanded', !b.hidden); $('#change-start').textContent = b.hidden ? 'Changer' : 'Fermer'; if (!b.hidden) $('#start-q').focus(); };
 // ---------- départ : ouvrir la recherche, « Autour de moi » (D-70) ----------
-function openStart(focus) { $('#start-box').hidden = false; $('#change-start').setAttribute('aria-expanded', true); $('#change-start').textContent = 'Fermer'; if (focus) $('#start-q').focus(); }
+function openStart(focus) { if (MPHR) { if (focus) mOpen('dep', 'start'); return; } $('#start-box').hidden = false; $('#change-start').setAttribute('aria-expanded', true); $('#change-start').textContent = 'Fermer'; if (focus) $('#start-q').focus(); }
 function locate() {
   return new Promise(res => {
     if (!navigator.geolocation) { toast('Ta position n’est pas disponible sur cet appareil : choisis un départ.', 4000); openStart(false); return res(false); }
@@ -628,7 +632,7 @@ function applyParams() {
   const ty = Q.get('type');
   if (ty === 'green' || ty === 'discover') $('#k-' + ty).click(); else if (ty === 'flat') $('#d-flat').click();
   const go = Q.get('go') === '1' && arr !== 'place', dep = Q.get('dep');
-  if (dep === 'pos') { locate().then(ok => { if (ok && go) generate(); else if (ok && arr === 'place') $('#end-q').focus(); }); return true; }
+  if (dep === 'pos') { locate().then(ok => { if (ok && go) generate(); else if (ok && arr === 'place') { if (MPHR) mOpen('arr', 'end'); else $('#end-q').focus(); } }); return true; }
   if (dep === 'pick') { openStart(true); return true; }
   if (dep === 'home' && S.start) { if (go) generate(); return true; }
   return false;
@@ -728,7 +732,7 @@ function showView(v) {
   $('#view-set').hidden = v !== 'set'; $('#foot-set').hidden = v !== 'set';
   $('#view-res').hidden = v !== 'res'; $('#foot-res').hidden = v !== 'res';
   if (v === 'res') { $('#view-res').scrollTop = 0; requestAnimationFrame(() => { drawProfile(S.route); scrollToMap(); }); }
-  else { $('#stale').hidden = true; $('#view-set').scrollTop = 0; if (MOB.matches && sheet !== 'full') setSheet('full'); }
+  else { $('#stale').hidden = true; $('#view-set').scrollTop = 0; if (MOB.matches) setSheet(MPHR ? 'half' : 'full'); }
 }
 
 // bring the map into view after a calculation (useful when the page is narrow and the map sits above the panel)
@@ -965,7 +969,7 @@ function readDplus() {
 // ---------- generate ----------
 function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
 async function generate(isAgain) {
-  if (!G || busy) return;
+  if (!G || busy) return; mClose();
   const notes = [], errs = [];
   if (!S.start) { showView('set'); openStart(true); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
   const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
@@ -974,7 +978,7 @@ async function generate(isAgain) {
   if (!parsePace($('#pace').value)) notes.push('Allure non reconnue (exemple : 5:30) : le temps est estimé à 5:30 /km.');
   let dplus = null;
   if (S.dmode === 'target') { const d = readDplus(); if (d.err) { fail([{ t: d.err, err: true }]); return; } if (d.info) notes.push(d.info); dplus = d.dplus; }
-  if (S.mode === 'ab' && !S.endFree && !S.end) { showView('set'); $('#end-q').focus(); toast('Choisis d’abord ton arrivée, ou « N’importe où ».'); return; }
+  if (S.mode === 'ab' && !S.endFree && !S.end) { showView('set'); if (MPHR) mOpen('arr', 'end'); else $('#end-q').focus(); toast('Choisis d’abord ton arrivée, ou « N’importe où ».'); return; }
   if (S.exclQ.size >= M.quartiers.length) { fail([{ t: 'Tu as exclu toute la carte. Réautorise au moins un arrondissement, un quartier ou une commune.', err: true }]); return; }
 
   busy = true; $('#gen').disabled = true; $('#again').disabled = true; $('#recalc').disabled = true; $('#gen').textContent = 'Calcul en cours…'; $('#again').textContent = 'Calcul en cours…';
@@ -1264,6 +1268,69 @@ $('#fb-form').onsubmit = async ev => {
 $('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Parcours mythiques : tracés issus de fichiers GPX publics.', 7000);
 // public site: the logo leads back to the welcome page
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
+// ---------- mobile : réglages en phrase + feuilles (D-74) ----------
+// Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.
+var MPHR = false, MCUR = null, MHOLD = {};
+const MSH = {
+  dist: { t: 'Distance', ok: () => 'Valider ' + $('#mf-dist').textContent, nodes: () => [$('#u-km').parentElement, document.querySelector('.stepper'), $('#chips-km'), $('#chips-min'), $('#conv').parentElement] },
+  dep: { t: 'Départ', ok: null, nodes: () => [$('#start-box'), $('#home-row')] },
+  arr: { t: 'Arrivée', ok: () => 'Valider', nodes: () => [$('#a-back').parentElement, $('#end-fixed'), $('#end-free-hint'), $('#end-metro-row'), $('#via-list'), $('#via-box')] },
+  prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), document.querySelector('.depline'), $('#dep-hint'), $('#sig-on').closest('label'), $('#sig-level'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label'), $('#avoid-cem').closest('label')] },
+  avoid: { t: 'À éviter', ok: () => 'Valider', nodes: () => [$('#avoid-list'), $('#addbox'), $('#always')] }
+};
+function mMount() {
+  if (MPHR) return; MPHR = true;
+  for (const [k, d] of Object.entries(MSH)) {
+    const h = document.createElement('div'); h.className = 'mhold'; h.hidden = true; h.dataset.sh = k; h._moved = [];
+    for (const n of d.nodes()) {
+      if (typeof n === 'string') { const l = document.createElement('span'); l.className = 'lbl'; l.textContent = n; h.appendChild(l); continue; }
+      if (!n) continue; const ph = document.createComment('m'); n.parentNode.insertBefore(ph, n); h._moved.push([n, ph]); h.appendChild(n);
+    }
+    MHOLD[k] = h; $('#msheet-b').appendChild(h);
+  }
+  $('#view-set').classList.add('m-on'); $('#mset').hidden = false; msync();
+}
+function mUnmount() {
+  if (!MPHR) return; mClose(); MPHR = false;
+  for (const [k, h] of Object.entries(MHOLD)) { for (const [n, ph] of h._moved) { ph.parentNode.insertBefore(n, ph); ph.remove(); } h.remove(); delete MHOLD[k]; }
+  $('#view-set').classList.remove('m-on'); $('#mset').hidden = true;
+}
+function mOpen(k, focus) {
+  if (!MPHR) return; MCUR = k;
+  for (const [j, h] of Object.entries(MHOLD)) h.hidden = j !== k;
+  $('#msheet-t').textContent = MSH[k].t;
+  const ok = MSH[k].ok; $('#msheet-f').hidden = !ok; if (ok) $('#msheet-ok').textContent = ok();
+  if (k === 'dep') $('#start-box').hidden = false;
+  if (k === 'avoid' && $('#addbox').hidden && !document.querySelector('#avoid-list .xchip')) $('#addbox').hidden = false;
+  $('#mback').hidden = false; $('#msheet').hidden = false; $('#msheet-b').scrollTop = 0;
+  if (focus === 'start') $('#start-q').focus(); else if (focus === 'end') $('#end-q').focus();
+}
+function mClose() { if (!MCUR) return; MCUR = null; $('#msheet').hidden = true; $('#mback').hidden = true; msync(); }
+const mShort = n => { if (!n) return ''; if (/^Chez moi/.test(n)) return 'chez moi'; if (n === 'Ma position') return 'ma position'; n = n.replace(/^Point sur la carte · /, ''); return n.length > 24 ? n.slice(0, 23) + '…' : n; };
+function msync() {
+  if (!MPHR) return;
+  const km = parseFloat(String($('#km').value).replace(',', '.')), mn = parseFloat($('#dur').value);
+  $('#mf-dist').textContent = S.unit === 'min' ? (mn >= 60 ? `${Math.floor(mn / 60)} h${mn % 60 ? ' ' + String(Math.round(mn % 60)).padStart(2, '0') : ''}` : `${Math.round(mn || 0)} min`) : `${fmt(km || 0, km % 1 ? 1 : 0)} km`;
+  $('#mf-arr').textContent = S.mode === 'loop' ? 'en boucle' : S.endFree ? 'droit devant' : S.end ? 'jusqu’à ' + mShort(S.end.name) : 'jusqu’à un lieu';
+  $('#mf-dep').textContent = S.start ? mShort(S.start.name) : 'choisis ton départ';
+  const kind = { classic: 'Classique', green: 'Vert', discover: 'Découverte' }[S.kind] || 'Classique';
+  const dn = { flat: 'Plat', any: 'Normal', target: 'Vallonné' }[S.dmode] || 'Normal';
+  const p = [kind, dn, $('#sig-on').checked ? 'feux évités' : 'feux ignorés'];
+  if ($('#prefer-paths').checked) p.push('parcs'); if ($('#water-on').checked) p.push('eau tous les 3 km');
+  if (S.depNow === false && $('#dep-time').value) p.push('départ ' + $('#dep-time').value.replace(':', ' h '));
+  $('#mf-prefs').textContent = p.join(' · ');
+  const xs = [...document.querySelectorAll('#avoid-list .xchip .name')].map(e => e.textContent);
+  $('#mf-avoid').textContent = xs.length ? `À éviter : ${xs.slice(0, 2).join(', ')}${xs.length > 2 ? ' +' + (xs.length - 2) : ''}` : 'Éviter un quartier ou un lieu';
+  if (MCUR && MSH[MCUR].ok) $('#msheet-ok').textContent = MSH[MCUR].ok();
+  if (MOB.matches && S.view === 'set' && sheet === 'half') setSheet('half');
+}
+document.querySelectorAll('#mset [data-sh]').forEach(b => b.onclick = () => mOpen(b.dataset.sh, b.dataset.sh === 'dep' && !S.start ? 'start' : null));
+$('#mback').onclick = mClose; $('#msheet-x').onclick = mClose; $('#msheet-ok').onclick = mClose;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClose(); });
+['click', 'change', 'input'].forEach(ev => document.addEventListener(ev, () => setTimeout(msync, 0)));
+const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); };
+MOB.addEventListener('change', mApply);
+
 boot();
 })();
 </script>
