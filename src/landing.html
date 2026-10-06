@@ -167,12 +167,6 @@ footer p{margin:0;max-width:62em}
 .fld.pos::before{content:"";position:absolute;left:12px;top:50%;width:20px;height:20px;margin-top:-10px;background:var(--accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}
 .ask .btn{width:100%;height:56px;font-size:17px}
 .ask-hint{margin:-6px 0 0;font-size:14px;color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px}
-.chips>span{font-weight:700;font-size:13px;color:var(--muted);margin-right:4px}
-.chip{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:background-color .12s,border-color .12s}
-.chip:hover{border-color:var(--ink)}
-.chip[aria-pressed="true"]{background:var(--accent-fill);border:2px solid var(--accent);color:var(--accent);padding:0 13px}
-.chip:focus-visible{outline:none;box-shadow:var(--ring)}
 .sec-top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
 .sec-top .sec-h{margin:0}
 .more{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--accent);text-decoration:none;font-size:16px}
@@ -209,8 +203,7 @@ footer p{margin:0;max-width:62em}
 @media (max-width:760px){
   .hero{padding:76px 0 32px}
   .hero h1{font-size:clamp(40px,11.5vw,56px);margin-bottom:16px;max-width:none}
-  .chips>span{display:none}
-  .myth:nth-child(n+5){display:none}
+    .myth:nth-child(n+5){display:none}
   .ask{padding:16px;gap:14px}
   .sentence{font-size:28px;gap:8px 10px}
   .fld select{height:42px}
@@ -237,6 +230,15 @@ footer p{margin:0;max-width:62em}
 .th-seg{display:flex;background:var(--field);border-radius:4px;padding:3px;gap:3px}
 .th-seg button{flex:1;height:36px;border:0;background:none;border-radius:4px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
 .th-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.how{padding:64px 0 72px}
+.how .facts{margin-bottom:48px}
+.how .steps{margin-bottom:28px}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:760px){.how{padding:44px 0 52px}.how .facts{margin-bottom:32px}}
+/* web : version complète (B) ; mobile : version épurée (A) — D-73 */
+.how{display:none}
+@media (max-width:760px){.ideas-s,#mythiques,.about{display:none}.how{display:block}.hero{padding-bottom:8px}}
 </style>
 
 <header>
@@ -285,9 +287,6 @@ footer p{margin:0;max-width:62em}
         <button class="btn primary" type="submit">Générer mes parcours</button>
         <p class="ask-hint" id="ask-hint">Gratuit, sans compte. « Droit devant » finit près d’un métro pour rentrer.</p>
       </form>
-      <div class="chips" role="group" aria-label="Raccourcis"><span>Raccourcis</span>
-        <button type="button" class="chip" data-v="km:5">5 km</button><button type="button" class="chip" data-v="km:10">10 km</button><button type="button" class="chip" data-v="km:21.1">Semi</button><button type="button" class="chip" data-v="min:45">45 min</button>
-      </div>
     </div>
   </section>
 
@@ -307,6 +306,24 @@ footer p{margin:0;max-width:62em}
       <div class="sec-top"><h2 class="sec-h" id="t-myth">Parcours mythiques</h2><a class="more" href="app.html#courses">Voir les 16 parcours <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></div>
       <p class="sec-p" style="margin:0">Les tracés des grandes courses parisiennes, à courir en entier ou en partie.</p>
       <div class="myths">{{MYTH}}</div>
+    </div>
+  </section>
+
+  <section class="how" id="comment-m" aria-labelledby="t-how">
+    <div class="wrap">
+      <ul class="facts" aria-label="RunParis en chiffres">
+        <li><b>5 400 km</b><span>de rues et chemins</span></li>
+        <li><b>3 539</b><span>carrefours à feux</span></li>
+        <li><b>1 541</b><span>fontaines</span></li>
+        <li><b>16</b><span>parcours mythiques</span></li>
+      </ul>
+      <h2 class="visually-hidden" id="t-how">Comment ça marche</h2>
+      <ol class="steps">
+        <li><h3>Où ?</h3><p>Autour de toi, depuis chez toi ou n’importe quelle adresse de Paris et des 29 communes voisines.</p></li>
+        <li><h3>Combien ?</h3><p>Une distance ou une durée : 5 km, 45 minutes, un semi.</p></li>
+        <li><h3>Comment ?</h3><p>Plat ou vallonné, au vert, devant les monuments, sans les quartiers que tu évites.</p></li>
+      </ol>
+      <a class="more" href="a-propos.html">Tout ce que fait RunParis <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
 
@@ -361,12 +378,10 @@ if (location.hostname === 'runparis.netlify.app') { const sc = document.createEl
     const f = { pos: 'autour de toi', home: 'depuis chez toi', pick: 'depuis l’adresse de ton choix' }[dep.value];
     $('#idea-ctx').textContent = `${d[0].toUpperCase() + d.slice(1)} ${a}, ${f}`;
     document.querySelectorAll('.idea').forEach(a => a.href = params(a.dataset.type));
-    document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.v === dist.value));
     const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: '« Droit devant » finit près d’un métro pour rentrer.', back: 'Gratuit, sans compte. Trois parcours au choix.' }[arr.value];
     $('#ask-hint').textContent = dep.value === 'pick' ? 'Tu choisiras ton départ sur la carte ou dans la recherche.' : hint;
   };
   [dist, arr, dep].forEach(s => s.addEventListener('change', label));
-  document.querySelectorAll('.chip').forEach(c => c.onclick = () => { dist.value = c.dataset.v; label(); });
   $('#ask').addEventListener('submit', e => { e.preventDefault(); location.href = params(); });
   label();
 })();
