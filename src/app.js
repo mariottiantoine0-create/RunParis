@@ -1130,7 +1130,7 @@ async function generate(isAgain) {
     console.error(e); r = null; errs.push('Le calcul a échoué de façon inattendue. Réessaie ; si ça se reproduit, change un réglage.');
   } finally {
     bar.style.width = '100%'; setTimeout(() => bar.style.width = '0', 300);
-    busy = false; $('#gen').disabled = false; $('#again').disabled = false; $('#recalc').disabled = false; $('#gen').textContent = 'Générer 3 parcours'; $('#again').textContent = '↻ Voir 3 autres parcours';
+    busy = false; $('#gen').disabled = false; $('#again').disabled = false; $('#recalc').disabled = false; $('#gen').textContent = 'Générer 3 parcours'; $('#again').innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Voir 3 autres parcours';
   }
   S.lastKm = km; $('#stale').hidden = true;
   if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
