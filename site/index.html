@@ -239,6 +239,8 @@ footer p{margin:0;max-width:62em}
 /* web : version complète (B) ; mobile : version épurée (A) — D-73 */
 .how{display:none}
 @media (max-width:760px){.ideas-s,#mythiques,.about{display:none}.how{display:block}.hero{padding-bottom:8px}}
+/* accueil mobile : seulement la carte, le titre et la phrase (D-82) ; mention OpenStreetMap obligatoire gardée, sur une ligne */
+@media (max-width:760px){.how,#comment-m,.ask-hint{display:none!important}footer{padding:12px 0 20px;font-size:12px;border-top:0}footer p+p{display:none}footer .f-full{display:none}}
 </style>
 
 <header>
@@ -358,7 +360,7 @@ footer p{margin:0;max-width:62em}
 
 <footer>
   <div class="wrap">
-    <p>Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a> (ODbL) · altitudes IGN · quartiers Paris Open Data · parcours mythiques : tracés issus de fichiers GPX publics.</p>
+    <p>Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a> (ODbL)<span class="f-full"> · altitudes IGN · quartiers Paris Open Data · parcours mythiques : tracés issus de fichiers GPX publics</span>.</p>
     <p><a href="a-propos.html">Comment ça marche</a> · RunParis · un projet d'Antoine Mariotti · statistiques de visite anonymes, sans cookie (GoatCounter)</p>
   </div>
 </footer>
