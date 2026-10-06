@@ -546,6 +546,58 @@ button,a,label,summary{touch-action:manipulation}
   html.sheet-full .layers{display:none}
 }
 
+/* Mes parcours et parcours envoyés (D-81) */
+.tl-s{display:none}
+@media (max-width:860px){ .tl-x{display:none} .tl-s{display:inline} }
+#copy-m{display:none!important}
+.tabs button{white-space:nowrap}
+#tab-gen{flex:1.4}
+.foot-links .textbtn{width:auto;flex:none}
+#foot-res .foot-links .textbtn{font-size:13.5px;padding:2px}
+#foot-res .foot-links{gap:14px}
+#send{display:inline-flex;align-items:center;gap:6px}
+#send .ico{width:16px;height:16px;color:var(--accent)}
+#view-mine{display:flex;flex-direction:column;gap:12px}
+#view-mine[hidden]{display:none}
+#mine-list,#mine-detail{display:flex;flex-direction:column;gap:12px}
+#mine-list[hidden],#mine-detail[hidden]{display:none}
+.mine-tot{display:flex;gap:26px;border-top:2px solid var(--ink);padding-top:8px}
+.mine-tot[hidden]{display:none}
+.mine-tot b,.mine-stats b{display:block;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.mine-tot span,.mine-stats span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:3px}
+.mine-items{display:flex;flex-direction:column;gap:8px}
+.mine-m{margin-top:4px}
+.race.mine-card{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.mine-card .mine-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.mine-card .k{color:var(--muted)}
+.mine-card .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mine-card .s{color:var(--muted)}
+.mine-card .n{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:34px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mine-card .n small{font-size:16px}
+.mine-th{flex:none;width:56px;height:56px;border-radius:4px;background:var(--map-bg);display:grid;place-items:center;overflow:hidden}
+.mine-th.old .ico{color:var(--route-done);width:20px;height:20px}
+.mine-empty{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:8px 0}
+.mine-empty[hidden]{display:none}
+.mine-empty h2,.mine-h{margin:0;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1.05}
+.mine-empty p{margin:0;color:var(--muted);font-size:15px;line-height:1.45}
+.mine-empty .btn{width:auto}
+.mine-back{align-self:flex-start;padding:0}
+.mine-sub{margin:-4px 0 0;color:var(--muted);font-size:14px}
+.mine-hero{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:96px;line-height:.9;font-variant-numeric:tabular-nums}
+.mine-hero small{font-size:28px;margin-left:4px}
+@media (max-width:860px){ .mine-hero{font-size:84px} }
+.mine-stats{display:flex;gap:28px;border-top:2px solid var(--ink);padding-top:8px}
+.mine-extra{margin:0;font-size:14px}
+.mine-acts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.mine-acts .btn{width:100%;gap:10px}
+#md-redo .ico{color:var(--accent-ink)}
+.mine-row{display:flex;gap:8px}
+.mine-row[hidden]{display:none}
+.mine-row .btn{flex:1;height:48px}
+.mine-row .ico{color:var(--ink)}
+#md-del{align-self:center}
+#md-redo[hidden]{display:none}
+.toast .undo{margin-left:12px;border:0;background:none;color:#fff;font-weight:700;text-decoration:underline;padding:0;cursor:pointer}
 /* mode course : suivre le tracé en direct (mobile) */
 #run-go{display:none}
 @media (max-width:860px){ #run-go{display:inline-flex;gap:10px;width:100%;margin-bottom:8px} #run-go[hidden]{display:none} }
@@ -652,8 +704,31 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     </div>
 
     <div class="tabs" role="tablist" aria-label="Mode">
-      <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
-      <button role="tab" id="tab-race" aria-selected="false">Parcours mythiques</button>
+      <button role="tab" id="tab-gen" aria-selected="true">Créer<span class="tl-x"> un parcours</span></button>
+      <button role="tab" id="tab-race" aria-selected="false">Mythiques</button>
+      <button role="tab" id="tab-mine" aria-selected="false">Mes parcours</button>
+    </div>
+    <!-- ===== Mes parcours (D-81) ===== -->
+    <div class="pbody" id="view-mine" hidden>
+      <div id="mine-list">
+        <div class="mine-tot" id="mine-tot"></div>
+        <div class="mine-items" id="mine-items"></div>
+        <div class="mine-empty" id="mine-empty" hidden><h2>Pas encore de sortie</h2><p>Génère un parcours, cours-le, puis touche « Je l’ai fait » : il arrive ici avec ton temps. Tout reste sur cet appareil.</p><button type="button" class="btn primary" id="mine-new">Créer un parcours</button></div>
+      </div>
+      <div id="mine-detail" hidden>
+        <button type="button" class="textbtn mine-back" id="mine-back">‹ Mes parcours</button>
+        <h2 class="mine-h" id="md-t"></h2>
+        <p class="mine-sub" id="md-sub"></p>
+        <div class="mine-hero" id="md-km"></div>
+        <div class="mine-stats" id="md-stats"></div>
+        <p class="mine-extra" id="md-extra" hidden></p>
+        <div class="note info" id="md-old" hidden>Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.</div>
+        <div class="mine-acts">
+          <button type="button" class="btn primary" id="md-redo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Refaire ce parcours</button>
+          <div class="mine-row" id="md-row"><button type="button" class="btn ghost" id="md-send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer le lien</button><button type="button" class="btn ghost" id="md-img"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3z"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>Image</button></div>
+          <button type="button" class="textbtn" id="md-del">Retirer de mes parcours</button>
+        </div>
+      </div>
     </div>
     <!-- ===== Réglages ===== -->
     <div class="pbody" id="view-set">
@@ -824,7 +899,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     <div class="pfoot" id="foot-res" hidden>
       <button type="button" class="btn primary" id="run-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Suivre le parcours</button>
       <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button><button class="btn ghost" id="done" hidden><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Je l’ai fait</button></div>
-      <div class="foot-links"><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
+      <div class="foot-links"><button class="textbtn" id="send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer le parcours</button><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
     </div>
   </aside>
 

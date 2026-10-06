@@ -673,6 +673,7 @@ $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') 
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
   const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
+  if (Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -829,12 +830,19 @@ function renderVias() {
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- official races ----------
 function setTab(t) {
-  S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race');
-  const tools = document.querySelector('.tools'); tools.hidden = t === 'race';
+  const prev = S.tab;
+  S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
+  const tools = document.querySelector('.tools'); tools.hidden = t !== 'gen';
+  $('#view-mine').hidden = t !== 'mine';
+  if (prev === 'gen' && t !== 'gen') S.saved = { route: S.route, alts: S.alts, lastTarget: S.lastTarget, lastD: S.lastD, baseNotes: S.baseNotes };
+  if (t === 'mine') { // Mes parcours (D-81)
+    $('#view-set').hidden = true; $('#foot-set').hidden = true; $('#view-res').hidden = true; $('#stale').hidden = true; $('#view-race').hidden = true; $('#foot-res').hidden = true;
+    S.route = null; S.alts = []; renderMine(); draw(); if (MOB.matches) setSheet('half'); track('mes-parcours', 'Mes parcours ouvert');
+    return;
+  }
   if (t === 'race') {
     $('#view-set').hidden = true; $('#foot-set').hidden = true; $('#view-res').hidden = true; $('#stale').hidden = true;
     $('#view-race').hidden = false; $('#foot-res').hidden = !S.race; $('#again').hidden = true;
-    S.saved = { route: S.route, alts: S.alts, lastTarget: S.lastTarget, lastD: S.lastD, baseNotes: S.baseNotes };
     if (S.race) showRace(S.race, S.raceFrom, S.raceTo); else { S.route = null; S.alts = []; draw(); }
   } else {
     $('#view-race').hidden = true; $('#again').hidden = false;
@@ -1331,7 +1339,9 @@ function shOpen(secs, doneM) {
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
   $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
-  try { const k = 'runparis-done', L = JSON.parse(localStorage.getItem(k) || '[]'); L.unshift({ extra: meas && SH.extra ? SH.extra : undefined, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop }); localStorage.setItem(k, JSON.stringify(L.slice(0, 200))); } catch (e) {}
+  const entry = { id: Date.now(), d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
+  const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
+  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
 function shClose() { $('#shx').hidden = true; SH.photo = null; }
@@ -1425,6 +1435,7 @@ $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
 $('#shx-x1').onclick = shClose; $('#shx-x2').onclick = shClose; $('#shx-back').onclick = shClose;
 $('#shx-cam').onchange = e => shPhoto(e.target.files[0]); $('#shx-gal').onchange = e => shPhoto(e.target.files[0]);
+$('#shx-time').addEventListener('change', () => { const v = parseClock($('#shx-time').value); if (v && SH.entryId) minePatch(SH.entryId, { secs: Math.round(v) }); });
 $('#shx-nophoto').onclick = () => { SH.photo = null; SH.bg = 'map'; shOut(); };
 document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.disabled) return; SH.bg = b.dataset.bg; shSync(); shDraw(); });
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
@@ -1696,6 +1707,109 @@ document.addEventListener('visibilitychange', () => {
   if (gap > 15 && NAV.t0 && !NAV.paused) { NAV.reacq = true; navMsg('warn', `Suivi interrompu ${gap >= 90 ? Math.round(gap / 60) + ' min' : Math.round(gap) + ' s'}`, 'L’écran s’est verrouillé. Ta position a repris, la distance est recalculée.', 8000); }
 });
 addEventListener('beforeunload', e => { if (NAV.on && NAV.t0) { e.preventDefault(); e.returnValue = ''; } });
+// ---------- Mes parcours et parcours envoyés (D-81) ----------
+// Les sorties faites restent sur l'appareil (runparis-done) ; chaque sortie garde son tracé compact pour être refaite ou envoyée.
+const MINE_K = 'runparis-done';
+function mineLoad() { try { const L = JSON.parse(localStorage.getItem(MINE_K) || '[]'); return Array.isArray(L) ? L : []; } catch (e) { return []; } }
+function mineSave(L) { try { localStorage.setItem(MINE_K, JSON.stringify(L.slice(0, 200))); } catch (e) {} }
+function minePatch(id, patch) { const L = mineLoad(), e = L.find(x => x.id === id); if (e) { Object.assign(e, patch); mineSave(L); } }
+// tracé compact : simplifié à ~4 m (Douglas-Peucker) puis encodé en « polyline » (5 décimales)
+function simplifyPts(P, tol) {
+  if (P.length < 3) return P.slice(); const keep = new Uint8Array(P.length); keep[0] = keep[P.length - 1] = 1; const st = [[0, P.length - 1]];
+  while (st.length) { const [a, b] = st.pop(); const [ax, ay] = P[a], [bx, by] = P[b], vx = bx - ax, vy = by - ay, l = Math.hypot(vx, vy) || 1e-9; let md = 0, mi = -1;
+    for (let i = a + 1; i < b; i++) { const d = l < 1 ? Math.hypot(P[i][0] - ax, P[i][1] - ay) : Math.abs((P[i][0] - ax) * vy - (P[i][1] - ay) * vx) / l; /* boucle : début = fin */ if (d > md) { md = d; mi = i; } }
+    if (md > tol && mi > 0) { keep[mi] = 1; st.push([a, mi], [mi, b]); } }
+  return P.filter((_, i) => keep[i]);
+}
+function encPoly(ll) { let s = '', pa = 0, po = 0; const enc = v => { v = v < 0 ? ~(v << 1) : v << 1; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } s += String.fromCharCode(v + 63); };
+  for (const [la, lo] of ll) { const a = Math.round(la * 1e5), o = Math.round(lo * 1e5); enc(a - pa); enc(o - po); pa = a; po = o; } return s; }
+function decPoly(s) { const out = []; let i = 0, la = 0, lo = 0; const dec = () => { let r = 0, sh = 0, b; do { if (i >= s.length) return null; b = s.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); return r & 1 ? ~(r >> 1) : r >> 1; };
+  while (i < s.length) { const a = dec(), o = dec(); if (a == null || o == null) break; la += a; lo += o; out.push([la / 1e5, lo / 1e5]); } return out; }
+function routeCode(r) { const P = routePts(r); if (!P || P.length < 2) return ''; return encPoly(simplifyPts(P, 4).map(([x, y]) => E.toLL(x, y))); }
+function routeFromCode(code) { const ll = decPoly(code || ''); if (ll.length < 2) return null; const st = geomRoute(ll.map(([la, lo]) => E.toXY(la, lo))); st.kind = 'shared'; return st; }
+const mineTitle = d => d.race ? d.dep : d.loop ? 'Boucle · ' + d.dep : d.dep + ' → ' + (d.arr || 'arrivée');
+function sendLink(code, title, km) {
+  if (!code) return toast('Ce parcours ne peut pas être envoyé.');
+  const url = location.origin + location.pathname + '?p=' + code + '&n=' + encodeURIComponent(title || '');
+  track('envoi', 'Parcours envoyé');
+  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
+}
+// ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
+function openFixed(code, title, received) {
+  const st = routeFromCode(code); if (!st) { toast('Ce lien de parcours est incomplet.', 3500); return false; }
+  if (S.tab !== 'gen') setTab('gen');
+  const P = st.geom, a = P[0], b = P[P.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150, ll = p => { const [la, lo] = E.toLL(p[0], p[1]); return { lat: la, lon: lo }; };
+  const near = p => { const ns = nearestStation(p[0], p[1]); return ns && ns.d < 300 ? ns.s.n : 'Point sur la carte'; };
+  setPoint('start', Object.assign(ll(a), { name: near(a) }));
+  setArrival(loop ? 'back' : 'place'); if (!loop) setPoint('end', Object.assign(ll(b), { name: near(b) }));
+  setUnit('km'); $('#km').value = clampKm(Math.round(st.len / 100) / 10); updateConv();
+  S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null;
+  const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
+  S.baseNotes = [{ info: true, t: received ? `Parcours reçu : ${t}, ${fmt(st.len / 1000)} km. Suis-le, exporte-le ou touche « Modifier » pour créer le tien.` : `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
+  if ($('#done')) $('#done').setAttribute('aria-pressed', false);
+  return true;
+}
+function mineThumb(code) {
+  const ll = decPoly(code || ''); if (ll.length < 2) return `<span class="mine-th old" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg></span>`;
+  const xy = ll.map(([la, lo]) => E.toXY(la, lo)); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of xy) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const s = 40 / Math.max(x1 - x0, y1 - y0, 1), ox = 28 - (x0 + x1) / 2 * s, oy = 28 - (y0 + y1) / 2 * s, d = 'M' + xy.map(([x, y]) => (x * s + ox).toFixed(1) + ' ' + (y * s + oy).toFixed(1)).join(' L');
+  return `<span class="mine-th" aria-hidden="true"><svg viewBox="0 0 56 56" width="56" height="56"><path d="${d}" fill="none" stroke="var(--route-casing)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="var(--route)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>`;
+}
+const mineDate = (iso, o) => new Date(iso).toLocaleDateString('fr-FR', o || { weekday: 'long', day: 'numeric', month: 'short' }).replace(/^./, c => c.toUpperCase());
+function renderMine() {
+  const L = mineLoad(), items = $('#mine-items'); items.innerHTML = '';
+  $('#mine-detail').hidden = true; $('#mine-list').hidden = false;
+  $('#mine-empty').hidden = !!L.length; $('#mine-tot').hidden = !L.length;
+  const km = L.reduce((t, e) => t + (e.km || 0), 0), secs = L.reduce((t, e) => t + (e.secs || 0), 0);
+  const h = Math.floor(secs / 3600), mn = Math.round(secs % 3600 / 60);
+  $('#mine-tot').innerHTML = `<div><b>${L.length}</b><span>sortie${L.length > 1 ? 's' : ''}</span></div><div><b>${fmt(km, 1)} km</b><span>au total</span></div>` + (secs ? `<div><b>${h ? h + ' h ' + String(mn).padStart(2, '0') : mn + ' min'}</b><span>de course</span></div>` : '');
+  let month = '';
+  L.forEach((e, i) => {
+    const m = mineDate(e.d, { month: 'long', year: 'numeric' }); if (m !== month) { month = m; const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = m; items.appendChild(hh); }
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
+    b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
+    b.querySelector('.k').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'short' }) + (e.secs ? (e.meas ? ' · mesuré' : ' · estimé') : '');
+    b.querySelector('.t').textContent = e.t || mineTitle(e);
+    b.querySelector('.s').textContent = [e.secs ? fmtClock(e.secs) : '', e.secs && e.km ? fmtClock(e.secs / e.km) + ' /km' : '', e.up != null ? e.up + ' m D+' : ''].filter(Boolean).join(' · ');
+    b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
+    b.onclick = () => mineOpen(i);
+    items.appendChild(b);
+  });
+}
+function mineOpen(i) {
+  const e = mineLoad()[i]; if (!e) return renderMine();
+  S.mineCur = e.id || e.d;
+  $('#mine-list').hidden = true; $('#mine-detail').hidden = false; $('#view-mine').scrollTop = 0;
+  $('#md-t').textContent = e.t || mineTitle(e);
+  $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
+  $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
+  $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
+  const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
+  const has = !!(e.g && decPoly(e.g).length > 1);
+  $('#md-old').hidden = has; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
+  // la carte montre la sortie
+  if (has) { const st = routeFromCode(e.g); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
+  draw();
+}
+function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur); }
+$('#tab-mine').onclick = () => setTab('mine');
+$('#mine-new').onclick = () => setTab('gen');
+$('#mine-back').onclick = () => { renderMine(); S.route = null; S.alts = []; draw(); };
+$('#md-redo').onclick = () => { const e = mineCurrent(); if (e && openFixed(e.g, e.t || mineTitle(e), false)) track('refaire', 'Parcours refait'); };
+$('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.g, e.t || mineTitle(e), e.km); };
+$('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.g); if (!st) return;
+  const P = st.geom; SH.data = { pts: P, km: e.km, up: e.up || Math.round(st.up), loop: !!e.loop, dep: e.dep || '', arr: e.arr || '', race: !!e.race, date: new Date(e.d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) };
+  SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; SH.extra = null; $('#shx-time').value = fmtClock(e.secs || e.km * pace()); $('#shx').hidden = false; shOut(); };
+$('#md-del').onclick = () => {
+  const L = mineLoad(), i = L.findIndex(x => (x.id || x.d) === S.mineCur); if (i < 0) return; const [gone] = L.splice(i, 1); mineSave(L);
+  renderMine(); S.route = null; S.alts = []; draw();
+  const t = $('#toast'); t.innerHTML = ''; t.append('Sortie retirée'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  u.onclick = () => { const M2 = mineLoad(); M2.splice(Math.min(i, M2.length), 0, gone); mineSave(M2); if (S.tab === 'mine') renderMine(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
+};
+$('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));

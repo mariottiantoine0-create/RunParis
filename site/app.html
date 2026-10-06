@@ -553,6 +553,58 @@ button,a,label,summary{touch-action:manipulation}
   html.sheet-full .layers{display:none}
 }
 
+/* Mes parcours et parcours envoyés (D-81) */
+.tl-s{display:none}
+@media (max-width:860px){ .tl-x{display:none} .tl-s{display:inline} }
+#copy-m{display:none!important}
+.tabs button{white-space:nowrap}
+#tab-gen{flex:1.4}
+.foot-links .textbtn{width:auto;flex:none}
+#foot-res .foot-links .textbtn{font-size:13.5px;padding:2px}
+#foot-res .foot-links{gap:14px}
+#send{display:inline-flex;align-items:center;gap:6px}
+#send .ico{width:16px;height:16px;color:var(--accent)}
+#view-mine{display:flex;flex-direction:column;gap:12px}
+#view-mine[hidden]{display:none}
+#mine-list,#mine-detail{display:flex;flex-direction:column;gap:12px}
+#mine-list[hidden],#mine-detail[hidden]{display:none}
+.mine-tot{display:flex;gap:26px;border-top:2px solid var(--ink);padding-top:8px}
+.mine-tot[hidden]{display:none}
+.mine-tot b,.mine-stats b{display:block;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.mine-tot span,.mine-stats span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:3px}
+.mine-items{display:flex;flex-direction:column;gap:8px}
+.mine-m{margin-top:4px}
+.race.mine-card{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.mine-card .mine-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.mine-card .k{color:var(--muted)}
+.mine-card .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mine-card .s{color:var(--muted)}
+.mine-card .n{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:34px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mine-card .n small{font-size:16px}
+.mine-th{flex:none;width:56px;height:56px;border-radius:4px;background:var(--map-bg);display:grid;place-items:center;overflow:hidden}
+.mine-th.old .ico{color:var(--route-done);width:20px;height:20px}
+.mine-empty{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:8px 0}
+.mine-empty[hidden]{display:none}
+.mine-empty h2,.mine-h{margin:0;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1.05}
+.mine-empty p{margin:0;color:var(--muted);font-size:15px;line-height:1.45}
+.mine-empty .btn{width:auto}
+.mine-back{align-self:flex-start;padding:0}
+.mine-sub{margin:-4px 0 0;color:var(--muted);font-size:14px}
+.mine-hero{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:96px;line-height:.9;font-variant-numeric:tabular-nums}
+.mine-hero small{font-size:28px;margin-left:4px}
+@media (max-width:860px){ .mine-hero{font-size:84px} }
+.mine-stats{display:flex;gap:28px;border-top:2px solid var(--ink);padding-top:8px}
+.mine-extra{margin:0;font-size:14px}
+.mine-acts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.mine-acts .btn{width:100%;gap:10px}
+#md-redo .ico{color:var(--accent-ink)}
+.mine-row{display:flex;gap:8px}
+.mine-row[hidden]{display:none}
+.mine-row .btn{flex:1;height:48px}
+.mine-row .ico{color:var(--ink)}
+#md-del{align-self:center}
+#md-redo[hidden]{display:none}
+.toast .undo{margin-left:12px;border:0;background:none;color:#fff;font-weight:700;text-decoration:underline;padding:0;cursor:pointer}
 /* mode course : suivre le tracé en direct (mobile) */
 #run-go{display:none}
 @media (max-width:860px){ #run-go{display:inline-flex;gap:10px;width:100%;margin-bottom:8px} #run-go[hidden]{display:none} }
@@ -659,8 +711,31 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     </div>
 
     <div class="tabs" role="tablist" aria-label="Mode">
-      <button role="tab" id="tab-gen" aria-selected="true">Créer un parcours</button>
-      <button role="tab" id="tab-race" aria-selected="false">Parcours mythiques</button>
+      <button role="tab" id="tab-gen" aria-selected="true">Créer<span class="tl-x"> un parcours</span></button>
+      <button role="tab" id="tab-race" aria-selected="false">Mythiques</button>
+      <button role="tab" id="tab-mine" aria-selected="false">Mes parcours</button>
+    </div>
+    <!-- ===== Mes parcours (D-81) ===== -->
+    <div class="pbody" id="view-mine" hidden>
+      <div id="mine-list">
+        <div class="mine-tot" id="mine-tot"></div>
+        <div class="mine-items" id="mine-items"></div>
+        <div class="mine-empty" id="mine-empty" hidden><h2>Pas encore de sortie</h2><p>Génère un parcours, cours-le, puis touche « Je l’ai fait » : il arrive ici avec ton temps. Tout reste sur cet appareil.</p><button type="button" class="btn primary" id="mine-new">Créer un parcours</button></div>
+      </div>
+      <div id="mine-detail" hidden>
+        <button type="button" class="textbtn mine-back" id="mine-back">‹ Mes parcours</button>
+        <h2 class="mine-h" id="md-t"></h2>
+        <p class="mine-sub" id="md-sub"></p>
+        <div class="mine-hero" id="md-km"></div>
+        <div class="mine-stats" id="md-stats"></div>
+        <p class="mine-extra" id="md-extra" hidden></p>
+        <div class="note info" id="md-old" hidden>Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.</div>
+        <div class="mine-acts">
+          <button type="button" class="btn primary" id="md-redo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Refaire ce parcours</button>
+          <div class="mine-row" id="md-row"><button type="button" class="btn ghost" id="md-send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer le lien</button><button type="button" class="btn ghost" id="md-img"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3z"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>Image</button></div>
+          <button type="button" class="textbtn" id="md-del">Retirer de mes parcours</button>
+        </div>
+      </div>
     </div>
     <!-- ===== Réglages ===== -->
     <div class="pbody" id="view-set">
@@ -831,7 +906,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     <div class="pfoot" id="foot-res" hidden>
       <button type="button" class="btn primary" id="run-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Suivre le parcours</button>
       <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button><button class="btn ghost" id="done" hidden><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Je l’ai fait</button></div>
-      <div class="foot-links"><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
+      <div class="foot-links"><button class="textbtn" id="send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer le parcours</button><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages">↻ Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
     </div>
   </aside>
 
@@ -2218,6 +2293,7 @@ $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') 
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
   const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
+  if (Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -2374,12 +2450,19 @@ function renderVias() {
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- official races ----------
 function setTab(t) {
-  S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race');
-  const tools = document.querySelector('.tools'); tools.hidden = t === 'race';
+  const prev = S.tab;
+  S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
+  const tools = document.querySelector('.tools'); tools.hidden = t !== 'gen';
+  $('#view-mine').hidden = t !== 'mine';
+  if (prev === 'gen' && t !== 'gen') S.saved = { route: S.route, alts: S.alts, lastTarget: S.lastTarget, lastD: S.lastD, baseNotes: S.baseNotes };
+  if (t === 'mine') { // Mes parcours (D-81)
+    $('#view-set').hidden = true; $('#foot-set').hidden = true; $('#view-res').hidden = true; $('#stale').hidden = true; $('#view-race').hidden = true; $('#foot-res').hidden = true;
+    S.route = null; S.alts = []; renderMine(); draw(); if (MOB.matches) setSheet('half'); track('mes-parcours', 'Mes parcours ouvert');
+    return;
+  }
   if (t === 'race') {
     $('#view-set').hidden = true; $('#foot-set').hidden = true; $('#view-res').hidden = true; $('#stale').hidden = true;
     $('#view-race').hidden = false; $('#foot-res').hidden = !S.race; $('#again').hidden = true;
-    S.saved = { route: S.route, alts: S.alts, lastTarget: S.lastTarget, lastD: S.lastD, baseNotes: S.baseNotes };
     if (S.race) showRace(S.race, S.raceFrom, S.raceTo); else { S.route = null; S.alts = []; draw(); }
   } else {
     $('#view-race').hidden = true; $('#again').hidden = false;
@@ -2876,7 +2959,9 @@ function shOpen(secs, doneM) {
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
   $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
-  try { const k = 'runparis-done', L = JSON.parse(localStorage.getItem(k) || '[]'); L.unshift({ extra: meas && SH.extra ? SH.extra : undefined, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop }); localStorage.setItem(k, JSON.stringify(L.slice(0, 200))); } catch (e) {}
+  const entry = { id: Date.now(), d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
+  const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
+  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
 function shClose() { $('#shx').hidden = true; SH.photo = null; }
@@ -2970,6 +3055,7 @@ $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
 $('#shx-x1').onclick = shClose; $('#shx-x2').onclick = shClose; $('#shx-back').onclick = shClose;
 $('#shx-cam').onchange = e => shPhoto(e.target.files[0]); $('#shx-gal').onchange = e => shPhoto(e.target.files[0]);
+$('#shx-time').addEventListener('change', () => { const v = parseClock($('#shx-time').value); if (v && SH.entryId) minePatch(SH.entryId, { secs: Math.round(v) }); });
 $('#shx-nophoto').onclick = () => { SH.photo = null; SH.bg = 'map'; shOut(); };
 document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.disabled) return; SH.bg = b.dataset.bg; shSync(); shDraw(); });
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
@@ -3241,6 +3327,109 @@ document.addEventListener('visibilitychange', () => {
   if (gap > 15 && NAV.t0 && !NAV.paused) { NAV.reacq = true; navMsg('warn', `Suivi interrompu ${gap >= 90 ? Math.round(gap / 60) + ' min' : Math.round(gap) + ' s'}`, 'L’écran s’est verrouillé. Ta position a repris, la distance est recalculée.', 8000); }
 });
 addEventListener('beforeunload', e => { if (NAV.on && NAV.t0) { e.preventDefault(); e.returnValue = ''; } });
+// ---------- Mes parcours et parcours envoyés (D-81) ----------
+// Les sorties faites restent sur l'appareil (runparis-done) ; chaque sortie garde son tracé compact pour être refaite ou envoyée.
+const MINE_K = 'runparis-done';
+function mineLoad() { try { const L = JSON.parse(localStorage.getItem(MINE_K) || '[]'); return Array.isArray(L) ? L : []; } catch (e) { return []; } }
+function mineSave(L) { try { localStorage.setItem(MINE_K, JSON.stringify(L.slice(0, 200))); } catch (e) {} }
+function minePatch(id, patch) { const L = mineLoad(), e = L.find(x => x.id === id); if (e) { Object.assign(e, patch); mineSave(L); } }
+// tracé compact : simplifié à ~4 m (Douglas-Peucker) puis encodé en « polyline » (5 décimales)
+function simplifyPts(P, tol) {
+  if (P.length < 3) return P.slice(); const keep = new Uint8Array(P.length); keep[0] = keep[P.length - 1] = 1; const st = [[0, P.length - 1]];
+  while (st.length) { const [a, b] = st.pop(); const [ax, ay] = P[a], [bx, by] = P[b], vx = bx - ax, vy = by - ay, l = Math.hypot(vx, vy) || 1e-9; let md = 0, mi = -1;
+    for (let i = a + 1; i < b; i++) { const d = l < 1 ? Math.hypot(P[i][0] - ax, P[i][1] - ay) : Math.abs((P[i][0] - ax) * vy - (P[i][1] - ay) * vx) / l; /* boucle : début = fin */ if (d > md) { md = d; mi = i; } }
+    if (md > tol && mi > 0) { keep[mi] = 1; st.push([a, mi], [mi, b]); } }
+  return P.filter((_, i) => keep[i]);
+}
+function encPoly(ll) { let s = '', pa = 0, po = 0; const enc = v => { v = v < 0 ? ~(v << 1) : v << 1; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } s += String.fromCharCode(v + 63); };
+  for (const [la, lo] of ll) { const a = Math.round(la * 1e5), o = Math.round(lo * 1e5); enc(a - pa); enc(o - po); pa = a; po = o; } return s; }
+function decPoly(s) { const out = []; let i = 0, la = 0, lo = 0; const dec = () => { let r = 0, sh = 0, b; do { if (i >= s.length) return null; b = s.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20); return r & 1 ? ~(r >> 1) : r >> 1; };
+  while (i < s.length) { const a = dec(), o = dec(); if (a == null || o == null) break; la += a; lo += o; out.push([la / 1e5, lo / 1e5]); } return out; }
+function routeCode(r) { const P = routePts(r); if (!P || P.length < 2) return ''; return encPoly(simplifyPts(P, 4).map(([x, y]) => E.toLL(x, y))); }
+function routeFromCode(code) { const ll = decPoly(code || ''); if (ll.length < 2) return null; const st = geomRoute(ll.map(([la, lo]) => E.toXY(la, lo))); st.kind = 'shared'; return st; }
+const mineTitle = d => d.race ? d.dep : d.loop ? 'Boucle · ' + d.dep : d.dep + ' → ' + (d.arr || 'arrivée');
+function sendLink(code, title, km) {
+  if (!code) return toast('Ce parcours ne peut pas être envoyé.');
+  const url = location.origin + location.pathname + '?p=' + code + '&n=' + encodeURIComponent(title || '');
+  track('envoi', 'Parcours envoyé');
+  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
+}
+// ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
+function openFixed(code, title, received) {
+  const st = routeFromCode(code); if (!st) { toast('Ce lien de parcours est incomplet.', 3500); return false; }
+  if (S.tab !== 'gen') setTab('gen');
+  const P = st.geom, a = P[0], b = P[P.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150, ll = p => { const [la, lo] = E.toLL(p[0], p[1]); return { lat: la, lon: lo }; };
+  const near = p => { const ns = nearestStation(p[0], p[1]); return ns && ns.d < 300 ? ns.s.n : 'Point sur la carte'; };
+  setPoint('start', Object.assign(ll(a), { name: near(a) }));
+  setArrival(loop ? 'back' : 'place'); if (!loop) setPoint('end', Object.assign(ll(b), { name: near(b) }));
+  setUnit('km'); $('#km').value = clampKm(Math.round(st.len / 100) / 10); updateConv();
+  S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null;
+  const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
+  S.baseNotes = [{ info: true, t: received ? `Parcours reçu : ${t}, ${fmt(st.len / 1000)} km. Suis-le, exporte-le ou touche « Modifier » pour créer le tien.` : `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
+  if ($('#done')) $('#done').setAttribute('aria-pressed', false);
+  return true;
+}
+function mineThumb(code) {
+  const ll = decPoly(code || ''); if (ll.length < 2) return `<span class="mine-th old" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg></span>`;
+  const xy = ll.map(([la, lo]) => E.toXY(la, lo)); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of xy) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const s = 40 / Math.max(x1 - x0, y1 - y0, 1), ox = 28 - (x0 + x1) / 2 * s, oy = 28 - (y0 + y1) / 2 * s, d = 'M' + xy.map(([x, y]) => (x * s + ox).toFixed(1) + ' ' + (y * s + oy).toFixed(1)).join(' L');
+  return `<span class="mine-th" aria-hidden="true"><svg viewBox="0 0 56 56" width="56" height="56"><path d="${d}" fill="none" stroke="var(--route-casing)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="var(--route)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>`;
+}
+const mineDate = (iso, o) => new Date(iso).toLocaleDateString('fr-FR', o || { weekday: 'long', day: 'numeric', month: 'short' }).replace(/^./, c => c.toUpperCase());
+function renderMine() {
+  const L = mineLoad(), items = $('#mine-items'); items.innerHTML = '';
+  $('#mine-detail').hidden = true; $('#mine-list').hidden = false;
+  $('#mine-empty').hidden = !!L.length; $('#mine-tot').hidden = !L.length;
+  const km = L.reduce((t, e) => t + (e.km || 0), 0), secs = L.reduce((t, e) => t + (e.secs || 0), 0);
+  const h = Math.floor(secs / 3600), mn = Math.round(secs % 3600 / 60);
+  $('#mine-tot').innerHTML = `<div><b>${L.length}</b><span>sortie${L.length > 1 ? 's' : ''}</span></div><div><b>${fmt(km, 1)} km</b><span>au total</span></div>` + (secs ? `<div><b>${h ? h + ' h ' + String(mn).padStart(2, '0') : mn + ' min'}</b><span>de course</span></div>` : '');
+  let month = '';
+  L.forEach((e, i) => {
+    const m = mineDate(e.d, { month: 'long', year: 'numeric' }); if (m !== month) { month = m; const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = m; items.appendChild(hh); }
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
+    b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
+    b.querySelector('.k').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'short' }) + (e.secs ? (e.meas ? ' · mesuré' : ' · estimé') : '');
+    b.querySelector('.t').textContent = e.t || mineTitle(e);
+    b.querySelector('.s').textContent = [e.secs ? fmtClock(e.secs) : '', e.secs && e.km ? fmtClock(e.secs / e.km) + ' /km' : '', e.up != null ? e.up + ' m D+' : ''].filter(Boolean).join(' · ');
+    b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
+    b.onclick = () => mineOpen(i);
+    items.appendChild(b);
+  });
+}
+function mineOpen(i) {
+  const e = mineLoad()[i]; if (!e) return renderMine();
+  S.mineCur = e.id || e.d;
+  $('#mine-list').hidden = true; $('#mine-detail').hidden = false; $('#view-mine').scrollTop = 0;
+  $('#md-t').textContent = e.t || mineTitle(e);
+  $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
+  $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
+  $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
+  const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
+  const has = !!(e.g && decPoly(e.g).length > 1);
+  $('#md-old').hidden = has; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
+  // la carte montre la sortie
+  if (has) { const st = routeFromCode(e.g); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
+  draw();
+}
+function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur); }
+$('#tab-mine').onclick = () => setTab('mine');
+$('#mine-new').onclick = () => setTab('gen');
+$('#mine-back').onclick = () => { renderMine(); S.route = null; S.alts = []; draw(); };
+$('#md-redo').onclick = () => { const e = mineCurrent(); if (e && openFixed(e.g, e.t || mineTitle(e), false)) track('refaire', 'Parcours refait'); };
+$('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.g, e.t || mineTitle(e), e.km); };
+$('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.g); if (!st) return;
+  const P = st.geom; SH.data = { pts: P, km: e.km, up: e.up || Math.round(st.up), loop: !!e.loop, dep: e.dep || '', arr: e.arr || '', race: !!e.race, date: new Date(e.d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) };
+  SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; SH.extra = null; $('#shx-time').value = fmtClock(e.secs || e.km * pace()); $('#shx').hidden = false; shOut(); };
+$('#md-del').onclick = () => {
+  const L = mineLoad(), i = L.findIndex(x => (x.id || x.d) === S.mineCur); if (i < 0) return; const [gone] = L.splice(i, 1); mineSave(L);
+  renderMine(); S.route = null; S.alts = []; draw();
+  const t = $('#toast'); t.innerHTML = ''; t.append('Sortie retirée'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  u.onclick = () => { const M2 = mineLoad(); M2.splice(Math.min(i, M2.length), 0, gone); mineSave(M2); if (S.tab === 'mine') renderMine(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
+};
+$('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
