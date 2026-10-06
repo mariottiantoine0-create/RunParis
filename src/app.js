@@ -1414,7 +1414,6 @@ $('#shx-cam').onchange = e => shPhoto(e.target.files[0]); $('#shx-gal').onchange
 $('#shx-nophoto').onclick = () => { SH.photo = null; SH.bg = 'map'; shOut(); };
 document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.disabled) return; SH.bg = b.dataset.bg; shSync(); shDraw(); });
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
-if (!navigator.canShare) $('#shx-hint').hidden = true;
 $('#shx-share').onclick = shShare; $('#shx-save').onclick = () => shSave();
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#shx').hidden) shClose(); });
 $('#done').hidden = false; $('#copy-m').hidden = false;
