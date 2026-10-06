@@ -549,7 +549,8 @@ button,a,label,summary{touch-action:manipulation}
 /* mode course : suivre le tracé en direct (mobile) */
 #run-go{display:none}
 @media (max-width:860px){ #run-go{display:inline-flex;gap:10px;width:100%;margin-bottom:8px} #run-go[hidden]{display:none} }
-#run-go .ico,#runp-go .ico,#runz-go .ico{color:var(--accent-ink)}
+#run-go .ico,#runp-go .ico,#runz-go .ico,#runa-end .ico{color:var(--accent-ink)}
+#runa-go .ico,#runz-end .ico{color:var(--ink)}
 @media (max-width:860px){ #foot-res .btnrow>.btn:not([hidden]){flex:1} }
 .msheet-h .iconbtn,.shx .iconbtn{width:44px;height:44px}
 .run-opts{display:flex;flex-direction:column}
@@ -583,6 +584,8 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .run-tools button[aria-pressed="true"]#run-vol{background:var(--accent);color:var(--accent-ink)}
 .run-tools button[aria-pressed="false"]#run-pos{color:var(--muted)}
 .run-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);color:var(--ink);border-radius:8px 8px 0 0;box-shadow:var(--shadow-sheet);padding:14px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
+.run-cur{font-weight:700;font-size:15px;color:var(--ink);margin-bottom:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.run-cur[hidden]{display:none}
 .run-prog{height:4px;background:var(--field);border-radius:2px;overflow:hidden}
 .run-prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
 .run-stats{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
@@ -904,9 +907,20 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
       <button type="button" id="run-vol" aria-pressed="true" aria-label="Guidage vocal"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9c1.5 1.5 1.5 4.5 0 6"/><path d="M18.5 6.5c3 3 3 8 0 11"/></svg></button>
     </div>
     <section class="run-panel" aria-label="Ta course">
+      <div class="run-cur" id="run-cur" hidden></div>
       <div class="run-prog" aria-hidden="true"><i id="run-bar"></i></div>
-      <div class="run-stats"><div class="big"><b id="rs-done">0,0 km</b><span>faits</span></div><div><b id="rs-rest">–</b><span>restants</span></div><div><b id="rs-time">0:00</b><span>temps</span></div><div><b id="rs-pace">–</b><span>allure /km</span></div></div>
+      <div class="run-stats"><div class="big"><b id="rs-done">0,0 km</b><span>faits</span></div><div><b id="rs-rest">–</b><span id="rs-rest-l">restants</span></div><div><b id="rs-time">0:00</b><span>temps</span></div><div><b id="rs-pace">–</b><span>allure /km</span></div></div>
       <button type="button" class="btn ghost" id="run-pause"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3v16H7z"/><path d="M14 4h3v16h-3z"/></svg>Pause</button>
+    </section>
+  </div>
+  <div class="shx" id="runa" hidden>
+    <div class="shx-back"></div>
+    <section class="shx-bravo" role="dialog" aria-modal="true" aria-labelledby="runa-t">
+      <div class="msheet-grab" aria-hidden="true"></div>
+      <div class="msheet-h"><h2 id="runa-t">Parcours terminé !</h2></div>
+      <div class="shx-b"><div class="run-zs"><div><b id="ra-km">0 km</b><span>parcourus</span></div><div><b id="ra-time">0:00</b><span>temps</span></div></div>
+        <p class="shx-lede" style="margin:4px 0 0">Tu en veux encore ? Continue sans tracé : tes kilomètres et les rues en plus sont comptés.</p></div>
+      <div class="msheet-f run-zf"><button type="button" class="btn primary" id="runa-end"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg>Terminer</button><button type="button" class="btn ghost" id="runa-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Continuer sans tracé</button></div>
     </section>
   </div>
   <div class="shx" id="runz" hidden>

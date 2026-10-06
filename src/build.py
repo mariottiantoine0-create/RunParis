@@ -15,7 +15,7 @@ meta = ('<!doctype html>\n<html lang="fr">\n<meta charset="utf-8">\n'
 app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engine.js'))
 # version des données : change dès qu'un fichier de données change, pour que le navigateur recharge la nouvelle version
 h = hashlib.sha1()
-for f in ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt']:
+for f in ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt']:
     h.update((root / 'site' / f).read_bytes())
 app = app.replace("'__DATAV__'", "'?v=%s'" % h.hexdigest()[:8])
 # sur le site, le logo ramène à l'accueil (pas d'accueil dans l'artifact)

@@ -21,12 +21,13 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
     if (gr) E.setGreen(b64(gr));
+    if (pv) E.setPrivate(b64(pv)); // voies privées et impasses fermées : jamais empruntées (D-80)
     if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
@@ -180,7 +181,7 @@ function buildSearch() {
   const town = e => { const q = M.quartiers[G.nq[G.ea[e]] - 1]; return q && q.ar > 100 ? q.name : ''; };
   for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e], key = n + '|' + town(e); const b = best.get(key); if (!b || L > b[0]) best.set(key, [L, e, n]); }
   for (const [key, [, e, n]] of best) {
-    const a = G.ea[e], b = G.eb[e]; const [la, lo] = E.toLL((G.NX[a] + G.NX[b]) / 2, (G.NY[a] + G.NY[b]) / 2);
+    const a = G.ea[e], b = G.eb[e], v = G.deg[a + 1] - G.deg[a] >= G.deg[b + 1] - G.deg[b] ? a : b; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); // sur un carrefour de la rue, pas au milieu d'un pâté de maisons
     const name = M.names[n - 1], tw = key.split('|')[1]; IDX.push({ name, type: tw ? 'Rue · ' + tw : 'Rue', lat: la, lon: lo, k: norm(name + (tw ? ' ' + tw : '')) });
   }
 }
@@ -535,6 +536,7 @@ function render() {
   }
   drawMetro(true);
   if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
+  drawRouteNames();
   // pins
   // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
   const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
@@ -881,6 +883,12 @@ function laneInfo(R) {
   return (R._lanes = { pts, tx, ty, lane: sm, pass, any });
 }
 // polyline of a route in map metres: from street edges, or from a GPX geometry (official races)
+// point de départ, d'arrivée ou de passage : jamais au bout d'un petit passage sans nom (porche, cour) — on se place au carrefour (D-80)
+function snapNode(x, y) {
+  let v = E.nearest(x, y); if (v < 0) return v;
+  for (let k = 0; k < 3 && G.deg[v + 1] - G.deg[v] === 1; k++) { const e = G.adjE[G.deg[v]]; if (G.en[e] || G.LEN[e] > 80) break; const u = G.ea[e] === v ? G.eb[e] : G.ea[e]; if (!G.nodeOk[u]) break; v = u; }
+  return v;
+}
 function routePts(r) {
   if (r.geom) return r.geom;
   if (r._pts) return r._pts;
@@ -1062,7 +1070,7 @@ async function generate(isAgain) {
     }
     const ab = S.mode === 'ab', A = ab ? 'A' : 'le départ';
     const [sx, sy] = E.toXY(S.start.lat, S.start.lon);
-    const s = E.nearest(sx, sy);
+    const s = snapNode(sx, sy);
     if (s < 0) errs.push(`Aucune rue accessible autour de ${A} avec ces exclusions. Réautorise un quartier proche ou retire un lieu évité.`);
     else {
       const snapD = Math.hypot(G.NX[s] - sx, G.NY[s] - sy);
@@ -1071,7 +1079,7 @@ async function generate(isAgain) {
       // places to pass by, or discovery of famous places
       let endN = null;
       if (ab && !S.endFree) {
-        const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = E.nearest(ex, ey);
+        const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = snapNode(ex, ey);
         if (endN < 0) errs.push('Aucune rue accessible autour de l’arrivée avec ces exclusions.');
         else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « Retour au départ » ou « N’importe où ».');
       }
@@ -1079,7 +1087,7 @@ async function generate(isAgain) {
       if (errs.length) { /* reported below */ }
       else if (S.vias.length) {
         const vn = [];
-        for (const v of S.vias) { const [vx, vy] = E.toXY(v.lat, v.lon); const n = E.nearest(vx, vy); if (n < 0 || Math.hypot(G.NX[n] - vx, G.NY[n] - vy) > 400) { errs.push(`« ${v.name} » est dans une zone évitée ou inaccessible : retire-le ou réautorise sa zone.`); } else vn.push(n); }
+        for (const v of S.vias) { const [vx, vy] = E.toXY(v.lat, v.lon); const n = snapNode(vx, vy); if (n < 0 || Math.hypot(G.NX[n] - vx, G.NY[n] - vy) > 400) { errs.push(`« ${v.name} » est dans une zone évitée ou inaccessible : retire-le ou réautorise sa zone.`); } else vn.push(n); }
         if (!errs.length) {
           r = await E.viaRoute(s, vn, endArg, target, opt, prog);
           if (!r) errs.push('Impossible de passer par ces lieux sans traverser une zone évitée. Retire un lieu ou réautorise un quartier.');
@@ -1321,9 +1329,9 @@ function shOpen(secs, doneM) {
   SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
   $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
-  $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}. Immortalise ta sortie et partage-la.`;
+  $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
-  try { const k = 'runparis-done', L = JSON.parse(localStorage.getItem(k) || '[]'); L.unshift({ d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop }); localStorage.setItem(k, JSON.stringify(L.slice(0, 200))); } catch (e) {}
+  try { const k = 'runparis-done', L = JSON.parse(localStorage.getItem(k) || '[]'); L.unshift({ extra: meas && SH.extra ? SH.extra : undefined, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop }); localStorage.setItem(k, JSON.stringify(L.slice(0, 200))); } catch (e) {}
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
 function shClose() { $('#shx').hidden = true; SH.photo = null; }
@@ -1444,10 +1452,11 @@ function navBuild(r) {
   const at = d => { d = Math.max(0, Math.min(L, d)); const i = Math.min(idx(d), pts.length - 2), t = (d - cum[i]) / Math.max(1e-6, cum[i + 1] - cum[i]); return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; };
   const turn = (d, w) => { const a = at(d - w), b = at(d), c = at(d + w); let t = (Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0])) * 180 / Math.PI; while (t > 180) t -= 360; while (t < -180) t += 360; return t; };
   const nameNear = d => { const [x, y] = at(d), v = E.nearest(x, y); if (v < 0) return ''; for (let k = G.deg[v]; k < G.deg[v + 1]; k++) { const e = G.adjE[k]; if (G.en[e]) return M.names[G.en[e] - 1]; } return ''; };
-  let man = [];
+  let man = []; const runs = [];
+  const addRun = (d0, d1, nm) => { if (!nm) return; const l = runs[runs.length - 1]; if (l && l.name === nm && d0 - l.d1 < 30) l.d1 = d1; else runs.push({ d0, d1, name: nm }); };
   if (r.edges && r.edges.length) { // parcours généré : un virage possible à chaque carrefour
     const segs = []; let d = 0;
-    for (const [e, fromA] of r.edges) { const p = E.edgePts(e); let len = 0; for (let i = 1; i < p.length; i++) len += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); segs.push([d, d + len, G.en[e] ? M.names[G.en[e] - 1] : '']); d += len; }
+    for (const [e, fromA] of r.edges) { const p = E.edgePts(e); let len = 0; for (let i = 1; i < p.length; i++) len += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); segs.push([d, d + len, G.en[e] ? M.names[G.en[e] - 1] : '']); addRun(d, d + len, segs[segs.length - 1][2]); d += len; }
     for (let i = 0; i < segs.length - 1; i++) {
       const dd = segs[i][1]; if (dd < 15 || dd > L - 15) continue;
       const a = turn(dd, 18); if (Math.abs(a) < 35) continue;
@@ -1455,12 +1464,13 @@ function navBuild(r) {
       man.push({ d: dd, a, name: nm });
     }
   } else { // trace publiée : là où le cap change nettement
+    for (let d = 0; d < L; d += 40) addRun(d, Math.min(L, d + 40), nameNear(d + 20));
     let best = null;
     for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
   }
   man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
   man.push({ d: L, a: 0, arrive: true, name: '' });
-  return { pts, cum, L, idx, at, man };
+  return { pts, cum, L, idx, at, man, runs };
 }
 function navDir(m) {
   if (m.arrive) return ['flag', 'Arrivée'];
@@ -1503,7 +1513,7 @@ function runPrep() {
 }
 function runStart() {
   $('#runp').hidden = true;
-  Object.assign(NAV, { on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0 });
+  Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0 });
   $('#run-vol').setAttribute('aria-pressed', NAV.voice); $('#run-pos').setAttribute('aria-pressed', true);
   document.documentElement.classList.add('running'); $('#run').hidden = false; navMsg(null);
   if (NAV.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} } // iOS : la voix doit démarrer après un geste
@@ -1522,12 +1532,31 @@ function runStop() {
   setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
 }
 function runFinish(arrived) {
-  const secs = navElapsed(), started = !!NAV.t0, done = NAV.prog;
-  if (arrived) navSay('Bravo, parcours terminé.');
-  runStop();
+  const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, done = free ? NAV.n.L + extra : NAV.prog;
+  const streets = free ? [...NAV.streets.entries()].sort((a, b) => b[1] - a[1]).map(q => q[0]).slice(0, 3) : [];
+  runStop(); $('#runa').hidden = true;
   if (!started) return;
-  track('suivi-fin', arrived ? 'Arrivée détectée' : 'Terminé avant l’arrivée');
-  shOpen(secs, arrived ? null : done);
+  track('suivi-fin', free ? 'Terminé après avoir continué' : arrived ? 'Arrivée détectée' : 'Terminé avant l’arrivée');
+  SH.extra = free && extra > 50 ? { km: Math.round(extra / 100) / 10, streets } : null;
+  shOpen(secs, arrived && !free ? null : done);
+}
+// arrivée : on ne coupe pas d'office, le coureur choisit de terminer ou de continuer (D-80)
+function navArrive() {
+  NAV.paused = true; NAV.pauseAt = Date.now(); NAV.prog = NAV.n.L; navUI();
+  navSay('Parcours terminé. Tu peux terminer ou continuer.');
+  $('#ra-km').textContent = fmt(NAV.n.L / 1000, 1) + ' km'; $('#ra-time').textContent = fmtClock(navElapsed()); $('#runa').hidden = false;
+}
+function navContinue() {
+  $('#runa').hidden = true; NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false;
+  Object.assign(NAV, { free: true, extra: 0, track: NAV.pos ? [NAV.pos.slice()] : [], streets: new Map(), offOn: false, errShown: false });
+  navMsg(null); navSay('Course libre : tes kilomètres en plus sont comptés.'); navUI();
+}
+// rue la plus proche d'un point (course libre)
+function streetAt(x, y) {
+  const v = E.nearest(x, y); if (v < 0) return ''; let best = '', bd = 40;
+  for (let k = G.deg[v]; k < G.deg[v + 1]; k++) { const e = G.adjE[k]; if (!G.en[e]) continue; const p = E.edgePts(e);
+    for (let i = 1; i < p.length; i++) { const vx = p[i][0] - p[i - 1][0], vy = p[i][1] - p[i - 1][1], l = vx * vx + vy * vy || 1e-9, t = Math.max(0, Math.min(1, ((x - p[i - 1][0]) * vx + (y - p[i - 1][1]) * vy) / l)), d = Math.hypot(x - p[i - 1][0] - vx * t, y - p[i - 1][1] - vy * t); if (d < bd) { bd = d; best = M.names[G.en[e] - 1]; } } }
+  return best;
 }
 function navProject(x, y, d0, d1) {
   const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
@@ -1542,6 +1571,13 @@ function navFix(p) {
   const [x, y] = E.toXY(c.latitude, c.longitude), n = NAV.n;
   const prevPos = NAV.pos; NAV.pos = [x, y];
   NAV.head = c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.8 ? c.heading : null;
+  if (NAV.free) { // course libre après l'arrivée : on compte les km et les rues en plus
+    if (NAV.paused) return navUI();
+    const last = NAV.track[NAV.track.length - 1], d = last ? Math.hypot(x - last[0], y - last[1]) : 0;
+    if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
+    const tot = n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navSay(`${NAV.km} kilomètres. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
+    return navUI();
+  }
   // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
   if (!NAV.t0) {
     const b = navProject(x, y, 0, 150), toStart = Math.hypot(x - n.pts[0][0], y - n.pts[0][1]);
@@ -1573,21 +1609,23 @@ function navFix(p) {
   }
   if (NAV.prog >= NAV.km * 1000 && NAV.km * 1000 < n.L - 200) { const pc = navElapsed() / (NAV.prog / 1000); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(NAV.prog / 1000) + 1; }
   // arrivée
-  if (NAV.prog >= n.L - 30 || (NAV.prog > n.L * 0.9 && Math.hypot(x - n.pts[n.pts.length - 1][0], y - n.pts[n.pts.length - 1][1]) < 25)) { NAV.prog = n.L; navUI(); return runFinish(true); }
+  if (NAV.prog >= n.L - 30 || (NAV.prog > n.L * 0.9 && Math.hypot(x - n.pts[n.pts.length - 1][0], y - n.pts[n.pts.length - 1][1]) < 25)) return navArrive();
   navUI();
 }
 function navUI() {
   if (!NAV.on) return;
-  const n = NAV.n, secs = navElapsed(), km = NAV.prog / 1000;
-  $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km';
+  const n = NAV.n, secs = navElapsed(), km = (NAV.free ? n.L + NAV.extra : NAV.prog) / 1000;
+  $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = NAV.free ? '+' + fmt(NAV.extra / 1000, 1) + ' km' : fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km'; $('#rs-rest-l').textContent = NAV.free ? 'en plus' : 'restants';
   $('#rs-time').textContent = fmtClock(secs); $('#rs-pace').textContent = km > 0.2 ? fmtClock(secs / km) : '–';
   $('#run-bar').style.width = (100 * NAV.prog / n.L).toFixed(1) + '%';
   $('#run-pause').disabled = !NAV.t0;
   let ic, big, small;
-  if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
-  else { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = navDistTxt(Math.max(0, m.d - NAV.prog)); small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : ''); }
+  if (NAV.free) { ic = 'straight'; big = '+' + navDistTxt(NAV.extra); small = 'Course libre' + (NAV.curFree ? ' · ' + NAV.curFree : ''); }
+  else if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
+  else { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = m.arrive && NAV.prog >= n.L - 1 ? 'Arrivée' : navDistTxt(Math.max(0, m.d - NAV.prog)); small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : ''); }
   if (NAV.icK !== ic) { $('#run-ic').innerHTML = runIco(ic); NAV.icK = ic; }
   $('#run-dist').textContent = big; $('#run-street').textContent = small;
+  const cur = NAV.free ? '' : NAV.t0 ? (n.runs.find(q => q.d0 <= NAV.prog + 1 && q.d1 >= NAV.prog - 1) || {}).name : ''; $('#run-cur').textContent = cur ? 'Tu es sur ' + cur : ''; $('#run-cur').hidden = !cur;
   if (NAV.offOn) { const d = NAV.proj ? NAV.proj.dd : 0; navMsg('err', 'Tu t’es écarté du parcours', `Le tracé est à ${navDistTxt(d)} : suis le pointillé rouge pour le rejoindre.`); NAV.errShown = true; }
   else if (NAV.errShown) { NAV.errShown = false; navMsg(null); $('#run-nav').hidden = false; }
   if (NAV.follow && NAV.pos) navCenter(); else draw();
@@ -1604,16 +1642,38 @@ function navCenter() {
 }
 // dessin sur la carte (appelé depuis render) : partie déjà courue, position, écart au tracé
 function navDrawDone(px) {
+  if (NAV.on && NAV.free && NAV.track.length > 1) { const q = new Path2D(); NAV.track.forEach(([x, y], i) => i ? q.lineTo(x, y) : q.moveTo(x, y)); ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(q); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(q); }
   if (!NAV.on || !NAV.t0 || NAV.prog <= 0) return;
   const n = NAV.n, k = n.idx(NAV.prog), p = new Path2D(); p.moveTo(n.pts[0][0], n.pts[0][1]);
   for (let i = 1; i <= k; i++) p.lineTo(n.pts[i][0], n.pts[i][1]); const e = n.at(NAV.prog); p.lineTo(e[0], e[1]);
   ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(p); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(p);
 }
+// noms des rues du parcours, posés sur le tracé (D-80) : en course, et dès qu'on zoome sur un parcours
+function drawRouteNames() {
+  const R = S.route; if (!R || !(NAV.on || V.s >= 0.45)) return;
+  const n = NAV.on ? NAV.n : (R._nav || (R._nav = navBuild(R)));
+  ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const boxes = [];
+  for (const run of n.runs) {
+    if (NAV.on && NAV.t0 && run.d1 < NAV.prog) continue; // en course : seulement les rues à venir
+    const tw = ctx.measureText(run.name).width; if ((run.d1 - run.d0) * V.s < Math.min(tw + 40, 70)) continue;
+    const dm = (run.d0 + run.d1) / 2, a = n.at(dm - 12), b = n.at(dm + 12), [mx, my] = n.at(dm), cx = mx * V.s + V.tx, cy = my * V.s + V.ty;
+    if (cx < 0 || cy < 0 || cx > W || cy > H) continue;
+    let ang = Math.atan2(b[1] - a[1], b[0] - a[0]); if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+    const hw = Math.abs(Math.cos(ang)) * (tw / 2 + 6) + Math.abs(Math.sin(ang)) * 10, hh = Math.abs(Math.sin(ang)) * (tw / 2 + 6) + Math.abs(Math.cos(ang)) * 10;
+    if (boxes.some(q => Math.abs(q[0] - cx) < q[2] + hw && Math.abs(q[1] - cy) < q[3] + hh)) continue; boxes.push([cx, cy, hw, hh]);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-tw / 2 - 6, -10, tw + 12, 20, 4) : ctx.rect(-tw / 2 - 6, -10, tw + 12, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = colors.ink; ctx.fillText(run.name, 0, 0.5); ctx.restore();
+  }
+  ctx.restore();
+}
 function navDrawMe() {
   if (!NAV.on || !NAV.pos) return;
   const [x, y] = NAV.pos, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
   if (NAV.offOn && NAV.proj) { const qx = NAV.proj.px * V.s + V.tx, qy = NAV.proj.py * V.s + V.ty; ctx.save(); ctx.strokeStyle = css('--err'); ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(qx, qy); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(qx, qy, 5, 0, 7); ctx.fillStyle = colors.panel; ctx.fill(); ctx.stroke(); ctx.restore(); }
-  let h = NAV.head; if (h == null) { const n = NAV.n, a = NAV.t0 ? n.at(NAV.prog) : NAV.pos, b = NAV.t0 ? n.at(NAV.prog + 15) : n.pts[0]; h = Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI; } // cap : 0 = nord, sens horaire
+  let h = NAV.head; if (h == null && NAV.free) { const t = NAV.track, a = t[Math.max(0, t.length - 3)] || NAV.pos; h = a === NAV.pos ? 0 : Math.atan2(NAV.pos[0] - a[0], -(NAV.pos[1] - a[1])) * 180 / Math.PI; } if (h == null) { const n = NAV.n, a = NAV.t0 ? n.at(NAV.prog) : NAV.pos, b = NAV.t0 ? n.at(NAV.prog + 15) : n.pts[0]; h = Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI; } // cap : 0 = nord, sens horaire
   ctx.save(); ctx.beginPath(); ctx.arc(sx, sy, 22, 0, 7); ctx.fillStyle = colors.ink; ctx.globalAlpha = 0.1; ctx.fill(); ctx.globalAlpha = 1;
   ctx.translate(sx, sy); ctx.rotate(h * Math.PI / 180); ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(10, 11); ctx.lineTo(0, 5); ctx.lineTo(-10, 11); ctx.closePath();
   ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = colors.panel; ctx.stroke(); ctx.fillStyle = colors.ink; ctx.fill(); ctx.restore();
@@ -1627,6 +1687,7 @@ $('#run-pos').onclick = () => { NAV.follow = true; $('#run-pos').setAttribute('a
 $('#run-pause').onclick = () => { if (!NAV.t0) return; NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
 const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; } $('#runz').hidden = true; navUI(); };
 $('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
+$('#runa-end').onclick = () => runFinish(true); $('#runa-go').onclick = navContinue;
 $('#runz-end').onclick = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.pauseAt = 0; } runFinish(false); };
 document.addEventListener('visibilitychange', () => {
   if (!NAV.on) return;

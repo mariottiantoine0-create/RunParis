@@ -70,6 +70,7 @@ const Engine = (() => {
   function setConstraints(exclQ, places, opts = {}) {
     const { nE, nN, blocked, nodeOk, ez, nq } = G;
     blocked.fill(0); nodeOk.fill(1);
+    if (G.PRIV) for (let e = 0; e < nE; e++) if (G.PRIV[e]) blocked[e] = 1; // voies privées, impasses fermées par une barrière (OSM)
     if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
     if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parks closed at the time of the run
     for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
@@ -141,6 +142,7 @@ const Engine = (() => {
   // ---------- A* ----------
   let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
   // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  function setPrivate(bits) { G.PRIV = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.PRIV[e] = (bits[e >> 3] >> (e & 7)) & 1; }
   function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
   function setWeights(w) { W = Object.assign({}, W, w); }
@@ -546,6 +548,6 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setDark, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
