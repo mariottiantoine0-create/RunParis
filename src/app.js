@@ -1,6 +1,10 @@
 <script>
 (() => {
 const $ = s => document.querySelector(s);
+// Fonctions réservées à l'application (D-83) : mode course, Mes parcours, envoi de parcours, « Je l'ai fait » et image à partager.
+// Elles ne s'allument que hors production (staging, tests) ; ?web=1 force la version du site pour la recette.
+const APPF = location.hostname !== 'runparis.netlify.app' && !/[?&]web=1/.test(location.search);
+document.documentElement.classList.toggle('app', APPF);
 const E = Engine;
 const fmt = (n, d = 1) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -673,7 +677,7 @@ $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') 
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
   const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
-  if (Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
+  if (APPF && Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -1899,7 +1903,7 @@ document.querySelectorAll('#mset [data-sh]').forEach(b => b.onclick = () => mOpe
 $('#mback').onclick = mClose; $('#msheet-x').onclick = mClose; $('#msheet-ok').onclick = mClose;
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClose(); });
 ['click', 'change', 'input'].forEach(ev => document.addEventListener(ev, () => setTimeout(msync, 0)));
-const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); $('#gpx').classList.toggle('primary', !MOB.matches); $('#gpx').classList.toggle('ghost', MOB.matches); };
+const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); const sec = APPF && MOB.matches; /* « Suivre le parcours » est le principal seulement dans l'application */ $('#gpx').classList.toggle('primary', !sec); $('#gpx').classList.toggle('ghost', sec); };
 MOB.addEventListener('change', mApply);
 
 boot();
