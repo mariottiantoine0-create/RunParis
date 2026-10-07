@@ -744,6 +744,27 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .shx-f .btn{width:100%;height:52px;gap:10px}
 .shx-f .btn.ghost{border:2px solid var(--ink);color:var(--ink);background:none}
 .shx-f .ico{width:20px;height:20px}
+
+/* lien reçu sur le site (D-88) : titre du message, invitation à l'app, feuille « L'app RunParis », lien incomplet */
+.note b.nt{display:block;font-size:15px;margin-bottom:2px}
+.app-inv{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);text-align:left;font:inherit;cursor:pointer;min-height:64px}
+.app-inv[hidden]{display:none}
+.app-inv:hover{border-color:var(--line-strong)}
+.app-inv:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app-inv .inv-ic{flex:none;border-radius:10px}
+.app-inv .inv-tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.app-inv .inv-tx b{font-size:15px;font-weight:700}
+.app-inv .inv-tx span{font-size:13px;line-height:1.4;color:var(--muted)}
+.app-inv > .ico{flex:none;width:18px;height:18px;color:var(--muted)}
+.inv-li{display:flex;gap:12px;align-items:flex-start}
+.inv-li .ico{flex:none;width:22px;height:22px;color:var(--accent);margin-top:1px}
+.inv-li b{display:block;font-size:15px;font-weight:700}
+.inv-li span{display:block;font-size:13px;line-height:1.4;color:var(--muted)}
+.lnk-err{position:absolute;top:16px;left:16px;width:min(440px,calc(100% - 32px));box-sizing:border-box;z-index:9;box-shadow:var(--shadow-pop);padding-right:52px}
+.lnk-err[hidden]{display:none}
+#view-res.recv #alts,#view-res.recv #alts-h{display:none!important}
+.lnk-err .iconbtn{position:absolute;top:4px;right:4px}
+html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 </style>
 
 <div class="app">
@@ -935,6 +956,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
           <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
           <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
         </div>
+        <button type="button" class="app-inv" id="app-inv" hidden><svg class="inv-ic" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true"><rect width="100" height="100" fill="#1F4FE0"/><path d="M26 33L64 23L76 63L38 75Z" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="miter"/><text x="51" y="57.5" text-anchor="middle" font-family="Archivo,sans-serif" font-stretch="75%" font-weight="800" font-size="21" fill="#fff">RP</text><circle cx="26" cy="33" r="9" fill="#fff"/><text x="26" y="37" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="11" fill="#1F4FE0">D</text></svg><span class="inv-tx"><b>Suis-le avec l’app RunParis</b><span>Guidage vocal et suivi, même écran verrouillé. Bientôt sur iPhone.</span></span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
         <p class="via" id="via"></p>
         <button type="button" class="fb-link" id="fb-open" hidden>Un souci sur ce parcours ? Signaler un problème ou donner un avis</button>
@@ -1008,6 +1030,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
       </details>
       <div class="zoom"><button id="zin" aria-label="Zoomer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button><button id="zout" aria-label="Dézoomer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button id="zfit" aria-label="Recentrer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></button></div>
       <div class="toast" id="toast" hidden role="status"></div>
+      <div class="note err lnk-err" id="lnk-err" role="alert" hidden><b class="nt">Ce lien de parcours est incomplet</b>Il a sûrement été coupé en le copiant. Demande qu’on te le renvoie, ou crée ton parcours.<button type="button" class="iconbtn" id="lnk-err-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
     </div>
   </main>
@@ -1026,6 +1049,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
       <div class="msheet-grab" aria-hidden="true"></div>
       <div class="msheet-h"><h2 id="about-t">À propos</h2><button type="button" class="iconbtn" id="about-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="shx-b about-b" id="about-b"></div>
+      <div class="msheet-f about-f" id="about-fa" hidden><button type="button" class="btn primary" id="app-gpx">Exporter GPX</button><button type="button" class="textbtn" id="app-close">Fermer</button></div>
       <div class="msheet-f about-f" id="about-f" hidden><button type="button" class="btn ghost" id="erase-go">Effacer mes données</button><button type="button" class="textbtn" id="erase-keep">Garder mes données</button></div>
     </section>
   </div>
@@ -1842,7 +1866,7 @@ if (NATIVE) { new MutationObserver(sbSync).observe(document.documentElement, { a
 // vibrations du mode course (D-86) : courtes, jamais en continu
 function navBuzz(k) { if (!NATIVE || !NAV.buzz) return; const h = NP.hap; (k === 'off' ? h.impact({ style: 'HEAVY' }).then(() => setTimeout(() => h.impact({ style: 'HEAVY' }), 160)) : k === 'end' ? h.notification({ type: 'SUCCESS' }) : h.impact({ style: 'LIGHT' })).catch(() => {}); }
 document.documentElement.classList.toggle('native', NATIVE);
-const WEB_APP = 'https://staging--runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application
+const WEB_APP = 'https://runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application : le site en production les ouvre (D-88)
 if (NATIVE && NP.geo && navigator.geolocation) navigator.geolocation.getCurrentPosition = (ok, ko, o) => {
   NP.geo.getCurrentPosition({ enableHighAccuracy: !!(o && o.enableHighAccuracy), timeout: (o && o.timeout) || 10000, maximumAge: (o && o.maximumAge) || 0 })
     .then(ok, e => ko && ko({ code: /denied|permission|authoriz/i.test((e && (e.message || e.code)) || '') ? 1 : 2, message: e && e.message }));
@@ -1904,7 +1928,7 @@ function loadTrees() {
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();
     for (let i = 0; i < TREES.length; i += 2) { const k = (TREES[i] >> 5) * 4096 + (TREES[i + 1] >> 5); let c = TGRID.get(k); if (!c) TGRID.set(k, c = []); c.push(i); }
-    if (S.route) { S.route._trees = null; showRoute(S.route, [...$('#notes').children].map(d => ({ t: d.textContent, err: d.classList.contains('err') }))); }
+    if (S.route) { S.route._trees = null; showRoute(S.route, S.lastNotes || []); }
     draw();
   }).catch(() => { $('#ly-trees').disabled = true; });
 }
@@ -2526,7 +2550,7 @@ $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') 
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
   const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
-  if (APPF && Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
+  if (Q.has('p')) { if (openFixed(Q.get('p'), Q.get('n') || '', true)) track('recu', APPF ? 'Parcours reçu ouvert' : 'Parcours reçu ouvert sur le site'); else { linkErr(true); track('recu', 'Lien de parcours incomplet'); } return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -3069,8 +3093,8 @@ function fitRoute(onlyStart) {
   fit([x0, y0, x1, y1]);
 }
 function showRoute(r, notes) {
-  const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
-  $('#detail').hidden = !r;
+  S.lastNotes = notes; const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); if (x && x.b) { const b = document.createElement('b'); b.className = 'nt'; b.textContent = x.b; d.appendChild(b); d.appendChild(document.createTextNode(x.t)); } else d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
+  $('#detail').hidden = !r; const rcv = !!r && r === S.recv; $('#app-inv').hidden = APPF || !rcv; $('#view-res').classList.toggle('recv', rcv); /* parcours reçu : une seule proposition, pas de liste */ if (r) linkErr(false);
   if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
   $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
   $('#st-up').innerHTML = `${Math.round(r.up)}<small>m</small>`;
@@ -3608,7 +3632,7 @@ function sendLink(code, title, km) {
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
 function openFixed(code, title, received) {
-  const st = routeFromCode(code); if (!st) { toast('Ce lien de parcours est incomplet.', 3500); return false; }
+  const st = routeFromCode(code); if (!st) { if (!received) toast('Ce lien de parcours est incomplet.', 3500); return false; }
   if (S.tab !== 'gen') setTab('gen');
   const P = st.geom, a = P[0], b = P[P.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150, ll = p => { const [la, lo] = E.toLL(p[0], p[1]); return { lat: la, lon: lo }; };
   const near = p => { const ns = nearestStation(p[0], p[1]); return ns && ns.d < 300 ? ns.s.n : 'Point sur la carte'; };
@@ -3617,7 +3641,9 @@ function openFixed(code, title, received) {
   setUnit('km'); $('#km').value = clampKm(Math.round(st.len / 100) / 10); updateConv();
   S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null;
   const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
-  S.baseNotes = [{ info: true, t: received ? `Parcours reçu : ${t}, ${fmt(st.len / 1000)} km. Suis-le, exporte-le ou touche « Modifier » pour créer le tien.` : `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  const from = near(a), km = `${fmt(st.len / 1000)} km${loop ? ' en boucle' : ''}${from !== 'Point sur la carte' ? ' depuis ' + from : ''}`;
+  S.recv = received ? st : null; if (received) linkErr(false);
+  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
   renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
   if ($('#done')) $('#done').setAttribute('aria-pressed', false);
   return true;
@@ -3710,11 +3736,23 @@ const ABOUT = {
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
 };
+// lien reçu ouvert sur le site (D-88) : invitation à l'app, erreur de lien incomplet
+const invLi = (ic, t, s) => `<div class="inv-li"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><div><b>${t}</b><span>${s}</span></div></div>`;
+ABOUT.app = ['L’app RunParis', () => ap('Le site crée et exporte les parcours. L’app t’accompagne pendant la course :') +
+  invLi('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>', 'Guidage vocal', 'Chaque virage et chaque kilomètre annoncés.') +
+  invLi('<rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 'Suivi écran verrouillé', 'Le téléphone dans la poche, avec vibrations.') +
+  invLi('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', 'Mes parcours', 'Tes sorties et ton temps, gardés sur ton téléphone.') +
+  '<div class="note info"><b class="nt">Bientôt sur iPhone</b>En attendant, le fichier GPX s’ouvre dans Garmin Connect, Strava, Komoot ou Coros.</div>'];
+$('#app-inv').onclick = () => aboutOpen('app');
+$('#app-gpx').onclick = () => { $('#about-x').click(); $('#gpx').click(); };
+$('#app-close').onclick = () => $('#about-x').click();
+function linkErr(on) { $('#lnk-err').hidden = !on; }
+$('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
   $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
   if (k === 'fb') return $('#fb-open').click();
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
-  $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+  $('#about-f').hidden = k !== 'erase'; $('#about-fa').hidden = k !== 'app'; $('#about').hidden = false; track('a-propos', t);
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });

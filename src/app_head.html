@@ -737,6 +737,27 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .shx-f .btn{width:100%;height:52px;gap:10px}
 .shx-f .btn.ghost{border:2px solid var(--ink);color:var(--ink);background:none}
 .shx-f .ico{width:20px;height:20px}
+
+/* lien reçu sur le site (D-88) : titre du message, invitation à l'app, feuille « L'app RunParis », lien incomplet */
+.note b.nt{display:block;font-size:15px;margin-bottom:2px}
+.app-inv{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);text-align:left;font:inherit;cursor:pointer;min-height:64px}
+.app-inv[hidden]{display:none}
+.app-inv:hover{border-color:var(--line-strong)}
+.app-inv:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app-inv .inv-ic{flex:none;border-radius:10px}
+.app-inv .inv-tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.app-inv .inv-tx b{font-size:15px;font-weight:700}
+.app-inv .inv-tx span{font-size:13px;line-height:1.4;color:var(--muted)}
+.app-inv > .ico{flex:none;width:18px;height:18px;color:var(--muted)}
+.inv-li{display:flex;gap:12px;align-items:flex-start}
+.inv-li .ico{flex:none;width:22px;height:22px;color:var(--accent);margin-top:1px}
+.inv-li b{display:block;font-size:15px;font-weight:700}
+.inv-li span{display:block;font-size:13px;line-height:1.4;color:var(--muted)}
+.lnk-err{position:absolute;top:16px;left:16px;width:min(440px,calc(100% - 32px));box-sizing:border-box;z-index:9;box-shadow:var(--shadow-pop);padding-right:52px}
+.lnk-err[hidden]{display:none}
+#view-res.recv #alts,#view-res.recv #alts-h{display:none!important}
+.lnk-err .iconbtn{position:absolute;top:4px;right:4px}
+html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 </style>
 
 <div class="app">
@@ -928,6 +949,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
           <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
           <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
         </div>
+        <button type="button" class="app-inv" id="app-inv" hidden><svg class="inv-ic" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true"><rect width="100" height="100" fill="#1F4FE0"/><path d="M26 33L64 23L76 63L38 75Z" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="miter"/><text x="51" y="57.5" text-anchor="middle" font-family="Archivo,sans-serif" font-stretch="75%" font-weight="800" font-size="21" fill="#fff">RP</text><circle cx="26" cy="33" r="9" fill="#fff"/><text x="26" y="37" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="11" fill="#1F4FE0">D</text></svg><span class="inv-tx"><b>Suis-le avec l’app RunParis</b><span>Guidage vocal et suivi, même écran verrouillé. Bientôt sur iPhone.</span></span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
         <p class="via" id="via"></p>
         <button type="button" class="fb-link" id="fb-open" hidden>Un souci sur ce parcours ? Signaler un problème ou donner un avis</button>
@@ -1001,6 +1023,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
       </details>
       <div class="zoom"><button id="zin" aria-label="Zoomer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button><button id="zout" aria-label="Dézoomer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button id="zfit" aria-label="Recentrer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></button></div>
       <div class="toast" id="toast" hidden role="status"></div>
+      <div class="note err lnk-err" id="lnk-err" role="alert" hidden><b class="nt">Ce lien de parcours est incomplet</b>Il a sûrement été coupé en le copiant. Demande qu’on te le renvoie, ou crée ton parcours.<button type="button" class="iconbtn" id="lnk-err-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="loading" id="loading">Chargement des 5 500 km de rues parisiennes…</div>
     </div>
   </main>
@@ -1019,6 +1042,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
       <div class="msheet-grab" aria-hidden="true"></div>
       <div class="msheet-h"><h2 id="about-t">À propos</h2><button type="button" class="iconbtn" id="about-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="shx-b about-b" id="about-b"></div>
+      <div class="msheet-f about-f" id="about-fa" hidden><button type="button" class="btn primary" id="app-gpx">Exporter GPX</button><button type="button" class="textbtn" id="app-close">Fermer</button></div>
       <div class="msheet-f about-f" id="about-f" hidden><button type="button" class="btn ghost" id="erase-go">Effacer mes données</button><button type="button" class="textbtn" id="erase-keep">Garder mes données</button></div>
     </section>
   </div>

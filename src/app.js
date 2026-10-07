@@ -23,7 +23,7 @@ if (NATIVE) { new MutationObserver(sbSync).observe(document.documentElement, { a
 // vibrations du mode course (D-86) : courtes, jamais en continu
 function navBuzz(k) { if (!NATIVE || !NAV.buzz) return; const h = NP.hap; (k === 'off' ? h.impact({ style: 'HEAVY' }).then(() => setTimeout(() => h.impact({ style: 'HEAVY' }), 160)) : k === 'end' ? h.notification({ type: 'SUCCESS' }) : h.impact({ style: 'LIGHT' })).catch(() => {}); }
 document.documentElement.classList.toggle('native', NATIVE);
-const WEB_APP = 'https://staging--runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application
+const WEB_APP = 'https://runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application : le site en production les ouvre (D-88)
 if (NATIVE && NP.geo && navigator.geolocation) navigator.geolocation.getCurrentPosition = (ok, ko, o) => {
   NP.geo.getCurrentPosition({ enableHighAccuracy: !!(o && o.enableHighAccuracy), timeout: (o && o.timeout) || 10000, maximumAge: (o && o.maximumAge) || 0 })
     .then(ok, e => ko && ko({ code: /denied|permission|authoriz/i.test((e && (e.message || e.code)) || '') ? 1 : 2, message: e && e.message }));
@@ -85,7 +85,7 @@ function loadTrees() {
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();
     for (let i = 0; i < TREES.length; i += 2) { const k = (TREES[i] >> 5) * 4096 + (TREES[i + 1] >> 5); let c = TGRID.get(k); if (!c) TGRID.set(k, c = []); c.push(i); }
-    if (S.route) { S.route._trees = null; showRoute(S.route, [...$('#notes').children].map(d => ({ t: d.textContent, err: d.classList.contains('err') }))); }
+    if (S.route) { S.route._trees = null; showRoute(S.route, S.lastNotes || []); }
     draw();
   }).catch(() => { $('#ly-trees').disabled = true; });
 }
@@ -707,7 +707,7 @@ $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') 
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
   const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
-  if (APPF && Q.get('p')) { openFixed(Q.get('p'), Q.get('n') || '', true); track('recu', 'Parcours reçu ouvert'); return true; }
+  if (Q.has('p')) { if (openFixed(Q.get('p'), Q.get('n') || '', true)) track('recu', APPF ? 'Parcours reçu ouvert' : 'Parcours reçu ouvert sur le site'); else { linkErr(true); track('recu', 'Lien de parcours incomplet'); } return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -1250,8 +1250,8 @@ function fitRoute(onlyStart) {
   fit([x0, y0, x1, y1]);
 }
 function showRoute(r, notes) {
-  const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
-  $('#detail').hidden = !r;
+  S.lastNotes = notes; const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); if (x && x.b) { const b = document.createElement('b'); b.className = 'nt'; b.textContent = x.b; d.appendChild(b); d.appendChild(document.createTextNode(x.t)); } else d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
+  $('#detail').hidden = !r; const rcv = !!r && r === S.recv; $('#app-inv').hidden = APPF || !rcv; $('#view-res').classList.toggle('recv', rcv); /* parcours reçu : une seule proposition, pas de liste */ if (r) linkErr(false);
   if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
   $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
   $('#st-up').innerHTML = `${Math.round(r.up)}<small>m</small>`;
@@ -1789,7 +1789,7 @@ function sendLink(code, title, km) {
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
 function openFixed(code, title, received) {
-  const st = routeFromCode(code); if (!st) { toast('Ce lien de parcours est incomplet.', 3500); return false; }
+  const st = routeFromCode(code); if (!st) { if (!received) toast('Ce lien de parcours est incomplet.', 3500); return false; }
   if (S.tab !== 'gen') setTab('gen');
   const P = st.geom, a = P[0], b = P[P.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150, ll = p => { const [la, lo] = E.toLL(p[0], p[1]); return { lat: la, lon: lo }; };
   const near = p => { const ns = nearestStation(p[0], p[1]); return ns && ns.d < 300 ? ns.s.n : 'Point sur la carte'; };
@@ -1798,7 +1798,9 @@ function openFixed(code, title, received) {
   setUnit('km'); $('#km').value = clampKm(Math.round(st.len / 100) / 10); updateConv();
   S.route = st; S.alts = [st]; S.lastTarget = st.len; S.lastD = null;
   const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
-  S.baseNotes = [{ info: true, t: received ? `Parcours reçu : ${t}, ${fmt(st.len / 1000)} km. Suis-le, exporte-le ou touche « Modifier » pour créer le tien.` : `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  const from = near(a), km = `${fmt(st.len / 1000)} km${loop ? ' en boucle' : ''}${from !== 'Point sur la carte' ? ' depuis ' + from : ''}`;
+  S.recv = received ? st : null; if (received) linkErr(false);
+  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
   renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
   if ($('#done')) $('#done').setAttribute('aria-pressed', false);
   return true;
@@ -1891,11 +1893,23 @@ const ABOUT = {
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
 };
+// lien reçu ouvert sur le site (D-88) : invitation à l'app, erreur de lien incomplet
+const invLi = (ic, t, s) => `<div class="inv-li"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><div><b>${t}</b><span>${s}</span></div></div>`;
+ABOUT.app = ['L’app RunParis', () => ap('Le site crée et exporte les parcours. L’app t’accompagne pendant la course :') +
+  invLi('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>', 'Guidage vocal', 'Chaque virage et chaque kilomètre annoncés.') +
+  invLi('<rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 'Suivi écran verrouillé', 'Le téléphone dans la poche, avec vibrations.') +
+  invLi('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', 'Mes parcours', 'Tes sorties et ton temps, gardés sur ton téléphone.') +
+  '<div class="note info"><b class="nt">Bientôt sur iPhone</b>En attendant, le fichier GPX s’ouvre dans Garmin Connect, Strava, Komoot ou Coros.</div>'];
+$('#app-inv').onclick = () => aboutOpen('app');
+$('#app-gpx').onclick = () => { $('#about-x').click(); $('#gpx').click(); };
+$('#app-close').onclick = () => $('#about-x').click();
+function linkErr(on) { $('#lnk-err').hidden = !on; }
+$('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
   $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
   if (k === 'fb') return $('#fb-open').click();
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
-  $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+  $('#about-f').hidden = k !== 'erase'; $('#about-fa').hidden = k !== 'app'; $('#about').hidden = false; track('a-propos', t);
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
