@@ -10,3 +10,7 @@ www/
 !/node_modules/@capacitor-community/
 !/node_modules/@capacitor/status-bar/
 !/node_modules/@capacitor/haptics/
+
+# fichiers personnels de Xcode (position des fenêtres, ordre des schémas) : propres à chaque Mac
+xcuserdata/
+.swiftpm/
