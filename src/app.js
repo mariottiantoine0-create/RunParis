@@ -4,7 +4,7 @@ const $ = s => document.querySelector(s);
 // Fonctions réservées à l'application (D-83) : mode course, Mes parcours, envoi de parcours, « Je l'ai fait » et image à partager.
 // Elles ne s'allument que hors production (staging, tests) ; ?web=1 force la version du site pour la recette.
 const APPF = location.hostname !== 'runparis.netlify.app' && !/[?&]web=1/.test(location.search);
-document.documentElement.classList.toggle('app', APPF);
+document.documentElement.classList.toggle('appf', APPF);
 const E = Engine;
 const fmt = (n, d = 1) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

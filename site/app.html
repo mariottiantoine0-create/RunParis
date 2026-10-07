@@ -556,9 +556,10 @@ button,a,label,summary{touch-action:manipulation}
 /* Mes parcours et parcours envoyés (D-81) */
 .tl-s{display:none}
 @media (max-width:860px){ .tl-x{display:none} .tl-s{display:inline} }
-html.app #copy-m{display:none!important}
+html.appf #copy-m{display:none!important}
+@media (min-width:861px){ html.appf .tabs{padding-left:14px;padding-right:14px} html.appf .tabs button{padding-left:0;padding-right:0} }
 /* site en production : sans les fonctions réservées à l'application (D-83) */
-html:not(.app) #run-go,html:not(.app) #done,html:not(.app) #send,html:not(.app) #tab-mine,html:not(.app) #view-mine{display:none!important}
+html:not(.appf) #run-go,html:not(.appf) #done,html:not(.appf) #send,html:not(.appf) #tab-mine,html:not(.appf) #view-mine{display:none!important}
 .tabs button{white-space:nowrap}
 @media (min-width:861px){ #tab-gen{flex:1.4} }
 .foot-links .textbtn{width:auto;flex:none}
@@ -1638,7 +1639,7 @@ const $ = s => document.querySelector(s);
 // Fonctions réservées à l'application (D-83) : mode course, Mes parcours, envoi de parcours, « Je l'ai fait » et image à partager.
 // Elles ne s'allument que hors production (staging, tests) ; ?web=1 force la version du site pour la recette.
 const APPF = location.hostname !== 'runparis.netlify.app' && !/[?&]web=1/.test(location.search);
-document.documentElement.classList.toggle('app', APPF);
+document.documentElement.classList.toggle('appf', APPF);
 const E = Engine;
 const fmt = (n, d = 1) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
