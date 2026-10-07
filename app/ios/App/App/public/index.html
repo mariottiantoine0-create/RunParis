@@ -559,6 +559,21 @@ button,a,label,summary{touch-action:manipulation}
 @media (max-width:860px){ .tl-x{display:none} .tl-s{display:inline} }
 html.appf #copy-m{display:none!important}
 
+
+/* À propos (D-87) */
+.mabout button{display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 8px;border:0;background:none;border-radius:4px;font:inherit;font-weight:700;font-size:15px;color:var(--ink);cursor:pointer;text-align:left}
+.mabout button:hover{background:var(--field)}.mabout .ico{width:16px;height:16px;color:var(--muted)}
+.mver{margin:2px 0 0}
+.about .about-b{overflow-y:auto;max-height:min(70dvh,620px);padding-bottom:16px}
+.about-b h3{margin:8px 0 0;font-size:16px;font-weight:700}
+.about-p{margin:0;font-size:14px;line-height:1.5;color:var(--muted)}
+.about-ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.about-ul li{display:flex;gap:8px;font-size:14px;line-height:1.45}.about-ul li::before{content:"";flex:none;width:6px;height:6px;background:var(--ink);margin-top:7px}
+.about-b .textbtn{padding:0;font-size:14px}
+.lic{margin:0;white-space:pre-wrap;font-family:inherit;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.themepop{overflow-y:auto;overscroll-behavior:contain}
+.about-f{display:flex;flex-direction:column;gap:4px}.about-f .textbtn{align-self:center;min-height:44px}
+@media (min-width:861px){ #about .shx-bravo{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:480px;border-radius:8px;padding-bottom:16px} #about .msheet-grab{display:none} }
 /* application : feuille d'explication de la position (D-86) */
 .perm-b{display:flex;flex-direction:column;gap:16px;padding-top:8px}
 .perm-ill{display:flex;gap:10px}.perm-ill span{width:56px;height:56px;border-radius:8px;background:var(--info-bg);display:grid;place-items:center;color:var(--accent)}.perm-ill .ico{width:28px;height:28px}
@@ -741,6 +756,8 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     </div>
     <div class="themepop" id="themepop" hidden>
       <nav class="mlinks" id="mlinks" aria-label="Pages"><a href="./">Accueil</a><a href="a-propos.html">Comment ça marche</a></nav>
+      <span class="lbl">À propos</span>
+      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
       <span class="lbl">Apparence</span>
       <div class="seg sm">
         <button id="t-auto" aria-pressed="true">Auto</button>
@@ -748,6 +765,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
         <button id="t-dark" aria-pressed="false">Sombre</button>
       </div>
       <p class="hint">Auto suit le réglage de ton appareil.</p>
+      <p class="hint mver" id="mver">RunParis · site</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Mode">
@@ -1002,6 +1020,130 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     <div class="msheet-f" id="msheet-f"><button type="button" class="btn primary" id="msheet-ok">Valider</button></div>
   </div>
 
+  <!-- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) -->
+  <div class="shx" id="about" hidden>
+    <div class="shx-back" id="about-back"></div>
+    <section class="shx-bravo about" role="dialog" aria-modal="true" aria-labelledby="about-t">
+      <div class="msheet-grab" aria-hidden="true"></div>
+      <div class="msheet-h"><h2 id="about-t">À propos</h2><button type="button" class="iconbtn" id="about-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+      <div class="shx-b about-b" id="about-b"></div>
+      <div class="msheet-f about-f" id="about-f" hidden><button type="button" class="btn ghost" id="erase-go">Effacer mes données</button><button type="button" class="textbtn" id="erase-keep">Garder mes données</button></div>
+    </section>
+  </div>
+  <template id="lic-ofl"><pre class="lic">Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo) Archivo-Italic[wdth,wght].ttf: Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL
+
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+&quot;Font Software&quot; refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+&quot;Reserved Font Name&quot; refers to any names specified as such after the
+copyright statement(s).
+
+&quot;Original Version&quot; refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+&quot;Modified Version&quot; refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+&quot;Author&quot; refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION &amp; CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+</pre></template>
+  <template id="lic-mit"><p class="about-p">Capacitor et ses modules Share, Filesystem, Geolocation, Haptics, Status Bar : Copyright (c) 2017-present Drifty Co. / Ionic. Background Geolocation : Copyright 2021 James Diacono. Keep Awake : Copyright (c) 2019 The keep-awake developers.</p><pre class="lic">MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</pre></template>
   <!-- application : avant la question de l'iPhone sur la position (D-86) -->
   <div class="shx" id="runperm" hidden>
     <div class="shx-back" id="runperm-back"></div>
@@ -1031,6 +1173,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
           <label class="sw"><span><b>Garder l’écran allumé</b><small>Le suivi s’arrête si le téléphone se verrouille</small></span><input type="checkbox" id="run-wake" checked></label>
           <label class="sw" id="run-buzz-l" hidden><span><b>Vibrations</b><small>Aux virages, à chaque kilomètre et si tu t’écartes du parcours</small></span><input type="checkbox" id="run-buzz" checked></label>
         </div>
+        <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 17.5v.5"/></svg>Parcours indicatif : respecte le code de la route et la signalisation.</p>
         <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>Ta position reste dans ton téléphone, elle n’est jamais envoyée.</p>
       </div>
       <div class="msheet-f"><button type="button" class="btn primary" id="runp-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>C’est parti</button></div>
@@ -2321,7 +2464,7 @@ function applyTheme(t) {
   draw(); if (S.route) drawProfile(S.route);
 }
 ['auto', 'light', 'dark'].forEach(k => $('#t-' + k).onclick = () => { applyTheme(k); $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); });
-$('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); };
+$('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { p.style.maxHeight = ''; const r = p.getBoundingClientRect(); p.style.maxHeight = Math.max(200, innerHeight - r.top - 12) + 'px'; } };
 document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
 try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
 
@@ -3547,6 +3690,47 @@ if (STATS) { const sc = document.createElement('script'); sc.async = true; sc.sr
 function track(ev, title) { try { if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
 // ---------- feedback (Netlify Forms) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
+// ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
+const APP_VER = '0.1';
+const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
+const ap = t => '<p class="about-p">' + t + '</p>';
+const ABOUT = {
+  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 7 octobre 2026.') +
+    '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
+    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (hébergé par Netlify)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre']) +
+    '<h3>Mesure d’audience (site seulement)</h3>' + ap('GoatCounter compte les visites et les clics, sans cookie et sans te suivre d’un site à l’autre. L’application ne mesure rien.') +
+    '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
+  ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
+    '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
+    '<h3>Hébergeur du site</h3>' + ap('Netlify, Inc., 101 2nd Street, San Francisco, CA 94105, États-Unis — netlify.com') +
+    '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
+    '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
+  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Quartiers : Paris Open Data', 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
+    '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
+  erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
+    return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
+      '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
+};
+function aboutOpen(k) {
+  $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
+  if (k === 'fb') return $('#fb-open').click();
+  const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
+  $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+}
+document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
+$('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
+$('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
+$('#attrib-more').onclick = () => aboutOpen('src');
+$('#erase-go').onclick = () => { // tout ce que RunParis garde sur l'appareil commence par « runparis- »
+  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
+  $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
+  const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
+};
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `RunParis ${APP_VER} · essai iPhone`; }
+{ const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
+
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
 $('#fb-cancel').onclick = () => $('#fb').close();
 function routeContext() {
@@ -3565,7 +3749,7 @@ $('#fb-form').onsubmit = async ev => {
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }
 };
-$('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Parcours mythiques : tracés issus de fichiers GPX publics.', 7000);
+
 // public site: the logo leads back to the welcome page
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------

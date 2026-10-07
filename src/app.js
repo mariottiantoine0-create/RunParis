@@ -644,7 +644,7 @@ function applyTheme(t) {
   draw(); if (S.route) drawProfile(S.route);
 }
 ['auto', 'light', 'dark'].forEach(k => $('#t-' + k).onclick = () => { applyTheme(k); $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); });
-$('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); };
+$('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); p.hidden = !p.hidden; $('#theme-btn').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { p.style.maxHeight = ''; const r = p.getBoundingClientRect(); p.style.maxHeight = Math.max(200, innerHeight - r.top - 12) + 'px'; } };
 document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
 try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
 
@@ -1870,6 +1870,47 @@ if (STATS) { const sc = document.createElement('script'); sc.async = true; sc.sr
 function track(ev, title) { try { if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
 // ---------- feedback (Netlify Forms) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
+// ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
+const APP_VER = '0.1';
+const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
+const ap = t => '<p class="about-p">' + t + '</p>';
+const ABOUT = {
+  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 7 octobre 2026.') +
+    '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
+    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (hébergé par Netlify)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre']) +
+    '<h3>Mesure d’audience (site seulement)</h3>' + ap('GoatCounter compte les visites et les clics, sans cookie et sans te suivre d’un site à l’autre. L’application ne mesure rien.') +
+    '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
+  ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
+    '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
+    '<h3>Hébergeur du site</h3>' + ap('Netlify, Inc., 101 2nd Street, San Francisco, CA 94105, États-Unis — netlify.com') +
+    '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
+    '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
+  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Quartiers : Paris Open Data', 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
+    '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
+  erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
+    return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
+      '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
+};
+function aboutOpen(k) {
+  $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
+  if (k === 'fb') return $('#fb-open').click();
+  const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
+  $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+}
+document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
+$('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
+$('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
+$('#attrib-more').onclick = () => aboutOpen('src');
+$('#erase-go').onclick = () => { // tout ce que RunParis garde sur l'appareil commence par « runparis- »
+  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
+  $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
+  const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
+};
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `RunParis ${APP_VER} · essai iPhone`; }
+{ const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
+
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
 $('#fb-cancel').onclick = () => $('#fb').close();
 function routeContext() {
@@ -1888,7 +1929,7 @@ $('#fb-form').onsubmit = async ev => {
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }
 };
-$('#attrib-more').onclick = () => toast('Rues, arbres, métro, parcs : © contributeurs OpenStreetMap (ODbL). Altitudes : IGN RGE ALTI. Quartiers : Paris Open Data. Parcours mythiques : tracés issus de fichiers GPX publics.', 7000);
+
 // public site: the logo leads back to the welcome page
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
