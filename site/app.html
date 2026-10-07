@@ -2032,8 +2032,9 @@ function sheetHeights() {
   const peek = $('#grab').offsetHeight + $('.phead').offsetHeight + $('.tabs').offsetHeight + (foot ? foot.offsetHeight : 0);
   const full = innerHeight - 56;
   // réglages en phrase (D-74) : la feuille s'arrête juste sous la phrase, la carte reste visible
-  if (MPHR && S.view === 'set' && S.tab !== 'race') return { peek, half: Math.min(full, peek + $('#mset').offsetHeight + 30), full };
-  return { peek, half: Math.max(peek + 170, Math.round(innerHeight * 0.56)), full };
+  if (MPHR && S.view === 'set' && S.tab === 'gen' && $('#mset').offsetHeight) { sheetHeights.gen = Math.min(full, peek + $('#mset').offsetHeight + 30); return { peek, half: sheetHeights.gen, full }; }
+  // Mythiques et Mes parcours s'ouvrent à la même hauteur que « Créer » : les onglets ne sautent pas
+  return { peek, half: S.tab !== 'gen' && sheetHeights.gen ? sheetHeights.gen : Math.max(peek + 170, Math.round(innerHeight * 0.56)), full };
 }
 function setSheet(st, refit) {
   if (!MOB.matches) { document.documentElement.style.removeProperty('--sheet-h'); return; }
