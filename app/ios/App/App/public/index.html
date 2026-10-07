@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr"><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="description" content="RunParis génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
@@ -732,7 +732,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .shx-f .ico{width:20px;height:20px}
 </style>
 
-<div class="app">
+<div id="splash" aria-hidden="true"><svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">RUN<span>PARIS</span></div></div><div class="app">
   <aside class="panel" aria-label="Réglages et résultats">
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
@@ -1689,7 +1689,7 @@ const plug = n => new Proxy({}, { get: (_, m) => (o, cb) => cb ? Promise.resolve
 const NP = NATIVE ? { share: plug('Share'), fs: plug('Filesystem'), awake: plug('KeepAwake'), geo: plug('Geolocation'), bg: plug('BackgroundGeolocation'), sb: plug('StatusBar'), hap: plug('Haptics') } : null;
 // écran de lancement animé (D-86) : la boucle se dessine depuis le D, puis le logo ; retiré quand les données sont prêtes (au moins 1,5 s)
 const SPLASH_T0 = Date.now();
-if (NATIVE) { const sp = document.createElement('div'); sp.id = 'splash'; sp.setAttribute('aria-hidden', 'true');
+if (NATIVE && !document.getElementById('splash')) { const sp = document.createElement('div'); sp.id = 'splash'; sp.setAttribute('aria-hidden', 'true');
   sp.innerHTML = '<svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">RUN<span>PARIS</span></div>';
   document.body.appendChild(sp); }
 function splashDone() { const sp = document.getElementById('splash'); if (!sp) return; setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 320); }, Math.max(0, 1500 - (Date.now() - SPLASH_T0))); }

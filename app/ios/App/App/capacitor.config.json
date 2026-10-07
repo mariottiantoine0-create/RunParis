@@ -3,8 +3,7 @@
 	"appName": "RunParis",
 	"webDir": "www",
 	"ios": {
-		"contentInset": "never",
-		"backgroundColor": "#F4F4F2"
+		"contentInset": "never"
 	},
 	"packageClassList": [
 		"BackgroundGeolocation",

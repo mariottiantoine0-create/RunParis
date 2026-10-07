@@ -13,5 +13,11 @@ const FACE = `<style>
 </style>`;
 html = html.replace(/<link rel="preconnect"[^>]*>\s*/g, '').replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^>]*>/, FACE);
 if (/fonts\.googleapis/.test(html)) throw new Error('lien Google Fonts restant');
+// écran de lancement présent dès le premier affichage (D-86) : pas de flash de l'interface avant l'animation
+const SPLASH = '<div id="splash" aria-hidden="true"><svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">RUN<span>PARIS</span></div></div>';
+const firstDiv = html.indexOf('<div'); html = html.slice(0, firstDiv) + SPLASH + html.slice(firstDiv);
+// thème choisi dans l'app appliqué avant le premier affichage
+html = html.replace('<html lang="fr">', '<html lang="fr"><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>');
+if (!html.includes('id="splash"')) throw new Error('écran de lancement non inséré');
 fs.writeFileSync(path.join(WWW, 'index.html'), html);
 console.log('www prêt :', fs.readdirSync(WWW).length, 'fichiers');

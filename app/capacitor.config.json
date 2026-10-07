@@ -2,5 +2,7 @@
   "appId": "fr.runparis.app",
   "appName": "RunParis",
   "webDir": "www",
-  "ios": { "contentInset": "never", "backgroundColor": "#F4F4F2" }
+  "ios": {
+    "contentInset": "never"
+  }
 }
