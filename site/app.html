@@ -581,7 +581,6 @@ html.appf #copy-m{display:none!important}
 @media (prefers-reduced-motion:reduce){#splash .sp-l,#splash .sp-logo{animation:none;stroke-dashoffset:0;opacity:1}}
 /* application iPhone : sous l'heure et la batterie (D-85) */
 html.native .layers{top:calc(env(safe-area-inset-top) + 6px)}
-@media (max-width:860px){ html.native .toast{top:calc(env(safe-area-inset-top) + 52px)} }
 @media (min-width:861px){ html.appf .tabs{padding-left:14px;padding-right:14px} html.appf .tabs button{padding-left:0;padding-right:0} }
 /* site en production : sans les fonctions réservées à l'application (D-83) */
 html:not(.appf) #run-go,html:not(.appf) #done,html:not(.appf) #send,html:not(.appf) #tab-mine,html:not(.appf) #view-mine{display:none!important}
@@ -1750,7 +1749,7 @@ async function boot() {
   $('#pos-go').hidden = !navigator.geolocation || !!window.claude;
   $('#run-go').hidden = !navigator.geolocation || !!window.claude;
   if (window.claude || NATIVE) $('#mlinks').hidden = true;
-  if (NATIVE) { $('#run-wake').checked = false; $('#run-wake').closest('label').querySelector('small').textContent = 'Pour voir la carte ; le suivi continue même écran éteint'; $('#run-buzz-l').hidden = false; } // pas d'accueil dans l'artifact
+  if (NATIVE) { $('#run-wake').checked = false; $('#run-wake').closest('label').hidden = true; $('#run-buzz-l').hidden = false; } // application : le suivi marche écran verrouillé, plus besoin de garder l'écran allumé (D-86) // pas d'accueil dans l'artifact
   if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
@@ -3353,7 +3352,8 @@ function navUI() {
   $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = NAV.free ? '+' + fmt(NAV.extra / 1000, 1) + ' km' : fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km'; $('#rs-rest-l').textContent = NAV.free ? 'en plus' : 'restants';
   $('#rs-time').textContent = fmtClock(secs); $('#rs-pace').textContent = km > 0.2 ? fmtClock(secs / km) : '–';
   $('#run-bar').style.width = (100 * NAV.prog / n.L).toFixed(1) + '%';
-  $('#run-pause').disabled = !NAV.t0;
+  { const pb = $('#run-pause'), pre = !NAV.t0 && !NAV.free; if (pb.dataset.pre !== String(pre)) { pb.dataset.pre = pre; // avant le départ : on peut arrêter le suivi (pas de pause sans chrono)
+    pb.innerHTML = pre ? '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>Arrêter le suivi' : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3v16H7z"/><path d="M14 4h3v16h-3z"/></svg>Pause'; } }
   let ic, big, small;
   if (NAV.free) { ic = 'straight'; big = '+' + navDistTxt(NAV.extra); small = 'Course libre' + (NAV.curFree ? ' · ' + NAV.curFree : ''); }
   else if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
@@ -3421,7 +3421,7 @@ $('#runperm-go').onclick = () => { $('#runperm').hidden = true; runPrep.asked = 
 $('#runperm-later').onclick = $('#runperm-back').onclick = () => { $('#runperm').hidden = true; };
 $('#run-vol').onclick = () => { NAV.voice = !NAV.voice; $('#run-vol').setAttribute('aria-pressed', NAV.voice); if (!NAV.voice) try { speechSynthesis.cancel(); } catch (e) {} };
 $('#run-pos').onclick = () => { NAV.follow = true; $('#run-pos').setAttribute('aria-pressed', true); if (NAV.pos) navCenter(); };
-$('#run-pause').onclick = () => { if (!NAV.t0) return; NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
+$('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
 const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; } $('#runz').hidden = true; navUI(); };
 $('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
 $('#runa-end').onclick = () => runFinish(true); $('#runa-go').onclick = navContinue;

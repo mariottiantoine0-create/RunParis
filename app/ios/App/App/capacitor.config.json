@@ -11,6 +11,8 @@
 		"KeepAwakePlugin",
 		"FilesystemPlugin",
 		"GeolocationPlugin",
-		"SharePlugin"
+		"HapticsPlugin",
+		"SharePlugin",
+		"StatusBarPlugin"
 	]
 }
