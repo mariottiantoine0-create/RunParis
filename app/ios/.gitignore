@@ -1,0 +1,10 @@
+App/build
+App/Pods
+App/output
+DerivedData
+xcuserdata
+
+# Cordova plugins for Capacitor
+capacitor-cordova-ios-plugins
+
+# Fichiers web et config générés : gardés dans le dépôt pour ouvrir le projet dans Xcode sans Node (D-85)

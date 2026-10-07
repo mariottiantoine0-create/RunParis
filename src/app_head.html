@@ -550,6 +550,31 @@ button,a,label,summary{touch-action:manipulation}
 .tl-s{display:none}
 @media (max-width:860px){ .tl-x{display:none} .tl-s{display:inline} }
 html.appf #copy-m{display:none!important}
+
+/* application : feuille d'explication de la position (D-86) */
+.perm-b{display:flex;flex-direction:column;gap:16px;padding-top:8px}
+.perm-ill{display:flex;gap:10px}.perm-ill span{width:56px;height:56px;border-radius:8px;background:var(--info-bg);display:grid;place-items:center;color:var(--accent)}.perm-ill .ico{width:28px;height:28px}
+.perm-t{font-stretch:75%;font-weight:800;font-size:30px;line-height:1.05;margin:0}
+.perm-p{margin:0;font-size:15px;line-height:1.45;color:var(--muted)}
+.perm-step{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.4}.perm-step b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:13px;font-weight:800}.perm-step span{padding-top:2px}
+.perm-f{display:flex;flex-direction:column;gap:4px;align-items:stretch}.perm-f .textbtn{align-self:center;min-height:44px}
+/* application : écran de lancement animé (D-86) */
+#splash{position:fixed;inset:0;z-index:200;background:var(--map-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .3s ease}
+#splash.out{opacity:0}
+#splash svg{overflow:visible}
+#splash .sp-st{stroke:var(--street);stroke-width:2;fill:none}
+#splash .sp-l{fill:none;stroke-linejoin:miter;stroke-dasharray:140;stroke-dashoffset:140;animation:sp-draw .9s cubic-bezier(.5,0,.3,1) .15s forwards}
+#splash .sp-c{stroke:var(--route-casing);stroke-width:11}
+#splash .sp-r{stroke:var(--route);stroke-width:6}
+#splash .sp-d{fill:var(--route);stroke:var(--route-casing);stroke-width:2.5}
+#splash .sp-dt{font-family:var(--f-body);font-weight:800;font-size:11px;fill:var(--accent-ink)}
+#splash .sp-logo{font-stretch:75%;font-weight:800;font-size:34px;line-height:1;color:var(--ink);opacity:0;animation:sp-fade .35s ease 1s forwards}
+#splash .sp-logo span{color:var(--accent)}
+@keyframes sp-draw{to{stroke-dashoffset:0}}@keyframes sp-fade{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){#splash .sp-l,#splash .sp-logo{animation:none;stroke-dashoffset:0;opacity:1}}
+/* application iPhone : sous l'heure et la batterie (D-85) */
+html.native .layers{top:calc(env(safe-area-inset-top) + 6px)}
+@media (max-width:860px){ html.native .toast{top:calc(env(safe-area-inset-top) + 52px)} }
 @media (min-width:861px){ html.appf .tabs{padding-left:14px;padding-right:14px} html.appf .tabs button{padding-left:0;padding-right:0} }
 /* site en production : sans les fonctions réservées à l'application (D-83) */
 html:not(.appf) #run-go,html:not(.appf) #done,html:not(.appf) #send,html:not(.appf) #tab-mine,html:not(.appf) #view-mine{display:none!important}
@@ -970,6 +995,22 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
     <div class="msheet-f" id="msheet-f"><button type="button" class="btn primary" id="msheet-ok">Valider</button></div>
   </div>
 
+  <!-- application : avant la question de l'iPhone sur la position (D-86) -->
+  <div class="shx" id="runperm" hidden>
+    <div class="shx-back" id="runperm-back"></div>
+    <section class="shx-bravo" role="dialog" aria-modal="true" aria-labelledby="runperm-t">
+      <div class="msheet-grab" aria-hidden="true"></div>
+      <div class="shx-b perm-b">
+        <div class="perm-ill" aria-hidden="true"><span><svg class="ico" viewBox="0 0 24 24"><path d="M5 11h14v10H5z"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span><svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span></div>
+        <h2 class="perm-t" id="runperm-t">Garde ton téléphone<br>en poche</h2>
+        <p class="perm-p">Pour te guider écran éteint, RunParis a besoin de ta position pendant la course. L’iPhone va te demander l’autorisation :</p>
+        <div class="perm-step"><b>1</b><span>Choisis <strong>« Autoriser lorsque l’app est active »</strong>. C’est suffisant, même écran verrouillé.</span></div>
+        <div class="perm-step"><b>2</b><span>Pendant la course, une pastille bleue en haut de l’écran indique que RunParis suit ta position.</span></div>
+        <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>Ta position ne quitte jamais ton téléphone et ne sert que pendant le suivi.</p>
+      </div>
+      <div class="msheet-f perm-f"><button type="button" class="btn primary" id="runperm-go">Continuer</button><button type="button" class="textbtn" id="runperm-later">Pas maintenant</button></div>
+    </section>
+  </div>
   <!-- mode course : suivre le tracé en direct (mobile) -->
   <div class="shx" id="runp" hidden>
     <div class="shx-back" id="runp-back"></div>
@@ -981,6 +1022,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
         <div class="run-opts">
           <label class="sw"><span><b>Guidage vocal</b><small>Les virages et chaque kilomètre annoncés</small></span><input type="checkbox" id="run-voice" checked></label>
           <label class="sw"><span><b>Garder l’écran allumé</b><small>Le suivi s’arrête si le téléphone se verrouille</small></span><input type="checkbox" id="run-wake" checked></label>
+          <label class="sw" id="run-buzz-l" hidden><span><b>Vibrations</b><small>Aux virages, à chaque kilomètre et si tu t’écartes du parcours</small></span><input type="checkbox" id="run-buzz" checked></label>
         </div>
         <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>Ta position reste dans ton téléphone, elle n’est jamais envoyée.</p>
       </div>

@@ -5,6 +5,34 @@ const $ = s => document.querySelector(s);
 // Elles ne s'allument que hors production (staging, tests) ; ?web=1 force la version du site pour la recette.
 const APPF = location.hostname !== 'runparis.netlify.app' && !/[?&]web=1/.test(location.search);
 document.documentElement.classList.toggle('appf', APPF);
+// Application iPhone (Capacitor, D-85) : même code, avec les modules du téléphone (position écran verrouillé, partage, écran allumé).
+const CAP = window.Capacitor, NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+// sans @capacitor/core (pas de bundler) : on appelle les modules par le pont natif (nativePromise / nativeCallback)
+const plug = n => new Proxy({}, { get: (_, m) => (o, cb) => cb ? Promise.resolve(CAP.nativeCallback(n, m, o || {}, cb)) : CAP.nativePromise(n, m, o || {}) });
+const NP = NATIVE ? { share: plug('Share'), fs: plug('Filesystem'), awake: plug('KeepAwake'), geo: plug('Geolocation'), bg: plug('BackgroundGeolocation'), sb: plug('StatusBar'), hap: plug('Haptics') } : null;
+// écran de lancement animé (D-86) : la boucle se dessine depuis le D, puis le logo ; retiré quand les données sont prêtes (au moins 1,5 s)
+const SPLASH_T0 = Date.now();
+if (NATIVE) { const sp = document.createElement('div'); sp.id = 'splash'; sp.setAttribute('aria-hidden', 'true');
+  sp.innerHTML = '<svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">RUN<span>PARIS</span></div>';
+  document.body.appendChild(sp); }
+function splashDone() { const sp = document.getElementById('splash'); if (!sp) return; setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 320); }, Math.max(0, 1500 - (Date.now() - SPLASH_T0))); }
+// barre d'état : suit le thème de l'app (et l'écran toujours sombre de l'image à partager)
+function sbSync() { if (!NATIVE) return; const t = document.documentElement.getAttribute('data-theme'), dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; const shx = document.getElementById('shx');
+  NP.sb.setStyle({ style: (dark || (shx && !shx.hidden)) ? 'DARK' : 'LIGHT' }).catch(() => {}); }
+if (NATIVE) { new MutationObserver(sbSync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] }); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sbSync); }
+// vibrations du mode course (D-86) : courtes, jamais en continu
+function navBuzz(k) { if (!NATIVE || !NAV.buzz) return; const h = NP.hap; (k === 'off' ? h.impact({ style: 'HEAVY' }).then(() => setTimeout(() => h.impact({ style: 'HEAVY' }), 160)) : k === 'end' ? h.notification({ type: 'SUCCESS' }) : h.impact({ style: 'LIGHT' })).catch(() => {}); }
+document.documentElement.classList.toggle('native', NATIVE);
+const WEB_APP = 'https://staging--runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application
+if (NATIVE && NP.geo && navigator.geolocation) navigator.geolocation.getCurrentPosition = (ok, ko, o) => {
+  NP.geo.getCurrentPosition({ enableHighAccuracy: !!(o && o.enableHighAccuracy), timeout: (o && o.timeout) || 10000, maximumAge: (o && o.maximumAge) || 0 })
+    .then(ok, e => ko && ko({ code: /denied|permission|authoriz/i.test((e && (e.message || e.code)) || '') ? 1 : 2, message: e && e.message }));
+};
+async function nativeShareFile(name, data, text) {
+  const b64 = typeof data === 'string' ? btoa(unescape(encodeURIComponent(data))) : await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(data); });
+  const w = await NP.fs.writeFile({ path: name, data: b64, directory: 'CACHE' });
+  try { await NP.share.share({ files: [w.uri], text, dialogTitle: name }); } catch (e) { /* partage annulé */ }
+}
 const E = Engine;
 const fmt = (n, d = 1) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -36,7 +64,7 @@ async function boot() {
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
   } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de Paris (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
-  mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; renderAvoid(); renderVias(); renderRaces(); updateConv();
+  mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; splashDone(); sbSync(); renderAvoid(); renderVias(); renderRaces(); updateConv();
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
   renderHome();
@@ -44,7 +72,8 @@ async function boot() {
   showView('set'); if (/^#cours/.test(location.hash)) setTab('race');
   $('#pos-go').hidden = !navigator.geolocation || !!window.claude;
   $('#run-go').hidden = !navigator.geolocation || !!window.claude;
-  if (window.claude) $('#mlinks').hidden = true; // pas d'accueil dans l'artifact
+  if (window.claude || NATIVE) $('#mlinks').hidden = true;
+  if (NATIVE) { $('#run-wake').checked = false; $('#run-wake').closest('label').querySelector('small').textContent = 'Pour voir la carte ; le suivi continue même écran éteint'; $('#run-buzz-l').hidden = false; } // pas d'accueil dans l'artifact
   if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
@@ -1303,6 +1332,7 @@ $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
   try {
     const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX parcours mythique ' + S.race.name : 'GPX parcours');
+    if (NATIVE) { await nativeShareFile(fn + '.gpx', g); return; } // application : menu de partage (Strava, Garmin, Fichiers…)
     if (!window.claude) { // public site: a real .gpx file
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -1342,13 +1372,13 @@ function shOpen(secs, doneM) {
   $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
   $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
-  $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true;
+  $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
   const entry = { id: Date.now(), d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
   mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
-function shClose() { $('#shx').hidden = true; SH.photo = null; }
+function shClose() { $('#shx').hidden = true; SH.photo = null; sbSync(); }
 function shOut() {
   SH.secs = parseClock($('#shx-time').value) || SH.data.km * pace();
   $('#shx-bravo').hidden = true; $('#shx-out').hidden = false;
@@ -1431,10 +1461,11 @@ function shBlob() { return new Promise(res => $('#shx-cv').toBlob(b => res(b), '
 async function shShare() {
   const b = await shBlob(); if (!b) return; const f = new File([b], `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, { type: 'image/jpeg' });
   track('partage', 'Image partagée ' + SH.bg + ' ' + SH.ly);
+  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec RunParis · runparis.netlify.app'); return; }
   if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec RunParis · runparis.netlify.app' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
-async function shSave(b) { b = b || await shBlob(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
+async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
 $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
 $('#shx-x1').onclick = shClose; $('#shx-x2').onclick = shClose; $('#shx-back').onclick = shClose;
@@ -1498,7 +1529,7 @@ const navDistTxt = d => d >= 1000 ? fmt(d / 1000, 1) + ' km' : (d >= 100 ? Math.
 const navSayDist = d => d >= 1000 ? fmt(d / 1000, 1) + ' kilomètre' + (d >= 2000 ? 's' : '') : (d >= 100 ? Math.round(d / 50) * 50 : Math.round(d / 10) * 10) + ' mètres';
 function navSay(t) { if (!NAV.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {} }
 function navElapsed() { if (!NAV.t0) return 0; return ((NAV.paused ? NAV.pauseAt : Date.now()) - NAV.t0 - NAV.pausedMs) / 1000; }
-async function navWake() { if (!NAV.on || !NAV.wake || !('wakeLock' in navigator) || document.hidden) return; try { NAV.lock = await navigator.wakeLock.request('screen'); } catch (e) {} }
+async function navWake() { if (NATIVE) { if (NAV.on && NAV.wake) try { await NP.awake.keepAwake(); } catch (e) {} return; } if (!NAV.on || !NAV.wake || !('wakeLock' in navigator) || document.hidden) return; try { NAV.lock = await navigator.wakeLock.request('screen'); } catch (e) {} }
 function navMsg(kind, title, text, ms) {
   const n = $('#run-msg'); clearTimeout(NAV.msgT);
   if (!kind) { n.hidden = true; return; }
@@ -1509,14 +1540,19 @@ function navMsg(kind, title, text, ms) {
 // position bloquée : on dit où l'autoriser (message bloquant du design system)
 function navDenied(n) {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
-  const how = ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
+  const how = NATIVE ? 'Réglages → RunParis → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
+    : ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
     : and ? 'Touche le cadenas à gauche de l’adresse → Autorisations → Position : autoriser, et vérifie que la localisation du téléphone est activée. Recharge ensuite la page.'
     : 'Autorise la position pour ce site dans les réglages du navigateur, puis recharge la page.';
   n.className = 'note err'; n.innerHTML = ''; const b = document.createElement('b'); b.textContent = 'Ta position est bloquée'; n.append(b, how); n.hidden = false;
-  NAV.denied = true; const g = $('#runp-go'); NAV.goHTML = NAV.goHTML || g.innerHTML; g.textContent = 'Recharger la page';
+  NAV.denied = true; const g = $('#runp-go'); NAV.goHTML = NAV.goHTML || g.innerHTML; g.textContent = NATIVE ? 'Ouvrir les réglages' : 'Recharger la page';
 }
 function runPrep() {
   if (!S.route) return toast("Génère d'abord un parcours.");
+  if (NATIVE && !runPrep.asked) { // application : on explique avant la question de l'iPhone (D-86)
+    NP.geo.checkPermissions().then(r => { if (/prompt/.test(r.location)) $('#runperm').hidden = false; else { runPrep.asked = true; runPrep(); } }, () => { runPrep.asked = true; runPrep(); });
+    return;
+  }
   if (!navigator.geolocation) return toast('Ta position n’est pas disponible sur cet appareil.', 3500);
   NAV.n = navBuild(S.route);
   $('#runp-far').hidden = true; $('#runp-far').className = 'note info'; $('#runp').hidden = false;
@@ -1528,19 +1564,26 @@ function runPrep() {
 }
 function runStart() {
   $('#runp').hidden = true;
-  Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0 });
+  Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0 });
   $('#run-vol').setAttribute('aria-pressed', NAV.voice); $('#run-pos').setAttribute('aria-pressed', true);
   document.documentElement.classList.add('running'); $('#run').hidden = false; navMsg(null);
   if (NAV.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} } // iOS : la voix doit démarrer après un geste
   navSay('Suivi du parcours activé.');
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
+  if (NATIVE) { // application : la position continue écran verrouillé
+    NP.bg.addWatcher({ backgroundTitle: 'RunParis suit ton parcours', backgroundMessage: 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
+      if (err) { if (err.code === 'NOT_AUTHORIZED') { runStop(); runPrep(); navDenied($('#runp-far')); } return; }
+      navFix({ coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() });
+    }).then(id => { if (NAV.on) NAV.bgId = id; else NP.bg.removeWatcher({ id }); });
+  } else
   NAV.watch = navigator.geolocation.watchPosition(navFix, e => { if (e.code === 1) { runStop(); runPrep(); } }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
   NAV.tick = setInterval(navUI, 1000);
   track('suivi', 'Suivi lancé ' + Math.round(NAV.n.L / 1000) + ' km');
 }
 function runStop() {
   if (NAV.watch != null) navigator.geolocation.clearWatch(NAV.watch); NAV.watch = null; clearInterval(NAV.tick);
+  if (NATIVE) { if (NAV.bgId) NP.bg.removeWatcher({ id: NAV.bgId }).catch(() => {}); NAV.bgId = null; try { NP.awake.allowSleep(); } catch (e) {} }
   try { NAV.lock && NAV.lock.release(); } catch (e) {} NAV.lock = null;
   try { speechSynthesis.cancel(); } catch (e) {}
   NAV.on = false; $('#run').hidden = true; $('#runz').hidden = true; document.documentElement.classList.remove('running');
@@ -1558,7 +1601,7 @@ function runFinish(arrived) {
 // arrivée : on ne coupe pas d'office, le coureur choisit de terminer ou de continuer (D-80)
 function navArrive() {
   NAV.paused = true; NAV.pauseAt = Date.now(); NAV.prog = NAV.n.L; navUI();
-  navSay('Parcours terminé. Tu peux terminer ou continuer.');
+  navSay('Parcours terminé. Tu peux terminer ou continuer.'); navBuzz('end');
   $('#ra-km').textContent = fmt(NAV.n.L / 1000, 1) + ' km'; $('#ra-time').textContent = fmtClock(navElapsed()); $('#runa').hidden = false;
 }
 function navContinue() {
@@ -1590,7 +1633,7 @@ function navFix(p) {
     if (NAV.paused) return navUI();
     const last = NAV.track[NAV.track.length - 1], d = last ? Math.hypot(x - last[0], y - last[1]) : 0;
     if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
-    const tot = n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navSay(`${NAV.km} kilomètres. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
+    const tot = n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètres. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
     return navUI();
   }
   // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
@@ -1608,7 +1651,7 @@ function navFix(p) {
   if (!b) return;
   if (b.dd > tol) {
     NAV.off++; NAV.proj = b;
-    if (NAV.off >= 2 && !NAV.offOn) { NAV.offOn = true; navSay('Tu t’es écarté du parcours.'); }
+    if (NAV.off >= 2 && !NAV.offOn) { NAV.offOn = true; navSay('Tu t’es écarté du parcours.'); navBuzz('off'); }
   } else {
     if (NAV.offOn) { navSay('Tu es de retour sur le parcours.'); }
     NAV.off = 0; NAV.offOn = false; NAV.proj = b;
@@ -1620,9 +1663,9 @@ function navFix(p) {
   if (!m.arrive && !NAV.offOn) {
     const [k] = navDir(m), verb = k === 'uturn' ? 'fais demi-tour' : (k[0] === 's' ? 'tourne légèrement à ' : 'tourne à ') + (m.a > 0 ? 'droite' : 'gauche');
     if (dm <= 120 && dm > 40 && NAV.a1 !== NAV.mi) { NAV.a1 = NAV.mi; navSay(`Dans ${navSayDist(dm)}, ${verb}${m.name ? ', ' + m.name : ''}.`); }
-    else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; navSay(verb[0].toUpperCase() + verb.slice(1) + '.'); }
+    else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; navBuzz('turn'); navSay(verb[0].toUpperCase() + verb.slice(1) + '.'); }
   }
-  if (NAV.prog >= NAV.km * 1000 && NAV.km * 1000 < n.L - 200) { const pc = navElapsed() / (NAV.prog / 1000); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(NAV.prog / 1000) + 1; }
+  if (NAV.prog >= NAV.km * 1000 && NAV.km * 1000 < n.L - 200) { const pc = navElapsed() / (NAV.prog / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(NAV.prog / 1000) + 1; }
   // arrivée
   if (NAV.prog >= n.L - 30 || (NAV.prog > n.L * 0.9 && Math.hypot(x - n.pts[n.pts.length - 1][0], y - n.pts[n.pts.length - 1][1]) < 25)) return navArrive();
   navUI();
@@ -1696,7 +1739,9 @@ function navDrawMe() {
 if (/[?&]navtest=1/.test(location.search)) window.RP_NAV = NAV; // recette automatique uniquement
 $('#run-go').onclick = runPrep;
 $('#runp-x').onclick = $('#runp-back').onclick = () => { $('#runp').hidden = true; };
-$('#runp-go').onclick = () => { if (NAV.denied) { NAV.denied = false; return location.reload(); } runStart(); };
+$('#runp-go').onclick = () => { if (NAV.denied) { NAV.denied = false; if (NATIVE) { $('#runp').hidden = true; return NP.bg.openSettings().catch(() => {}); } return location.reload(); } runStart(); };
+$('#runperm-go').onclick = () => { $('#runperm').hidden = true; runPrep.asked = true; NP.geo.requestPermissions({ permissions: ['location'] }).then(() => runPrep(), () => runPrep()); };
+$('#runperm-later').onclick = $('#runperm-back').onclick = () => { $('#runperm').hidden = true; };
 $('#run-vol').onclick = () => { NAV.voice = !NAV.voice; $('#run-vol').setAttribute('aria-pressed', NAV.voice); if (!NAV.voice) try { speechSynthesis.cancel(); } catch (e) {} };
 $('#run-pos').onclick = () => { NAV.follow = true; $('#run-pos').setAttribute('aria-pressed', true); if (NAV.pos) navCenter(); };
 $('#run-pause').onclick = () => { if (!NAV.t0) return; NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt(NAV.prog / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt(NAV.n.L / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
@@ -1708,7 +1753,7 @@ document.addEventListener('visibilitychange', () => {
   if (!NAV.on) return;
   if (document.hidden) { NAV.hiddenAt = Date.now(); return; }
   navWake(); const gap = NAV.hiddenAt ? (Date.now() - NAV.hiddenAt) / 1000 : 0; NAV.hiddenAt = 0;
-  if (gap > 15 && NAV.t0 && !NAV.paused) { NAV.reacq = true; navMsg('warn', `Suivi interrompu ${gap >= 90 ? Math.round(gap / 60) + ' min' : Math.round(gap) + ' s'}`, 'L’écran s’est verrouillé. Ta position a repris, la distance est recalculée.', 8000); }
+  if (gap > 15 && NAV.t0 && !NAV.paused && !NATIVE) { NAV.reacq = true; navMsg('warn', `Suivi interrompu ${gap >= 90 ? Math.round(gap / 60) + ' min' : Math.round(gap) + ' s'}`, 'L’écran s’est verrouillé. Ta position a repris, la distance est recalculée.', 8000); }
 });
 addEventListener('beforeunload', e => { if (NAV.on && NAV.t0) { e.preventDefault(); e.returnValue = ''; } });
 // ---------- Mes parcours et parcours envoyés (D-81) ----------
@@ -1734,8 +1779,9 @@ function routeFromCode(code) { const ll = decPoly(code || ''); if (ll.length < 2
 const mineTitle = d => d.race ? d.dep : d.loop ? 'Boucle · ' + d.dep : d.dep + ' → ' + (d.arr || 'arrivée');
 function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
-  const url = location.origin + location.pathname + '?p=' + code + '&n=' + encodeURIComponent(title || '');
+  const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '');
   track('envoi', 'Parcours envoyé');
+  if (NATIVE) { NP.share.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
 }
@@ -1835,7 +1881,7 @@ $('#fb-form').onsubmit = async ev => {
   ev.preventDefault(); const msg = $('#fb-msg').value.trim(); if (!msg) { $('#fb-err').textContent = 'Écris un message.'; $('#fb-err').hidden = false; return; }
   const body = new URLSearchParams({ 'form-name': 'signalement', type: $('#fb-type').value, message: msg, email: $('#fb-mail').value.trim(), parcours: $('#fb-route').checked ? routeContext() : '', page: location.href });
   $('#fb-send').disabled = true;
-  try { const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!r.ok) throw new Error(r.status);
+  try { const r = await fetch(NATIVE ? 'https://runparis.netlify.app/' : '/', { method: 'POST', mode: NATIVE ? 'no-cors' : 'cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!NATIVE && !r.ok) throw new Error(r.status);
     $('#fb').close(); $('#fb-msg').value = ''; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }

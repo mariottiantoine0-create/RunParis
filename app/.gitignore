@@ -1,0 +1,12 @@
+# www/ est regénéré depuis ../site par copy-web.js
+www/
+# Seuls les modules natifs de l'app sont gardés (Xcode les lit directement) ; le reste se réinstalle avec npm install
+/node_modules/*
+!/node_modules/@capacitor/
+/node_modules/@capacitor/*
+!/node_modules/@capacitor/share/
+!/node_modules/@capacitor/filesystem/
+!/node_modules/@capacitor/geolocation/
+!/node_modules/@capacitor-community/
+!/node_modules/@capacitor/status-bar/
+!/node_modules/@capacitor/haptics/
