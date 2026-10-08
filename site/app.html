@@ -3712,7 +3712,12 @@ const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcount
 const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
 const STATS = PUBLIC && location.hostname === 'runparis.netlify.app'; // pas de stats sur staging ni en local
 if (STATS) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = `https://${GC}.goatcounter.com/count`; document.head.appendChild(sc); }
-function track(ev, title) { try { if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
+// application (D-89) : même compte GoatCounter, comptage direct sans script tiers ; ouverture « app » et événements « app/evt-… »
+function gcHit(path, title, ev) {
+  try { const q = new URLSearchParams({ p: path, t: title || path, e: ev ? 'true' : 'false', s: `${screen.width},${screen.height},${window.devicePixelRatio || 1}`, rnd: Math.random().toString(36).slice(2) });
+    const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = `https://${GC}.goatcounter.com/count?${q}`; } catch (e) {}
+}
+function track(ev, title) { try { if (NATIVE) return gcHit('app/evt-' + ev, 'App · ' + (title || ev), true); if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
 // ---------- feedback (Netlify Forms) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
@@ -3720,10 +3725,10 @@ const APP_VER = '0.1';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 7 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 8 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
-    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (hébergé par Netlify)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre']) +
-    '<h3>Mesure d’audience (site seulement)</h3>' + ap('GoatCounter compte les visites et les clics, sans cookie et sans te suivre d’un site à l’autre. L’application ne mesure rien.') +
+    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (hébergé par Netlify)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
+    '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
     '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
     '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
@@ -3765,7 +3770,7 @@ $('#erase-go').onclick = () => { // tout ce que RunParis garde sur l'appareil co
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 };
-if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `RunParis ${APP_VER} · essai iPhone`; }
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `RunParis ${APP_VER} · bêta`; gcHit('/app', `Application ${APP_VER}`, false); }
 { const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
 
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
