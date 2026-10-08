@@ -758,6 +758,21 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 #view-res.recv #alts,#view-res.recv #alts-h{display:none!important}
 .lnk-err .iconbtn{position:absolute;top:4px;right:4px}
 html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
+
+/* course : hors parcours (deux choix), sous-titre du bandeau, boussole, bouton de position à deux modes (build 3) */
+.run-sub{font-size:14px;color:#9AA0A8;margin-top:3px}
+.run-sub[hidden]{display:none}
+.run-choice{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.run-choice .btn{width:100%;min-height:48px}
+.run-tools button[aria-pressed="true"]#run-pos{background:var(--accent);color:var(--accent-ink)}
+.run-tools button[aria-pressed="false"]#run-pos{color:var(--ink)}
+#run-pos .i-head{display:none}
+#run-pos[aria-pressed="true"][data-mode="head"] .i-head{display:block}
+#run-pos[aria-pressed="true"][data-mode="head"] .i-north{display:none}
+.run-tools button.run-north{border-radius:50%;color:var(--ink)}
+.run-tools button.run-north[hidden]{display:none}
+#run-needle{transition:transform .45s ease}
+@media (prefers-reduced-motion:reduce){#run-needle{transition:none}}
 </style>
 
 <div class="app">
@@ -1197,11 +1212,12 @@ SOFTWARE.
   </div>
   <div class="run" id="run" hidden>
     <div class="run-top">
-      <div class="run-nav" id="run-nav" role="status" aria-live="polite"><span class="run-ic" id="run-ic"></span><div><div class="run-dist" id="run-dist">–</div><div class="run-street" id="run-street"></div></div></div>
+      <div class="run-nav" id="run-nav" role="status" aria-live="polite"><span class="run-ic" id="run-ic"></span><div><div class="run-dist" id="run-dist">–</div><div class="run-street" id="run-street"></div><div class="run-sub" id="run-sub" hidden></div></div></div>
       <div class="note" id="run-msg" role="alert" hidden></div>
     </div>
     <div class="run-tools">
-      <button type="button" id="run-pos" aria-pressed="true" aria-label="Suivre ma position"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></button>
+      <button type="button" id="run-north" class="run-north" aria-label="Remettre le nord en haut" hidden><svg viewBox="-17 -17 34 34" width="30" height="30" aria-hidden="true"><g id="run-needle"><path d="M0 -11 L4.5 1 L-4.5 1 Z" fill="currentColor"/><path d="M0 11 L4.5 1 L-4.5 1 Z" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="0" y="-12.5" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="7" fill="currentColor">N</text></g></svg></button>
+      <button type="button" id="run-pos" aria-pressed="true" data-mode="head" aria-label="Suivre ma position"><svg class="ico i-north" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg><svg class="ico i-head" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 18-7-4-7 4z"/></svg></button>
       <button type="button" id="run-vol" aria-pressed="true" aria-label="Guidage vocal"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9c1.5 1.5 1.5 4.5 0 6"/><path d="M18.5 6.5c3 3 3 8 0 11"/></svg></button>
     </div>
     <section class="run-panel" aria-label="Ta course">
