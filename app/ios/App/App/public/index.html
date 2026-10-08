@@ -3220,10 +3220,14 @@ function shOpen(secs, doneM) {
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
   const entry = { id: Date.now(), d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
-  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route;
+  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
-function shClose() { $('#shx').hidden = true; SH.photo = null; sbSync(); }
+function shClose() {
+  $('#shx').hidden = true; SH.photo = null; sbSync();
+  // sortie qui vient d'être enregistrée : on la montre dans « Mes parcours », avec ou sans photo (retour de course test, 8/10)
+  if (SH.fresh && APPF) { SH.fresh = false; const i = mineLoad().findIndex(x => x.id === SH.entryId); if (i >= 0) { setTab('mine'); mineOpen(i); toast('Sortie enregistrée dans «\u00a0Mes parcours\u00a0».', 3000); } }
+}
 function shOut() {
   SH.secs = parseClock($('#shx-time').value) || SH.data.km * pace();
   $('#shx-bravo').hidden = true; $('#shx-out').hidden = false;

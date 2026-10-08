@@ -10,6 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // RunParis (D-85) : la voix du guidage se mélange à la musique et continue écran verrouillé.
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
+        // Pas de fenêtre « Annuler Saisie » quand on secoue le téléphone en courant (course test du 8/10).
+        application.applicationSupportsShakeToEdit = false
         return true
     }
 
