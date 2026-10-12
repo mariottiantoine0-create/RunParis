@@ -911,7 +911,8 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
           <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
         </div>
-        <label class="sw">Éviter les feux rouges<input type="checkbox" id="sig-on" checked></label>
+        <div class="seg sm" role="group" aria-label="Priorité" id="prio"><button id="p-few" aria-pressed="false">Moins de feux</button><button id="p-eq" aria-pressed="true">Équilibré</button><button id="p-turn" aria-pressed="false">Moins de virages</button></div>
+        <p class="hint" id="prio-hint">Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.</p>
         <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
         <label class="sw">Points d'eau réguliers (≈ tous les 3 km)<input type="checkbox" id="water-on"></label>
       </section>
@@ -935,7 +936,6 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <details class="more">
         <summary>Plus d'options</summary>
         <div class="moreb">
-          <div class="row" id="sig-level" style="justify-content:space-between;min-height:40px"><span>Feux rouges</span><div class="seg sm" role="group" aria-label="Intensité d'évitement des feux" style="width:190px"><button id="s-1" aria-pressed="true">Limiter</button><button id="s-2" aria-pressed="false">Au maximum</button></div></div>
           <label class="sw">Repasser par les mêmes rues (allers-retours)<input type="checkbox" id="allow-repeat"></label>
         </div>
       </details>
@@ -2697,9 +2697,15 @@ $('#km').addEventListener('input', updateConv); $('#dur').addEventListener('inpu
 $('#dur').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-row').hidden = S.dmode !== 'target'; });
 // Feux : interrupteur (Ignorer / éviter) + intensité (Limiter / Au maximum)
-let sigLevel = 1;
-seg(['s-1', 's-2'], id => { sigLevel = +id.slice(2); S.sig = $('#sig-on').checked ? sigLevel : 0; });
-$('#sig-on').onchange = e => { S.sig = e.target.checked ? sigLevel : 0; $('#sig-level').hidden = !e.target.checked; };
+// Priorité (D-95) : moins de feux / équilibré / moins de virages ; remplace « Éviter les feux rouges » et « Limiter / Au maximum »
+const PRIO = {
+  few: { sig: 2, w: { sig: 450, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 1.5, txt: 'moins de feux', hint: 'Moins de feux : des petites rues, donc plus de virages. Une des propositions sera la plus simple.' },
+  eq: { sig: 1, w: { sig: 250, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 0.5, txt: 'équilibré', hint: 'Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.' },
+  turn: { sig: 1, w: { sig: 120, turn: 600, turnRun: 300, turnFar: 0.5 }, score: 0.2, txt: 'moins de virages', hint: 'Moins de virages : de longues lignes droites, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
+};
+function setPrio(k, save) { if (!PRIO[k]) k = 'eq'; S.prio = k; S.sig = PRIO[k].sig; ['few', 'eq', 'turn'].forEach(j => $('#p-' + j).setAttribute('aria-pressed', j === k)); $('#prio-hint').textContent = PRIO[k].hint; if (save) try { localStorage.setItem('runparis-prio', k); } catch (e) {} }
+['few', 'eq', 'turn'].forEach(k => $('#p-' + k).onclick = () => setPrio(k, true));
+{ let k = 'eq'; try { k = localStorage.getItem('runparis-prio') || 'eq'; } catch (e) {} setPrio(k, false); }
 // ---------- calques regroupés (D-76) ----------
 function lyCount() {} // pastille retirée (D-76)
 function lyClose() { $('#ly-pop').hidden = true; $('#ly-btn').setAttribute('aria-expanded', false); }
@@ -2940,7 +2946,7 @@ function renderSummary() {
   const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'B'}`);
   $('#sum-t').textContent = `${mode} · ${kmTxt} · ${where}`;
   const d = S.dmode === 'flat' ? 'Plat' : S.dmode === 'target' ? `Vallonné (D+ ${$('#dplus').value} m)` : 'Dénivelé normal';
-  const f = ['feux ignorés', 'feux limités', 'feux évités au max'][S.sig];
+  const f = PRIO[S.prio || 'eq'].txt;
   const n = S.exclQ.size ? `${S.exclQ.size} quartier${S.exclQ.size > 1 ? 's' : ''} évité${S.exclQ.size > 1 ? 's' : ''}` : '';
   const pl = S.places.length ? `${S.places.length} lieu${S.places.length > 1 ? 'x' : ''} évité${S.places.length > 1 ? 's' : ''}` : '';
   $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : '', S.depNow === false && S.lastDep ? 'départ ' + hhmm(S.lastDep.dep) : ''].filter(Boolean).join(' · ');
@@ -3012,8 +3018,8 @@ async function generate(isAgain) {
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
     const green = S.kind === 'green';
-    E.setWeights({ climb, sig: [0, 250, 450][S.sig], path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0 });
-    const opt = { seed: S.seed * 7919 + 13, sigScore: [0, 0.5, 1.5][S.sig], dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
+    E.setWeights({ climb, ...PRIO[S.prio || 'eq'].w, path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0 });
+    const opt = { seed: S.seed * 7919 + 13, sigScore: PRIO[S.prio || 'eq'].score, dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
     opt.night = S.lastDep.night; S.lastOpt = opt;
     if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
@@ -3067,6 +3073,16 @@ async function generate(isAgain) {
           else if (r.shortest && r.len > target * 1.03) notes.push(`Le plus court chemin de A à B fait déjà ${fmt(r.len / 1000)} km : c'est lui qui est proposé.`);
         }
       }
+      // la 3e proposition montre l'autre côté du compromis : « Le plus simple » ou « Le moins de feux » (D-95)
+      if (r && r.alts && !r.shortest && !S.vias.length && S.kind !== 'discover') {
+        const side = S.prio === 'turn' ? 'few' : 'simple', other = side === 'few' ? PRIO.few : PRIO.turn;
+        const per = a => side === 'few' ? a.feux / (a.len / 1000) : E.turnStats(a.edges).turns / (a.len / 1000);
+        E.setWeights(other.w); const o2 = Object.assign({}, opt, { sigScore: other.score, seed: opt.seed + 977 }); let r2 = null;
+        try { r2 = !ab ? await E.loop(s, target, o2, () => {}) : S.endFree ? await E.oneWay(s, target, o2, () => {}) : await E.aToB(s, endN, target, o2, () => {}); } catch (e) { r2 = null; }
+        E.setWeights(PRIO[S.prio || 'eq'].w);
+        if (r2) { const best = Math.min(...r.alts.map(per)), c = (r2.alts || [r2]).filter(a => Math.abs(a.len - target) / target <= 0.05 && r.alts.every(b => E.similarity(a, b) < 0.5)).sort((a, b) => per(a) - per(b))[0];
+          if (c && per(c) <= best * 0.75) { c._side = side; if (r.alts.length >= 3) r.alts[2] = c; else r.alts.push(c); } }
+      }
       if (r && r.alts && r.alts.length === 1 && !r.shortest) notes.push('Une seule proposition trouvée avec ces réglages.');
     }
   } catch (e) {
@@ -3113,7 +3129,7 @@ const KIND = { 'boucle': 'Boucle', 'aller-retour': 'Aller-retour', 'aller-simple
 function shortStreet(n) { return n.replace(/^(Rue|Boulevard|Avenue)\s+((de la|de l'|de l’|du|des|de|d'|d’)\s*)?/i, '').replace(/^./, c => c.toUpperCase()); }
 function altNames(a) { return [...a.names].sort((x, y) => y[1] - x[1]).slice(0, 2).map(([i]) => shortStreet(M.names[i] || '')).filter(Boolean).join(' · ') || (KIND[a.kind] || 'Parcours'); }
 function altLabels(alts) {
-  const L = new Array(alts.length).fill(null);
+  const L = alts.map(a => a._side === 'simple' ? 'Le plus simple' : a._side === 'few' ? 'Le moins de feux' : null);
   if (alts.length < 2) return [alts.length ? 'Recommandé' : ''];
   const crit = [
     ...(S.kind === 'green' ? [['Le plus vert', a => a.green, -1, 0.04]] : []),
@@ -3142,8 +3158,9 @@ function renderAlts() {
     b.innerHTML = `<span class="k"></span><span class="t"></span><span class="s"></span><span class="v"></span>`;
     b.querySelector('.k').textContent = `${String(i + 1).padStart(2, '0')} · ${labels[i]}${a.kind === 'aller-retour' ? ' · aller-retour' : ''}`;
     b.querySelector('.t').textContent = altNames(a);
-    b.querySelector('.s').textContent = `${fmt(a.len / 1000)} km · ${Math.round(a.up)} m D+ · ${a.feux} feux · ${fmtDur(a.len / 1000 * pace())}` + (S.kind === 'green' ? ` · ${Math.round(a.green * 100)} % vert` : '');
-    const vv = b.querySelector('.v'); vv.textContent = a.sightsN ? 'Passe par ' + a.sights.slice(0, 4).join(', ') + (a.sightsN > 4 ? '…' : '') : ''; vv.hidden = !a.sightsN;
+    if (a.turns == null) a.turns = a.edges && a.edges.length ? E.turnStats(a.edges).turns : null;
+    b.querySelector('.s').textContent = `${fmt(a.len / 1000)} km · ${Math.round(a.up)} m D+ · ${a.feux} feux${a.turns != null ? ` · ${a.turns} virages` : ''} · ${fmtDur(a.len / 1000 * pace())}` + (S.kind === 'green' ? ` · ${Math.round(a.green * 100)} % vert` : '');
+    const vv = b.querySelector('.v'); vv.textContent = a.sightsN ? 'Passe par ' + a.sights.slice(0, 4).join(', ') + (a.sightsN > 4 ? '…' : '') : a._side === 'simple' && a.turns ? `Longues lignes droites : un virage tous les ${Math.round(a.len / a.turns / 10) * 10} m` : ''; vv.hidden = !vv.textContent;
     b.onclick = () => selectAlt(i);
     box.appendChild(b);
   });
@@ -4055,7 +4072,7 @@ const MSH = {
   dist: { t: 'Distance', ok: () => 'Valider ' + $('#mf-dist').textContent, nodes: () => [$('#u-km').parentElement, document.querySelector('.stepper'), $('#chips-km'), $('#chips-min'), $('#conv').parentElement] },
   dep: { t: 'Départ', ok: null, nodes: () => [$('#start-box'), $('#home-row')] },
   arr: { t: 'Arrivée', ok: () => 'Valider', nodes: () => [$('#a-back').parentElement, $('#end-fixed'), $('#end-free-hint'), $('#end-metro-row'), $('#via-list'), $('#via-box')] },
-  prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), document.querySelector('.depline'), $('#dep-hint'), $('#sig-on').closest('label'), $('#sig-level'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label')] },
+  prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), 'Priorité', $('#prio'), $('#prio-hint'), document.querySelector('.depline'), $('#dep-hint'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label')] },
   avoid: { t: 'À éviter', ok: () => 'Valider', nodes: () => [$('#avoid-list'), $('#addbox'), $('#always')] }
 };
 function mMount() {
@@ -4095,7 +4112,7 @@ function msync() {
   $('#mf-dep').textContent = S.start ? mShort(S.start.name) : 'choisis ton départ';
   const kind = { classic: 'Classique', green: 'Vert', discover: 'Découverte' }[S.kind] || 'Classique';
   const dn = { flat: 'Plat', any: 'Normal', target: 'Vallonné' }[S.dmode] || 'Normal';
-  const p = [kind, dn, $('#sig-on').checked ? 'feux évités' : 'feux ignorés'];
+  const p = [kind, dn, PRIO[S.prio || 'eq'].txt];
   if ($('#prefer-paths').checked) p.push('parcs'); if ($('#water-on').checked) p.push('eau tous les 3 km');
   if (S.depNow === false && $('#dep-time').value) p.push('départ ' + $('#dep-time').value.replace(':', ' h '));
   $('#mf-prefs').textContent = p.join(' · ');
