@@ -267,6 +267,63 @@ const Engine = (() => {
     let b = -1, bd = R; for (const q of opt.water.pts) { const d = Math.abs(q.x - x) + Math.abs(q.y - y); if (d < bd * 1.4 && Math.hypot(q.x - x, q.y - y) < bd) { bd = Math.hypot(q.x - x, q.y - y); b = q.n; } }
     return b;
   }
+  // ---------- carrefours (D-93) : branches d'un carrefour, carrefours compliqués et zigzags ----------
+  const hdgDeg = (p, q) => Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI;
+  const angDev = (x, y) => { let t = y - x; while (t > 180) t -= 360; while (t < -180) t += 360; return t; };
+  function edgeFrom(e, v, dist) { // point à « dist » m le long de l'arête e en partant du nœud v
+    let q = edgePts(e); if (G.ea[e] !== v) q = q.slice().reverse(); let acc = 0;
+    for (let j = 1; j < q.length; j++) { const l = Math.hypot(q[j][0] - q[j - 1][0], q[j][1] - q[j - 1][1]); if (acc + l >= dist) { const t = (dist - acc) / (l || 1); return [q[j - 1][0] + (q[j][0] - q[j - 1][0]) * t, q[j - 1][1] + (q[j][1] - q[j - 1][1]) * t]; } acc += l; }
+    return q[q.length - 1];
+  }
+  const endOf = ([e, fromA]) => fromA ? G.eb[e] : G.ea[e], startOf = ([e, fromA]) => fromA ? G.ea[e] : G.eb[e];
+  // carrefour où arrive l'arête edges[i] : nœuds à moins de 25 m reliés par des tronçons courts (îlots, doubles voies)
+  function junctionAt(edges, i, R = 25) {
+    if (i < 0 || i >= edges.length - 1) return null;
+    const v = endOf(edges[i]), vx = G.NX[v], vy = G.NY[v], C = new Set([v]), st = [v];
+    while (st.length) { const u = st.pop(); for (let k = G.deg[u]; k < G.deg[u + 1]; k++) { const e = G.adjE[k]; if (G.LEN[e] > R) continue; const w = G.ea[e] === u ? G.eb[e] : G.ea[e]; if (!C.has(w) && Math.hypot(G.NX[w] - vx, G.NY[w] - vy) <= R) { C.add(w); st.push(w); } } }
+    let j = i + 1; while (j < edges.length && C.has(endOf(edges[j]))) j++;
+    if (j >= edges.length) return null;
+    let k = i; while (k > 0 && C.has(startOf(edges[k]))) k--;
+    let cx = 0, cy = 0; for (const u of C) { cx += G.NX[u]; cy += G.NY[u]; } cx /= C.size; cy /= C.size;
+    const eIn = edges[k][0], nIn = endOf(edges[k]), eOut = edges[j][0], nOut = startOf(edges[j]);
+    const pIn = edgeFrom(eIn, nIn, 25), hin = hdgDeg(pIn, [cx, cy]);
+    const br = [];
+    for (const u of C) for (let q = G.deg[u]; q < G.deg[u + 1]; q++) {
+      const e = G.adjE[q], w = G.ea[e] === u ? G.eb[e] : G.ea[e]; if (C.has(w)) continue;
+      if (e === eIn) continue;
+      if (G.P[e] > 0 && !G.en[e] && e !== eOut) continue; // petits passages sans nom : pas des rues
+      const p = edgeFrom(e, u, 25), a = angDev(hin, hdgDeg([cx, cy], p));
+      br.push({ a, e, out: e === eOut, maj: G.C[e] >= 2, name: G.en[e] ? M.names[G.en[e] - 1] : '', px: p[0], py: p[1] });
+    }
+    // une même rue à double voie compte une fois
+    br.sort((p, q) => p.a - q.a); let out = [];
+    for (const b of br) { const l = out[out.length - 1]; if (l && Math.abs(b.a - l.a) < 14 && (b.name === l.name || !b.name || !l.name)) { if (b.out) out[out.length - 1] = b; continue; } out.push(b); }
+    // allées piétonnes le long d'une rue (contre-allées, terre-pleins) : pas une rue de plus
+    out = out.filter(b => b.out || !(G.P[b.e] > 0) || !out.some(q => q !== b && !(G.P[q.e] > 0) && Math.abs(q.a - b.a) < 35));
+    // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
+    out = out.filter(b => b.out || Math.abs(b.a) <= 150);
+    const ex = out.find(b => b.out); if (!ex) return null;
+    // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
+    const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
+    const fwd = out.filter(b => Math.abs(b.a) < 165);
+    const near = fwd.some(b => !b.out && Math.abs(b.a - ex.a) < (Math.abs(ex.a) < 20 ? 30 : 50) && (Math.abs(ex.a) < 20 || Math.sign(b.a) === Math.sign(ex.a)));
+    const complex = fwd.length >= 5 || near;
+    const side = fwd.filter(b => Math.abs(b.a) >= 20 && Math.sign(b.a) === Math.sign(ex.a)).sort((p, q) => Math.abs(p.a) - Math.abs(q.a));
+    return { i, k, j, cx, cy, br: out, ex, a: ex.a, lat, complex, ord: Math.abs(ex.a) >= 20 ? side.indexOf(ex) + 1 : 0, nSide: side.length, nodes: C };
+  }
+  // virages, carrefours compliqués et zigzags d'un parcours (pour le choix entre parcours)
+  function turnStats(edges) {
+    const mans = []; let d = 0, skipTo = -1, cx = 0;
+    for (let i = 0; i < edges.length - 1; i++) {
+      d += G.LEN[edges[i][0]]; if (i < skipTo) continue;
+      const v = endOf(edges[i]), a = angDev(hdgDeg(edgeFrom(edges[i][0], v, 15), [G.NX[v], G.NY[v]]), hdgDeg([G.NX[v], G.NY[v]], edgeFrom(edges[i + 1][0], v, 15)));
+      if (Math.abs(a) < 35) continue;
+      const jx = junctionAt(edges, i); if (jx) { if (jx.complex) cx++; skipTo = jx.j; }
+      mans.push({ d, a: jx ? jx.a : a });
+    }
+    let zz = 0; for (let i = 1; i < mans.length; i++) { const m = mans[i - 1], q = mans[i]; if (q.d - m.d < 50 && Math.abs(m.a) >= 45 && Math.abs(q.a) >= 45 && Math.sign(m.a) !== Math.sign(q.a)) zz++; }
+    return { cx, zz, turns: mans.length };
+  }
   function score(st, target, opt) {
     const de = Math.abs(st.len - target) / target;
     let s = de * 200 + (de > 0.05 ? 40 : 0);
@@ -277,6 +334,7 @@ const Engine = (() => {
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
     if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
+    if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * 0.05; } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
@@ -548,6 +606,6 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

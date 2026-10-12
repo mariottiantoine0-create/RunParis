@@ -687,6 +687,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .run-nav{display:flex;align-items:center;gap:14px;background:var(--toast);color:#fff;border-radius:8px;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .run-ic{flex:none;width:44px;height:44px;display:grid;place-items:center}
 .run-ic .ico{width:44px;height:44px;color:#fff;stroke-width:2.6}
+.run-ic.jx{width:72px;height:72px}.run-ic .jxs{display:block}
 .run-dist{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:40px;line-height:1}
 .run-street{font-weight:700;font-size:17px;margin-top:2px}
 .run-top .note{box-shadow:var(--shadow-pop)}
@@ -1570,6 +1571,63 @@ const Engine = (() => {
     let b = -1, bd = R; for (const q of opt.water.pts) { const d = Math.abs(q.x - x) + Math.abs(q.y - y); if (d < bd * 1.4 && Math.hypot(q.x - x, q.y - y) < bd) { bd = Math.hypot(q.x - x, q.y - y); b = q.n; } }
     return b;
   }
+  // ---------- carrefours (D-93) : branches d'un carrefour, carrefours compliqués et zigzags ----------
+  const hdgDeg = (p, q) => Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI;
+  const angDev = (x, y) => { let t = y - x; while (t > 180) t -= 360; while (t < -180) t += 360; return t; };
+  function edgeFrom(e, v, dist) { // point à « dist » m le long de l'arête e en partant du nœud v
+    let q = edgePts(e); if (G.ea[e] !== v) q = q.slice().reverse(); let acc = 0;
+    for (let j = 1; j < q.length; j++) { const l = Math.hypot(q[j][0] - q[j - 1][0], q[j][1] - q[j - 1][1]); if (acc + l >= dist) { const t = (dist - acc) / (l || 1); return [q[j - 1][0] + (q[j][0] - q[j - 1][0]) * t, q[j - 1][1] + (q[j][1] - q[j - 1][1]) * t]; } acc += l; }
+    return q[q.length - 1];
+  }
+  const endOf = ([e, fromA]) => fromA ? G.eb[e] : G.ea[e], startOf = ([e, fromA]) => fromA ? G.ea[e] : G.eb[e];
+  // carrefour où arrive l'arête edges[i] : nœuds à moins de 25 m reliés par des tronçons courts (îlots, doubles voies)
+  function junctionAt(edges, i, R = 25) {
+    if (i < 0 || i >= edges.length - 1) return null;
+    const v = endOf(edges[i]), vx = G.NX[v], vy = G.NY[v], C = new Set([v]), st = [v];
+    while (st.length) { const u = st.pop(); for (let k = G.deg[u]; k < G.deg[u + 1]; k++) { const e = G.adjE[k]; if (G.LEN[e] > R) continue; const w = G.ea[e] === u ? G.eb[e] : G.ea[e]; if (!C.has(w) && Math.hypot(G.NX[w] - vx, G.NY[w] - vy) <= R) { C.add(w); st.push(w); } } }
+    let j = i + 1; while (j < edges.length && C.has(endOf(edges[j]))) j++;
+    if (j >= edges.length) return null;
+    let k = i; while (k > 0 && C.has(startOf(edges[k]))) k--;
+    let cx = 0, cy = 0; for (const u of C) { cx += G.NX[u]; cy += G.NY[u]; } cx /= C.size; cy /= C.size;
+    const eIn = edges[k][0], nIn = endOf(edges[k]), eOut = edges[j][0], nOut = startOf(edges[j]);
+    const pIn = edgeFrom(eIn, nIn, 25), hin = hdgDeg(pIn, [cx, cy]);
+    const br = [];
+    for (const u of C) for (let q = G.deg[u]; q < G.deg[u + 1]; q++) {
+      const e = G.adjE[q], w = G.ea[e] === u ? G.eb[e] : G.ea[e]; if (C.has(w)) continue;
+      if (e === eIn) continue;
+      if (G.P[e] > 0 && !G.en[e] && e !== eOut) continue; // petits passages sans nom : pas des rues
+      const p = edgeFrom(e, u, 25), a = angDev(hin, hdgDeg([cx, cy], p));
+      br.push({ a, e, out: e === eOut, maj: G.C[e] >= 2, name: G.en[e] ? M.names[G.en[e] - 1] : '', px: p[0], py: p[1] });
+    }
+    // une même rue à double voie compte une fois
+    br.sort((p, q) => p.a - q.a); let out = [];
+    for (const b of br) { const l = out[out.length - 1]; if (l && Math.abs(b.a - l.a) < 14 && (b.name === l.name || !b.name || !l.name)) { if (b.out) out[out.length - 1] = b; continue; } out.push(b); }
+    // allées piétonnes le long d'une rue (contre-allées, terre-pleins) : pas une rue de plus
+    out = out.filter(b => b.out || !(G.P[b.e] > 0) || !out.some(q => q !== b && !(G.P[q.e] > 0) && Math.abs(q.a - b.a) < 35));
+    // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
+    out = out.filter(b => b.out || Math.abs(b.a) <= 150);
+    const ex = out.find(b => b.out); if (!ex) return null;
+    // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
+    const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
+    const fwd = out.filter(b => Math.abs(b.a) < 165);
+    const near = fwd.some(b => !b.out && Math.abs(b.a - ex.a) < (Math.abs(ex.a) < 20 ? 30 : 50) && (Math.abs(ex.a) < 20 || Math.sign(b.a) === Math.sign(ex.a)));
+    const complex = fwd.length >= 5 || near;
+    const side = fwd.filter(b => Math.abs(b.a) >= 20 && Math.sign(b.a) === Math.sign(ex.a)).sort((p, q) => Math.abs(p.a) - Math.abs(q.a));
+    return { i, k, j, cx, cy, br: out, ex, a: ex.a, lat, complex, ord: Math.abs(ex.a) >= 20 ? side.indexOf(ex) + 1 : 0, nSide: side.length, nodes: C };
+  }
+  // virages, carrefours compliqués et zigzags d'un parcours (pour le choix entre parcours)
+  function turnStats(edges) {
+    const mans = []; let d = 0, skipTo = -1, cx = 0;
+    for (let i = 0; i < edges.length - 1; i++) {
+      d += G.LEN[edges[i][0]]; if (i < skipTo) continue;
+      const v = endOf(edges[i]), a = angDev(hdgDeg(edgeFrom(edges[i][0], v, 15), [G.NX[v], G.NY[v]]), hdgDeg([G.NX[v], G.NY[v]], edgeFrom(edges[i + 1][0], v, 15)));
+      if (Math.abs(a) < 35) continue;
+      const jx = junctionAt(edges, i); if (jx) { if (jx.complex) cx++; skipTo = jx.j; }
+      mans.push({ d, a: jx ? jx.a : a });
+    }
+    let zz = 0; for (let i = 1; i < mans.length; i++) { const m = mans[i - 1], q = mans[i]; if (q.d - m.d < 50 && Math.abs(m.a) >= 45 && Math.abs(q.a) >= 45 && Math.sign(m.a) !== Math.sign(q.a)) zz++; }
+    return { cx, zz, turns: mans.length };
+  }
   function score(st, target, opt) {
     const de = Math.abs(st.len - target) / target;
     let s = de * 200 + (de > 0.05 ? 40 : 0);
@@ -1580,6 +1638,7 @@ const Engine = (() => {
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
     if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
+    if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * 0.05; } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
@@ -1851,7 +1910,7 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
 
@@ -3355,9 +3414,29 @@ const RUN_IC = {
   uturn: '<path d="M8 21V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 21V4"/><path d="M7 9l5-5 5 5"/>',
   keepl: '<path d="M14 21v-7l-6-8"/><path d="M6 10V5h5"/>', keepr: '<path d="M10 21v-7l6-8"/><path d="M18 10V5h-5"/>',
   left2: '<path d="M18 21v-7h-7V8H5"/><path d="M8 5L5 8l3 3"/>', right2: '<path d="M6 21v-7h7V8h6"/><path d="M16 5l3 3-3 3"/>',
+  jogr: '<path d="M9 21v-8h6V4"/><path d="M11 8l4-4 4 4"/>', jogl: '<path d="M15 21v-8H9V4"/><path d="M5 8l4-4 4 4"/>',
   flag: '<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', start: '<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>'
 };
 const runIco = k => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${RUN_IC[k]}</svg>`;
+function navWrong(on, m, wb) {
+  if (!on) { if (NAV.wrongOn) { NAV.wrongOn = false; navMsg(null); $('#run-nav').hidden = false; } return; }
+  NAV.wrongOn = true; const j = m.jx, br = j.br.filter(b => Math.abs(b.a) < 179).sort((p, q) => p.a - q.a), iw = br.indexOf(wb), ie = br.findIndex(b => b.out), s = ie > iw ? 'droite' : 'gauche';
+  const rel = Math.abs(ie - iw) === 1 ? `la suivante à ${s}` : `plus à ${s}`;
+  navMsg('err', 'Ce n’est pas la bonne rue', m.name ? `Reviens au carrefour : ta rue est ${m.name}, ${rel}.` : `Reviens au carrefour et prends la rue ${rel}.`);
+  navBuzz('off'); navSay(`Ce n’est pas la bonne rue. Reviens au carrefour, ${m.name ? navArt(m.name) + ' est ' + rel : 'ta rue est ' + rel}.`); track('mauvaise-rue', 'Mauvaise rue au carrefour');
+}
+// mini-schéma d'un carrefour compliqué (D-93) : rues en gris (grands axes plus épais), la tienne en blanc avec la flèche ; arrivée par le bas
+function navSchema(j) {
+  const c = 36, L = 31, v = (a, l) => { const r = a * Math.PI / 180; return [c + Math.sin(r) * l, c - Math.cos(r) * l]; };
+  let o = '<svg class="jxs" viewBox="0 0 72 72" width="72" height="72" aria-hidden="true">';
+  for (const b of j.br) if (!b.out) { const [x, y] = v(b.a, L); o += `<path d="M${c} ${c}L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#5E6166" stroke-width="${b.maj ? 6 : 4}" fill="none"/>`; }
+  const [ax, ay] = v(180, L), [ex, ey] = v(j.a, L * 0.86), r = j.a * Math.PI / 180, ux = Math.sin(r), uy = -Math.cos(r), hx = ex + ux * 5, hy = ey + uy * 5;
+  o += `<path d="M${ax.toFixed(1)} ${ay.toFixed(1)}L${c} ${c}L${ex.toFixed(1)} ${ey.toFixed(1)}" stroke="#fff" stroke-width="6" fill="none" stroke-linejoin="miter"/>`;
+  o += `<path d="M${hx.toFixed(1)} ${hy.toFixed(1)}L${(hx - ux * 10 - uy * 6.5).toFixed(1)} ${(hy - uy * 10 + ux * 6.5).toFixed(1)}L${(hx - ux * 10 + uy * 6.5).toFixed(1)} ${(hy - uy * 10 - ux * 6.5).toFixed(1)}Z" fill="#fff"/>`;
+  return o + '</svg>';
+}
+// nom d'une rue avec son article, pour la voix (« le boulevard Pereire »)
+function navArt(n) { const m = /^(Boulevard|Avenue|Rue|Place|Quai|Pont|Cours|Allée|Passage|Square|Carrefour|Rond-Point)\s+(.*)$/i.exec(n || ''); if (!m) return n || ''; const w = m[1].toLowerCase(), art = /^[aeiouâéè]/i.test(w) ? 'l’' : ['rue', 'place', 'allée', 'avenue'].includes(w) ? 'la ' : 'le '; return art + w + ' ' + m[2]; }
 function navBuild(r) {
   const pts = routePts(r).map(p => [p[0], p[1]]), cum = [0];
   for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
@@ -3374,6 +3453,16 @@ function navBuild(r) {
     const hdg = (p, q) => Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI, dev = (x, y) => { let t = y - x; while (t > 180) t -= 360; while (t < -180) t += 360; return t; };
     for (let i = 0; i < segs.length - 1; i++) {
       const dd = segs[i][1]; if (dd < 15 || dd > L - 15) continue;
+      const nmAfter = j0 => { for (let j = j0; j < segs.length && segs[j][0] < segs[j0][0] + 60; j++) if (segs[j][2]) return segs[j][2]; return ''; };
+      // carrefour à plusieurs nœuds (îlots, doubles voies) : une seule consigne, calculée sur l'entrée et la sortie (D-93)
+      const jx = E.junctionAt(r.edges, i);
+      if (jx && jx.j > i + 1 || jx && jx.complex || jx && Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10) {
+        const jog = Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10 && jx.br.some(b => b.maj && !b.out && Math.abs(Math.abs(b.a) - 90) < 45);
+        const name = nmAfter(jx.j);
+        if (jog) man.push({ d: dd, a: jx.lat > 0 ? 1 : -1, jog: Math.abs(jx.lat), lat: jx.lat, name, jx, cross: (jx.br.find(b => b.maj && !b.out) || {}).name || '' });
+        else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: Math.abs(jx.a) < 20 });
+        i = jx.j - 1; continue;
+      }
       const a = turn(dd, 18), ein = segs[i][3], eout = segs[i + 1][3], v = segs[i][4] ? G.eb[ein] : G.ea[ein];
       // autres rues au carrefour : y a-t-il une rue tout droit, ou une fourche de l'autre côté ?
       const hin = hdg(at(dd - 18), at(dd)); let straight = false, fork = false;
@@ -3384,7 +3473,7 @@ function navBuild(r) {
       if (Math.abs(a) < 35) { if (fork && Math.abs(a) >= 12) keep = true; else continue; } // petit angle sans fourche : on continue, rien à dire
       else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // « légèrement » supprimé (course test du 8/10)
       let nm = ''; for (let j = i + 1; j < segs.length && segs[j][0] < dd + 60; j++) if (segs[j][2]) { nm = segs[j][2]; break; }
-      man.push({ d: dd, a, name: nm, keep });
+      man.push({ d: dd, a, name: nm, keep, jx });
     }
   } else { // trace publiée : là où le cap change nettement
     for (let d = 0; d < L; d += 40) addRun(d, Math.min(L, d + 40), nameNear(d + 20));
@@ -3392,22 +3481,40 @@ function navBuild(r) {
     for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
   }
   man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
+  // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (build 4)
+  for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (m.jog || q.jog || m.straight || q.straight) continue;
+    if (q.d - m.d <= 45 && Math.abs(m.a) >= 50 && Math.abs(m.a) <= 130 && Math.abs(q.a) >= 50 && Math.abs(q.a) <= 130 && Math.sign(m.a) !== Math.sign(q.a) && Math.abs(m.a + q.a) < 35) {
+      const sg = r.edges ? (() => { let d0 = 0; for (const [e] of r.edges) { const l = G.LEN[e]; if (d0 + l > m.d + 2) return e; d0 += l; } return -1; })() : -1;
+      if (sg >= 0 && G.C[sg] >= 2) { man.splice(i, 2, { d: m.d, a: m.a > 0 ? 1 : -1, jog: q.d - m.d, lat: (m.a > 0 ? 1 : -1) * (q.d - m.d), name: q.name, jx: m.jx, cross: G.en[sg] ? M.names[G.en[sg] - 1] : '' }); } } }
   // deux virages à moins de 60 m : annoncés ensemble (« À gauche, puis encore à gauche »)
-  for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (!m.second && !m.keep && !q.keep && Math.abs(m.a) < 160 && Math.abs(q.a) < 160 && q.d - m.d < 60) { m.pair = q; q.second = true; } }
+  // boulevard à deux chaussées : deux décalages qui s'annulent = on traverse tout droit
+  for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (!m.jog || !q.jog || q.d - m.d > 60) continue;
+    const net = m.lat + q.lat; if (Math.abs(net) < 8) { man.splice(i, 2); i--; } else { man.splice(i, 2, Object.assign({}, m, { a: net > 0 ? 1 : -1, jog: Math.abs(net), lat: net, name: q.name })); } }
+  for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (!m.second && !m.keep && !q.keep && !m.jog && !q.jog && !m.cx && !q.cx && Math.abs(m.a) < 160 && Math.abs(q.a) < 160 && q.d - m.d < 60) { m.pair = q; q.second = true; } }
   man.push({ d: L, a: 0, arrive: true, name: '' });
   return { pts, cum, L, idx, at, man, runs };
 }
 function navDir(m) {
   if (m.arrive) return ['flag', 'Arrivée'];
   const a = m.a, s = a > 0 ? 'droite' : 'gauche', k = a > 0 ? 'right' : 'left';
+  if (m.jog) return ['jog' + (a > 0 ? 'r' : 'l'), 'Traverse puis en face'];
+  if (m.cx) return ['jx', m.straight ? 'Tout droit' : navOrd(m)];
   if (Math.abs(a) >= 160) return ['uturn', 'Demi-tour'];
   if (m.keep) return ['keep' + (a > 0 ? 'r' : 'l'), 'Garde la ' + s];
   if (m.pair) { const q = m.pair, same = (q.a > 0) === (a > 0), s2 = q.a > 0 ? 'droite' : 'gauche'; return [same ? k + '2' : k, `À ${s}, puis à ${s2}`]; }
   return [k, 'À ' + s];
 }
+// carrefour compliqué : les rues du côté du virage sont comptées en partant du tout droit (D-93)
+function navOrd(m, spoken) { const j = m.jx, s = m.a > 0 ? 'droite' : 'gauche';
+  if (!j || j.nSide < 2) return (spoken ? 'tourne à ' : 'À ') + s;
+  if (j.ord === j.nSide && j.nSide >= 3) return (spoken ? 'prends la rue la plus à ' : 'La plus à ') + s;
+  const o = j.ord === 1 ? (spoken ? 'première' : '1re') : (spoken ? ['', '', 'deuxième', 'troisième', 'quatrième', 'cinquième'][j.ord] || j.ord + 'e' : j.ord + 'e');
+  return spoken ? `prends la ${o} rue à ${s}` : `${o} à ${s}`; }
 // consigne parlée d'un virage (sans la distance)
 function navVerb(m) {
   const [k] = navDir(m), s = m.a > 0 ? 'droite' : 'gauche';
+  if (m.jog) return `traverse${m.cross ? ' ' + navArt(m.cross) : ''}, ${m.name ? m.name + ' reprend' : 'la rue reprend'} en face, un peu à ${s}`;
+  if (m.cx) return 'au carrefour, ' + (m.straight ? 'continue tout droit' : navOrd(m, true)) + (m.name ? ', ' + m.name : '');
   let v = k === 'uturn' ? 'fais demi-tour' : m.keep ? 'garde la ' + s : 'tourne à ' + s;
   if (m.pair) { const q = m.pair, same = (q.a > 0) === (m.a > 0); v += `${m.name ? ', ' + m.name : ''}, puis ${same ? 'encore ' : ''}à ${q.a > 0 ? 'droite' : 'gauche'} dans ${navSayDist(q.d - m.d)}`; }
   else if (m.name) v += ', ' + m.name;
@@ -3442,7 +3549,7 @@ function runPrep() {
     return;
   }
   if (!navigator.geolocation) return toast('Ta position n’est pas disponible sur cet appareil.', 3500);
-  NAV.n = navBuild(S.route);
+  NAV.n = navBuild(S.route); NAV.r_v = (NAV.r_v || 0) + 1;
   $('#runp-far').hidden = true; $('#runp-far').className = 'note info'; $('#runp').hidden = false;
   NAV.denied = false; if (NAV.goHTML) $('#runp-go').innerHTML = NAV.goHTML;
   navigator.geolocation.getCurrentPosition(p => { // prévenir si on n'est pas encore au départ
@@ -3453,7 +3560,7 @@ function runPrep() {
 function runStart() {
   $('#runp').hidden = true;
   Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
-    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref() });
+    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null });
   $('#run-vol').setAttribute('aria-pressed', NAV.voice); navPosBtn(); mapRotOn();
   document.documentElement.classList.add('running'); $('#run').hidden = false; navMsg(null);
   if (NAV.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} } // iOS : la voix doit démarrer après un geste
@@ -3555,11 +3662,22 @@ function navFix(p) {
     if (NAV.mode === 'back' && NAV.prog >= NAV.rejoinD) NAV.mode = null;
   }
   // annonces : virages et kilomètres
-  while (NAV.mi < n.man.length - 1 && n.man[NAV.mi].d < NAV.prog + 5) NAV.mi++;
+  while (NAV.mi < n.man.length - 1 && n.man[NAV.mi].d < NAV.prog + 5) { const pm = n.man[NAV.mi]; if (pm.jx) NAV.lastJ = { m: pm, t: Date.now() }; NAV.mi++; }
+  // mauvaise rue au carrefour qu'on vient de passer : alerte dans les 30 premiers mètres (D-93)
+  { const cj = n.man[NAV.mi], J = cj && cj.jx && cj.d - NAV.prog < 20 ? { m: cj, t: Date.now() } : NAV.lastJ, j = J && J.m.jx;
+    if (j && !NAV.offOn) { const dj = Math.hypot(x - j.cx, y - j.cy), fresh = Date.now() - J.t < 60000 && NAV.prog - J.m.d < 70;
+      let wrongB = null; if (fresh && dj > 12 && dj < 70 && b.dd > Math.max(14, c.accuracy * 0.6)) { let best = null; for (const q of j.br) { const vx = q.px - j.cx, vy = q.py - j.cy, l2 = vx * vx + vy * vy || 1, t = Math.max(0, ((x - j.cx) * vx + (y - j.cy) * vy) / l2), dd = Math.hypot(x - j.cx - vx * t, y - j.cy - vy * t); if (!best || dd < best.dd) best = { q, dd }; } if (best && !best.q.out) wrongB = best.q; }
+      if (wrongB) { NAV.wrongN = (NAV.wrongN || 0) + 1; if (NAV.wrongN >= 2 && !NAV.wrongOn) navWrong(true, J.m, wrongB); }
+      else { NAV.wrongN = 0; if (NAV.wrongOn && (b.dd < 12 || !fresh)) navWrong(false); } }
+    else if (NAV.wrongOn && NAV.offOn) { NAV.wrongOn = false; } }
+  // zoom automatique à l'approche d'un carrefour compliqué, dézoom une fois passé (D-93)
+  { const mz = n.man[NAV.mi], dz = mz ? mz.d - NAV.prog : 1e9;
+    if (mz && mz.cx && dz <= 80 && dz > 0 && NAV.jz !== NAV.mi && NAV.follow) { if (NAV.jz == null) NAV.sBase = V.s; NAV.jz = NAV.mi; NAV.jzEnd = mz.d + 40; V.s = Math.min(3, Math.max(NAV.sBase * 2, 1.8)); }
+    else if (NAV.jz != null && NAV.prog > NAV.jzEnd && !(mz && mz.cx && dz <= 80)) { NAV.jz = null; if (NAV.sBase) V.s = NAV.sBase; } }
   const m = n.man[NAV.mi], dm = m.d - NAV.prog;
   if (!m.arrive && !NAV.offOn) {
     const s = m.a > 0 ? 'droite' : 'gauche', p = man => { const prev = n.man[NAV.mi - 1]; return man.second && prev && prev.pair === man; };
-    const short = p(m) ? ((m.a > 0) === (n.man[NAV.mi - 1].a > 0) ? 'Encore à ' + s : 'Tourne à ' + s) : (m.keep ? 'Garde la ' + s : navDir(m)[0] === 'uturn' ? 'Fais demi-tour' : 'Tourne à ' + s) + (m.pair ? `, puis ${(m.pair.a > 0) === (m.a > 0) ? 'encore ' : ''}à ${m.pair.a > 0 ? 'droite' : 'gauche'}` : '');
+    const short = m.jog ? 'Traverse, puis en face' + (m.name ? ', ' + m.name : '') : m.cx ? (m.straight ? 'Tout droit' : navOrd(m)) + (m.name ? ', ' + m.name : '') : p(m) ? ((m.a > 0) === (n.man[NAV.mi - 1].a > 0) ? 'Encore à ' + s : 'Tourne à ' + s) : (m.keep ? 'Garde la ' + s : navDir(m)[0] === 'uturn' ? 'Fais demi-tour' : 'Tourne à ' + s) + (m.pair ? `, puis ${(m.pair.a > 0) === (m.a > 0) ? 'encore ' : ''}à ${m.pair.a > 0 ? 'droite' : 'gauche'}` : '');
     if (dm <= 120 && dm > 40 && NAV.a1 !== NAV.mi && !p(m)) { NAV.a1 = NAV.mi; navSay(`Dans ${navSayDist(dm)}, ${navVerb(m)}.`); }
     else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; navBuzz('turn'); navSay(short + '.'); }
   }
@@ -3583,8 +3701,11 @@ function navUI() {
   if (!NAV.free && NAV.t0) { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = m.arrive && NAV.prog >= n.L - 1 ? 'Arrivée' : navDistTxt(Math.max(0, m.d - NAV.prog));
     small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : '') + (m.pair && m.pair.name && m.pair.name !== m.name ? ', puis ' + m.pair.name : '');
     if (m.pair) { const same = (m.pair.a > 0) === (m.a > 0); sub = `${same ? 'Encore' : 'Puis'} à ${m.pair.a > 0 ? 'droite' : 'gauche'} ${navDistTxt(m.pair.d - m.d)} après`; }
+    if (m.jog) sub = `La rue reprend ${navDistTxt(m.jog)} à ${m.a > 0 ? 'droite' : 'gauche'}`;
+    else if (m.cx && !m.arrive) sub = `Carrefour à ${m.jx.br.length + 1} rues`;
     if (NAV.mode === 'back' && NAV.prog < NAV.rejoinD) sub = 'Retour au parcours dans ' + navDistTxt(NAV.rejoinD - NAV.prog); }
-  if (NAV.icK !== ic) { $('#run-ic').innerHTML = runIco(ic); NAV.icK = ic; }
+  if (ic === 'jx') { const m = n.man[NAV.mi], key = 'jx' + NAV.mi + ':' + NAV.r_v; if (NAV.icK !== key) { $('#run-ic').innerHTML = navSchema(m.jx); $('#run-ic').classList.add('jx'); NAV.icK = key; } }
+  else if (NAV.icK !== ic) { $('#run-ic').innerHTML = runIco(ic); $('#run-ic').classList.remove('jx'); NAV.icK = ic; }
   $('#run-dist').textContent = big; $('#run-street').textContent = small; $('#run-sub').textContent = sub; $('#run-sub').hidden = !sub;
   const cur = NAV.free ? '' : NAV.t0 ? (n.runs.find(q => q.d0 <= NAV.prog + 1 && q.d1 >= NAV.prog - 1) || {}).name : ''; $('#run-cur').textContent = cur ? 'Tu es sur ' + cur : ''; $('#run-cur').hidden = !cur;
   if (NAV.offOn) { navOffMsg(NAV.proj ? NAV.proj.dd : 0); NAV.errShown = true; }
@@ -3686,7 +3807,7 @@ async function navReroute(kind, auto) {
   NAV.doneSegs.push(done); if (NAV.offTrack.length > 1) NAV.doneSegs.push(NAV.offTrack.slice());
   if (kind === 'here') { const rest = []; for (let i = n.idx(from); i < n.pts.length; i++) rest.push(n.pts[i]); NAV.oldRest = rest; } else NAV.oldRest = null;
   const oldRestLen = n.L - from;
-  NAV.base += NAV.prog + NAV.offRun; NAV.r = st; NAV.n = navBuild(st);
+  NAV.base += NAV.prog + NAV.offRun; NAV.r = st; NAV.n = navBuild(st); NAV.r_v = (NAV.r_v || 0) + 1; NAV.lastJ = null; navWrong(false);
   Object.assign(NAV, { prog: 0, mi: 0, a1: -1, a2: -1, off: 0, offOn: false, offRun: 0, offTrack: [], proj: null, mode: kind, rejoinD: kind === 'back' ? rejoin : 0, errShown: false });
   $('#run-msg').dataset.kind = ''; navMsg(null);
   if (kind === 'here') { const dl = st.len - oldRestLen, dTxt = Math.abs(dl) < 100 ? '' : `, soit ${fmt(Math.abs(dl) / 1000, 1)} km de ${dl > 0 ? 'plus' : 'moins'}`;
@@ -3730,7 +3851,7 @@ function mapRotFollow() { // direction en haut : la carte tourne avec le coureur
 function navRefollow() { if (!NAV.on) return; clearTimeout(NAV.refT); NAV.follow = true; navPosBtn(); if (NAV.pos) navCenter(); else draw(); mapRotFollow(); }
 function navIdleArm() { if (!NAV.on) return; clearTimeout(NAV.refT); if (NAV.follow) return; NAV.refT = setTimeout(() => { if (NAV.on && !NAV.follow && !ptrs.size) navRefollow(); else navIdleArm(); }, 10000); }
 function navPosBtn() { const b = $('#run-pos'); b.setAttribute('aria-pressed', !!NAV.follow); b.dataset.mode = NAV.headUp ? 'head' : 'north'; b.setAttribute('aria-label', !NAV.follow ? 'Recentrer sur ma position' : NAV.headUp ? 'Carte orientée dans ta direction (toucher : nord en haut)' : 'Nord en haut (toucher : orienter dans ta direction)'); }
-if (/[?&]navtest=1/.test(location.search)) window.RP_NAV = NAV; // recette automatique uniquement
+if (/[?&]navtest=1/.test(location.search)) { window.RP_NAV = NAV; window.RP_VS = () => V.s; } // recette automatique uniquement
 $('#run-go').onclick = runPrep;
 $('#runp-x').onclick = $('#runp-back').onclick = () => { $('#runp').hidden = true; };
 $('#runp-go').onclick = () => { if (NAV.denied) { NAV.denied = false; if (NATIVE) { $('#runp').hidden = true; return NP.bg.openSettings().catch(() => {}); } return location.reload(); } runStart(); };
