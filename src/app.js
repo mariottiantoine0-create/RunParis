@@ -1254,7 +1254,7 @@ function fitRoute(onlyStart) {
 }
 function showRoute(r, notes) {
   S.lastNotes = notes; const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); if (x && x.b) { const b = document.createElement('b'); b.className = 'nt'; b.textContent = x.b; d.appendChild(b); d.appendChild(document.createTextNode(x.t)); } else d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
-  $('#detail').hidden = !r; const rcv = !!r && r === S.recv; $('#app-inv').hidden = APPF || !rcv; $('#view-res').classList.toggle('recv', rcv); /* parcours reçu : une seule proposition, pas de liste */ if (r) linkErr(false);
+  $('#detail').hidden = !r; const rcv = !!r && r === S.recv; $('#view-res').classList.toggle('recv', rcv); /* parcours reçu : une seule proposition, pas de liste */ if (r) linkErr(false);
   if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
   $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
   $('#st-up').innerHTML = `${Math.round(r.up)}<small>m</small>`;
@@ -2098,23 +2098,14 @@ const ABOUT = {
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
 };
-// lien reçu ouvert sur le site (D-88) : invitation à l'app, erreur de lien incomplet
-const invLi = (ic, t, s) => `<div class="inv-li"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><div><b>${t}</b><span>${s}</span></div></div>`;
-ABOUT.app = ['L’app RunParis', () => ap('Le site crée et exporte les parcours. L’app t’accompagne pendant la course :') +
-  invLi('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>', 'Guidage vocal', 'Chaque virage et chaque kilomètre annoncés.') +
-  invLi('<rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 'Suivi écran verrouillé', 'Le téléphone dans la poche, avec vibrations.') +
-  invLi('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', 'Mes parcours', 'Tes sorties et ton temps, gardés sur ton téléphone.') +
-  '<div class="note info"><b class="nt">Bientôt sur iPhone</b>En attendant, le fichier GPX s’ouvre dans Garmin Connect, Strava, Komoot ou Coros.</div>'];
-$('#app-inv').onclick = () => aboutOpen('app');
-$('#app-gpx').onclick = () => { $('#about-x').click(); $('#gpx').click(); };
-$('#app-close').onclick = () => $('#about-x').click();
+// lien reçu : erreur de lien incomplet (D-88) ; l'invitation à l'app sur le site est retirée (12/10)
 function linkErr(on) { $('#lnk-err').hidden = !on; }
 $('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
   $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
   if (k === 'fb') return $('#fb-open').click();
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
-  $('#about-f').hidden = k !== 'erase'; $('#about-fa').hidden = k !== 'app'; $('#about').hidden = false; track('a-propos', t);
+  $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
