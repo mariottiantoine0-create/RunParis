@@ -942,7 +942,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <details class="q"><summary>Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
           <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
         </div>
-        <p class="hint" id="always">Toujours évités : gares, quais et couloirs de métro.</p>
+        <p class="hint" id="always">Toujours évités : gares et métro, cimetières, passages couverts et centres commerciaux.</p>
       </section>
 
       <details class="more">
@@ -950,7 +950,6 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <div class="moreb">
           <div class="row" id="sig-level" style="justify-content:space-between;min-height:40px"><span>Feux rouges</span><div class="seg sm" role="group" aria-label="Intensité d'évitement des feux" style="width:190px"><button id="s-1" aria-pressed="true">Limiter</button><button id="s-2" aria-pressed="false">Au maximum</button></div></div>
           <label class="sw">Repasser par les mêmes rues (allers-retours)<input type="checkbox" id="allow-repeat"></label>
-          <label class="sw">Éviter les cimetières<input type="checkbox" id="avoid-cem" checked></label>
         </div>
       </details>
     </div>
@@ -1903,7 +1902,7 @@ const S = {
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
-const DV = '?v=8fba6c49'; // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
+const DV = '?v=9f457bc9'; // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
 let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [];
 
 // ---------- loading ----------
@@ -1913,13 +1912,13 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
     if (gr) E.setGreen(b64(gr));
-    if (pv) E.setPrivate(b64(pv)); // voies privées et impasses fermées : jamais empruntées (D-80)
+    if (pv || xc) { const a = pv ? b64(pv) : null, b = xc ? b64(xc) : null, m = new Uint8Array(Math.max(a ? a.length : 0, b ? b.length : 0)); for (let i = 0; i < m.length; i++) m[i] = (a && a[i] || 0) | (b && b[i] || 0); E.setPrivate(m); } // voies privées et impasses fermées (D-80) + passages couverts, galeries, intérieurs, centres commerciaux (D-91) : jamais empruntés
     if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
@@ -2598,8 +2597,6 @@ $('#home-save').onclick = () => {
   } catch (e) { toast('Ce navigateur ne permet pas d’enregistrer « Chez moi ».'); }
   renderHome();
 };
-$('#avoid-cem').onchange = () => { $('#always').textContent = 'Toujours évités : gares, quais, métro' + ($('#avoid-cem').checked ? ' · cimetières' : '') + '.'; };
-$('#avoid-cem').onchange();
 $('#pick-end').onclick = () => setTool('end');
 let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, ms); }
 
@@ -2963,7 +2960,7 @@ async function generate(isAgain) {
     await new Promise(res => setTimeout(res, 20));
     const dep = departure(), runMin = Math.round(km * pace() / 60), closed = PARKS.length ? closedParks(dep, runMin) : [];
     S.lastDep = { dep, closed, now: S.depNow !== false, night: runInDark(dep, runMin), sun: sunTimes(dep) };
-    E.setConstraints(S.exclQ, S.places, { avoidCemeteries: $('#avoid-cem').checked, closedEdges: closed.flatMap(p => p.e) });
+    E.setConstraints(S.exclQ, S.places, { avoidCemeteries: true, closedEdges: closed.flatMap(p => p.e) });
     const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
@@ -3954,7 +3951,7 @@ const MSH = {
   dist: { t: 'Distance', ok: () => 'Valider ' + $('#mf-dist').textContent, nodes: () => [$('#u-km').parentElement, document.querySelector('.stepper'), $('#chips-km'), $('#chips-min'), $('#conv').parentElement] },
   dep: { t: 'Départ', ok: null, nodes: () => [$('#start-box'), $('#home-row')] },
   arr: { t: 'Arrivée', ok: () => 'Valider', nodes: () => [$('#a-back').parentElement, $('#end-fixed'), $('#end-free-hint'), $('#end-metro-row'), $('#via-list'), $('#via-box')] },
-  prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), document.querySelector('.depline'), $('#dep-hint'), $('#sig-on').closest('label'), $('#sig-level'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label'), $('#avoid-cem').closest('label')] },
+  prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), document.querySelector('.depline'), $('#dep-hint'), $('#sig-on').closest('label'), $('#sig-level'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label')] },
   avoid: { t: 'À éviter', ok: () => 'Valider', nodes: () => [$('#avoid-list'), $('#addbox'), $('#always')] }
 };
 function mMount() {

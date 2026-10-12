@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path');
 const SITE = path.join(__dirname, '..', 'site'), WWW = path.join(__dirname, 'www');
 fs.rmSync(WWW, { recursive: true, force: true }); fs.mkdirSync(path.join(WWW, 'fonts'), { recursive: true });
-const DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt'];
+const DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt'];
 for (const f of DATA) fs.copyFileSync(path.join(SITE, f), path.join(WWW, f));
 for (const f of fs.readdirSync(path.join(__dirname, 'fonts'))) fs.copyFileSync(path.join(__dirname, 'fonts', f), path.join(WWW, 'fonts', f));
 let html = fs.readFileSync(path.join(SITE, 'app.html'), 'utf8');
