@@ -175,6 +175,7 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .alt[aria-pressed="true"] .k{color:var(--accent)}
 .alt .t{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .alt .s{font-family:var(--f-cond);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.alt .s .i{white-space:nowrap}
 .detail{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
 .stats{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 16px;align-items:end}
 .stat{display:flex;flex-direction:column;min-width:0}
@@ -321,6 +322,9 @@ body{font-family:var(--f-body);font-variant-numeric:tabular-nums;-webkit-font-sm
 /* sélecteur */
 .seg{border:0;border-radius:4px;gap:2px}
 .seg button{border-radius:3px;color:var(--ink);font-size:15px;font-weight:600;transition:background-color .12s}
+.seg button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px} /* segments de même largeur, quel que soit le libellé */
+.depline .seg button{flex:1 1 auto}
+@media (max-width:380px){.seg button{white-space:normal;line-height:1.15}} /* petit téléphone : un libellé long passe sur 2 lignes au lieu de déborder */
 .seg button:hover{background:var(--soft)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .seg.sm button{font-size:14px}

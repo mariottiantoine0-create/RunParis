@@ -795,7 +795,7 @@ seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-ro
 const PRIO = {
   few: { sig: 2, w: { sig: 450, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 1.5, txt: 'moins de feux', hint: 'Moins de feux : des petites rues, donc plus de virages. Une des propositions sera la plus simple.' },
   eq: { sig: 1, w: { sig: 250, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 0.5, txt: 'équilibré', hint: 'Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.' },
-  turn: { sig: 1, w: { sig: 120, turn: 600, turnRun: 300, turnFar: 0.5 }, score: 0.2, txt: 'moins de virages', hint: 'Moins de virages : de longues lignes droites, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
+  turn: { sig: 1, w: { sig: 220, turn: 450, turnRun: 250, turnFar: 0.5 }, score: 0.4, txt: 'moins de virages', hint: 'Moins de virages : de longues lignes droites, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
 };
 function setPrio(k, save) { if (!PRIO[k]) k = 'eq'; S.prio = k; S.sig = PRIO[k].sig; ['few', 'eq', 'turn'].forEach(j => $('#p-' + j).setAttribute('aria-pressed', j === k)); $('#prio-hint').textContent = PRIO[k].hint; if (save) try { localStorage.setItem('runparis-prio', k); } catch (e) {} }
 ['few', 'eq', 'turn'].forEach(k => $('#p-' + k).onclick = () => setPrio(k, true));
@@ -1170,11 +1170,11 @@ async function generate(isAgain) {
       // la 3e proposition montre l'autre côté du compromis : « Le plus simple » ou « Le moins de feux » (D-95)
       if (r && r.alts && !r.shortest && !S.vias.length && S.kind !== 'discover') {
         const side = S.prio === 'turn' ? 'few' : 'simple', other = side === 'few' ? PRIO.few : PRIO.turn;
-        const per = a => side === 'few' ? a.feux / (a.len / 1000) : E.turnStats(a.edges).turns / (a.len / 1000);
+        const per = a => side === 'few' ? a.feux / (a.len / 1000) : E.turnStats(a.edges).turns / (a.len / 1000), fk = a => a.feux / (a.len / 1000);
         E.setWeights(other.w); const o2 = Object.assign({}, opt, { sigScore: other.score, seed: opt.seed + 977 }); let r2 = null;
         try { r2 = !ab ? await E.loop(s, target, o2, () => {}) : S.endFree ? await E.oneWay(s, target, o2, () => {}) : await E.aToB(s, endN, target, o2, () => {}); } catch (e) { r2 = null; }
         E.setWeights(PRIO[S.prio || 'eq'].w);
-        if (r2) { const best = Math.min(...r.alts.map(per)), c = (r2.alts || [r2]).filter(a => Math.abs(a.len - target) / target <= 0.05 && r.alts.every(b => E.similarity(a, b) < 0.5)).sort((a, b) => per(a) - per(b))[0];
+        if (r2) { const best = Math.min(...r.alts.map(per)), fmin = Math.min(...r.alts.map(fk)), c = (r2.alts || [r2]).filter(a => Math.abs(a.len - target) / target <= 0.05 && r.alts.every(b => E.similarity(a, b) < 0.5) && (side === 'few' || fk(a) <= fmin * 1.8 + 0.5)).sort((a, b) => per(a) - per(b))[0]; // « Le plus simple » : pas plus de ~1,8 fois les feux
           if (c && per(c) <= best * 0.75) { c._side = side; if (r.alts.length >= 3) r.alts[2] = c; else r.alts.push(c); } }
       }
       if (r && r.alts && r.alts.length === 1 && !r.shortest) notes.push('Une seule proposition trouvée avec ces réglages.');
@@ -1253,7 +1253,7 @@ function renderAlts() {
     b.querySelector('.k').textContent = `${String(i + 1).padStart(2, '0')} · ${labels[i]}${a.kind === 'aller-retour' ? ' · aller-retour' : ''}`;
     b.querySelector('.t').textContent = altNames(a);
     if (a.turns == null) a.turns = a.edges && a.edges.length ? E.turnStats(a.edges).turns : null;
-    b.querySelector('.s').textContent = `${fmt(a.len / 1000)} km · ${Math.round(a.up)} m D+ · ${a.feux} feux${a.turns != null ? ` · ${a.turns} virages` : ''} · ${fmtDur(a.len / 1000 * pace())}` + (S.kind === 'green' ? ` · ${Math.round(a.green * 100)} % vert` : '');
+    b.querySelector('.s').innerHTML = [`${fmt(a.len / 1000)} km`, `${Math.round(a.up)} m D+`, `${a.feux} feux`, ...(a.turns != null ? [`${a.turns} virages`] : []), fmtDur(a.len / 1000 * pace()), ...(S.kind === 'green' ? [`${Math.round(a.green * 100)} % vert`] : [])].map(t => `<span class="i">${t}</span>`).join(' · '); // retour à la ligne seulement entre deux infos
     const vv = b.querySelector('.v'); vv.textContent = a.sightsN ? 'Passe par ' + a.sights.slice(0, 4).join(', ') + (a.sightsN > 4 ? '…' : '') : a._side === 'simple' && a.turns ? `Longues lignes droites : un virage tous les ${Math.round(a.len / a.turns / 10) * 10} m` : ''; vv.hidden = !vv.textContent;
     b.onclick = () => selectAlt(i);
     box.appendChild(b);
