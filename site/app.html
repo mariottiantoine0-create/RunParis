@@ -915,7 +915,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
           <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
         </div>
-        <div class="seg sm" role="group" aria-label="Priorité" id="prio"><button id="p-few" aria-pressed="false">Moins de feux</button><button id="p-eq" aria-pressed="true">Équilibré</button><button id="p-turn" aria-pressed="false">Moins de virages</button></div>
+        <div class="seg sm" role="group" aria-label="Priorité" id="prio"><button id="p-few" aria-pressed="false">Moins de feux</button><button id="p-eq" aria-pressed="true">Équilibré</button><button id="p-turn" aria-pressed="false">Lignes droites</button></div>
         <p class="hint" id="prio-hint">Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.</p>
         <label class="sw">Parcs, quais, rues piétonnes<input type="checkbox" id="prefer-paths" checked></label>
         <label class="sw">Points d'eau réguliers (≈ tous les 3 km)<input type="checkbox" id="water-on"></label>
@@ -2701,11 +2701,11 @@ $('#km').addEventListener('input', updateConv); $('#dur').addEventListener('inpu
 $('#dur').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-row').hidden = S.dmode !== 'target'; });
 // Feux : interrupteur (Ignorer / éviter) + intensité (Limiter / Au maximum)
-// Priorité (D-95) : moins de feux / équilibré / moins de virages ; remplace « Éviter les feux rouges » et « Limiter / Au maximum »
+// Priorité (D-95) : moins de feux / équilibré / lignes droites ; remplace « Éviter les feux rouges » et « Limiter / Au maximum »
 const PRIO = {
   few: { sig: 2, w: { sig: 450, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 1.5, txt: 'moins de feux', hint: 'Moins de feux : des petites rues, donc plus de virages. Une des propositions sera la plus simple.' },
   eq: { sig: 1, w: { sig: 250, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 0.5, txt: 'équilibré', hint: 'Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.' },
-  turn: { sig: 1, w: { sig: 220, turn: 450, turnRun: 250, turnFar: 0.5 }, score: 0.4, txt: 'moins de virages', hint: 'Moins de virages : de longues lignes droites, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
+  turn: { sig: 1, w: { sig: 220, turn: 450, turnRun: 250, turnFar: 0.5 }, score: 0.4, txt: 'lignes droites', hint: 'Lignes droites : moins de virages, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
 };
 function setPrio(k, save) { if (!PRIO[k]) k = 'eq'; S.prio = k; S.sig = PRIO[k].sig; ['few', 'eq', 'turn'].forEach(j => $('#p-' + j).setAttribute('aria-pressed', j === k)); $('#prio-hint').textContent = PRIO[k].hint; if (save) try { localStorage.setItem('runparis-prio', k); } catch (e) {} }
 ['few', 'eq', 'turn'].forEach(k => $('#p-' + k).onclick = () => setPrio(k, true));
