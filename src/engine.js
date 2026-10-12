@@ -47,7 +47,7 @@ const Engine = (() => {
     const SIG = [...sc.entries()].map(([k, a]) => ({ id: k, x: a[0] / a[2], y: a[1] / a[2] }));
     G = { CEM, nN, nE, nG, ea, eb, eu, ed, en, ez, go, nc, nq, NX, NY, NZ, GX, GY, LEN, C, P, S, deg, adjE, CELL, GW, GH, cellCount, cellNodes, kx, ky, la1, lo0, SIG, maxX, maxY };
     G.bad = new Uint8Array(nE); G.blocked = new Uint8Array(nE); G.nodeOk = new Uint8Array(nN).fill(1);
-    G.dist = new Float64Array(nN); G.stamp = new Uint32Array(nN); G.prev = new Int32Array(nN); G.done = new Uint32Array(nN); G.cur = 0;
+    G.dist = new Float64Array(nN); G.stamp = new Uint32Array(nN); G.prev = new Int32Array(nN); G.run = new Float32Array(nN); G.done = new Uint32Array(nN); G.cur = 0;
     G.used = new Uint8Array(nE);
     return G;
   }
@@ -140,7 +140,7 @@ const Engine = (() => {
   }
 
   // ---------- A* ----------
-  let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 150, reuse: 4, green: 0 };
+  let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 250, reuse: 4, green: 0, turn: 150, turnRun: 100, turnFar: 0.3 }; // turn : coût d'un virage avec changement de rue (parcours plus simples, retours du 12/10)
   // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
   function setPrivate(bits) { G.PRIV = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.PRIV[e] = (bits[e >> 3] >> (e & 7)) & 1; }
   function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
@@ -191,9 +191,13 @@ const Engine = (() => {
       for (let k = deg[u]; k < deg[u + 1]; k++) {
         const e = adjE[k]; const fromA = ea[e] === u; const v = fromA ? eb[e] : ea[e];
         if (done[v] === cur) continue;
-        const c = stepCost(e, fromA); if (c === Infinity) continue;
+        let c = stepCost(e, fromA); if (c === Infinity) continue;
+        let run = G.LEN[e];
+        if (W.turn && prev[u] >= 0) { const pe = prev[u]; if (G.en[pe] !== G.en[e]) { // on change de rue : virage ?
+          const w = ea[pe] === u ? eb[pe] : ea[pe], ax = NX[u] - NX[w], ay = NY[u] - NY[w], bx = NX[v] - NX[u], by = NY[v] - NY[u];
+          if (ax * bx + ay * by < 0.82 * Math.hypot(ax, ay) * Math.hypot(bx, by)) c += G.run[u] < W.turnRun ? W.turn : W.turn * W.turnFar; } else run += G.run[u]; }
         const nd = du + c;
-        if (stamp[v] !== cur || nd < dist[v]) { stamp[v] = cur; dist[v] = nd; prev[v] = e; hpush(v, nd + hk * Math.hypot(NX[v] - tx, NY[v] - ty)); }
+        if (stamp[v] !== cur || nd < dist[v]) { stamp[v] = cur; dist[v] = nd; prev[v] = e; G.run[v] = run; hpush(v, nd + hk * Math.hypot(NX[v] - tx, NY[v] - ty)); }
       }
     }
     if (done[t] !== cur) return null;
