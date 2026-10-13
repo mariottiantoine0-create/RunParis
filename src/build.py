@@ -47,14 +47,40 @@ def myth_cards(races):
         km = float(r['official']); kmt = (f'{km:.1f}'.replace('.', ',') if km % 1 else f'{km:.0f}') + ' km'
         meta = kmt  # D+ affiché dans l'app (calculé sur la trace)
         svg = f'<svg viewBox="0 0 {W} {H}" aria-hidden="true"><path class="tr-c" d="{d}"/><path class="tr" d="{d}"/><circle class="tr-d" cx="{P[0][0]:.1f}" cy="{P[0][1]:.1f}" r="4.5"/></svg>'
-        out.append(f'<a class="myth" href="app.html?race={rid}">{svg}<div><small>{cat}</small><b>{r["name"]}</b><span>{meta}</span></div></a>')
+        href = f'app.html?race={rid}' + ('' if r.get('_city', 'paris') == 'paris' else '&ville=' + r['_city'])
+        out.append(f'<a class="myth" href="{href}">{svg}<div><small>{cat}</small><b>{r["name"]}</b><span>{meta}</span></div></a>')
     return '\n        '.join(out)
+
+# --- villes et chiffres, calculés depuis les données : rien à réécrire à la main quand une ville arrive (D-97) ---
+import struct
+CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon')]  # même ordre que CITY_DIRS
+CITY_SOON = ['Bordeaux', 'Marseille']
+def nb(n): return f'{n:,}'.replace(',', '\u00a0')
+def city_stats():
+    km = feux = font = trees = 0; races = []
+    for d, name, key in CITY_NAMES:
+        site = root / 'site' / d
+        meta = json.loads((site / 'meta.json').read_text(encoding='utf-8')); buf = (site / 'graph.bin').read_bytes()
+        nE, offs = meta['nE'], meta['offs']
+        km += sum(struct.unpack_from('<%dH' % nE, buf, offs[7])) / 2000
+        feux += len(set(struct.unpack_from('<%dH' % meta['nN'], buf, offs[3])) - {0})
+        font += len(json.loads((site / 'fountains.json').read_text(encoding='utf-8')))
+        trees += len(base64.b64decode((site / 'trees.txt').read_text().strip())) // 4
+        races += [dict(r, _city=key) for r in json.loads((site / 'races.json').read_text(encoding='utf-8'))]
+    names = [n for _, n, _ in CITY_NAMES]
+    et = ' et '.join([', '.join(names[:-1]), names[-1]]) if len(names) > 1 else names[0]
+    a = ', à '.join(names)
+    line = '<b>' + ' · '.join(names) + '</b> et leurs communes voisines' + (' · ' + ' et '.join([', '.join(CITY_SOON[:-1]), CITY_SOON[-1]] if len(CITY_SOON) > 1 else CITY_SOON) + ' bientôt' if CITY_SOON else '')
+    return dict(S_KM=nb(round(km / 100) * 100), S_FEUX=nb(feux), S_FONT=nb(font), S_ARBRES=nb(round(trees / 1000) * 1000), S_RACES=str(len(races)), CITIES_ET=et, CITIES_A=a, CITIES_LINE=line), races
+import base64
+STATS, ALL_RACES = city_stats()
+print('chiffres', STATS)
 
 # 2. page d'accueil
 h = json.loads(rd('hero.json'))
 t = rd('landing.html')
 rep = {'VB': '640 118 640 400', 'GREEN': h['green'], 'WATER': h['water'], 'MINOR': h['minor'], 'C1': h['c1'], 'C2': h['c2'], 'C3': h['c3'],
-       'ROUTE': h['route'], 'RLEN': '1000', 'KM': '', 'SX': str(h['start'][0]), 'SY': str(h['start'][1]), 'REALM': str(round(h['len'])), 'MYTH': myth_cards(json.loads((root / 'site' / 'races.json').read_text(encoding='utf-8')))}
+       'ROUTE': h['route'], 'RLEN': '1000', 'KM': '', 'SX': str(h['start'][0]), 'SY': str(h['start'][1]), 'REALM': str(round(h['len'])), 'MYTH': myth_cards(ALL_RACES), **STATS}
 for k, v in rep.items(): t = t.replace('{{%s}}' % k, v)
 t = t.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
 assert '{{' not in t

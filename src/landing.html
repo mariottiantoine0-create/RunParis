@@ -2,11 +2,11 @@
 <html lang="fr">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Perfect Run · Ton parcours de course à Paris et Lyon</title>
-<meta name="description" content="Perfect Run génère des parcours de course à Paris, à Lyon et dans leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
+<title>Perfect Run · Ton parcours de course à {{CITIES_ET}}</title>
+<meta name="description" content="Perfect Run génère des parcours de course à {{CITIES_A}} et dans leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
-<meta property="og:title" content="Perfect Run · Ton parcours de course à Paris et Lyon">
+<meta property="og:title" content="Perfect Run · Ton parcours de course à {{CITIES_ET}}">
 <meta property="og:description" content="Choisis ta distance, Perfect Run trace ton parcours : dénivelé, moins de feux rouges, parcs, fontaines, métro pour rentrer. Gratuit, sans compte.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://perfectrun.fr/">
@@ -271,7 +271,7 @@ footer p{margin:0;max-width:62em}
       </svg>
     </div>
     <div class="wrap">
-      <p class="cities-line"><b>Paris · Lyon</b> et leurs communes voisines · Bordeaux et Marseille bientôt</p>
+      <p class="cities-line">{{CITIES_LINE}}</p>
       <h1 id="titre"><span>Où cours-tu</span> <em>aujourd’hui&nbsp;?</em></h1>
       <form class="ask" id="ask" action="app.html">
         <p class="sentence">
@@ -307,7 +307,7 @@ footer p{margin:0;max-width:62em}
 
   <section id="mythiques" aria-labelledby="t-myth" style="padding-top:0">
     <div class="wrap">
-      <div class="sec-top"><h2 class="sec-h" id="t-myth">Parcours mythiques</h2><a class="more" href="app.html#courses">Voir les 16 parcours <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></div>
+      <div class="sec-top"><h2 class="sec-h" id="t-myth">Parcours mythiques</h2><a class="more" href="app.html#courses">Voir les {{S_RACES}} parcours <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></div>
       <p class="sec-p" style="margin:0">Les tracés des grandes courses parisiennes, à courir en entier ou en partie.</p>
       <div class="myths">{{MYTH}}</div>
     </div>
@@ -316,14 +316,14 @@ footer p{margin:0;max-width:62em}
   <section class="how" id="comment-m" aria-labelledby="t-how">
     <div class="wrap">
       <ul class="facts" aria-label="Perfect Run en chiffres">
-        <li><b>5 400 km</b><span>de rues et chemins</span></li>
-        <li><b>3 539</b><span>carrefours à feux</span></li>
-        <li><b>1 541</b><span>fontaines</span></li>
-        <li><b>16</b><span>parcours mythiques</span></li>
+        <li><b>{{S_KM}} km</b><span>de rues et chemins</span></li>
+        <li><b>{{S_FEUX}}</b><span>carrefours à feux</span></li>
+        <li><b>{{S_FONT}}</b><span>fontaines</span></li>
+        <li><b>{{S_RACES}}</b><span>parcours mythiques</span></li>
       </ul>
       <h2 class="visually-hidden" id="t-how">Comment ça marche</h2>
       <ol class="steps">
-        <li><h3>Où ?</h3><p>Autour de toi, depuis chez toi ou n’importe quelle adresse de Paris, de Lyon et de leurs communes voisines.</p></li>
+        <li><h3>Où ?</h3><p>Autour de toi, depuis chez toi ou n’importe quelle adresse des villes couvertes et de leurs communes voisines.</p></li>
         <li><h3>Combien ?</h3><p>Une distance ou une durée : 5 km, 45 minutes, un semi.</p></li>
         <li><h3>Comment ?</h3><p>Plat ou vallonné, au vert, devant les monuments, sans les quartiers que tu évites.</p></li>
       </ol>
@@ -334,12 +334,12 @@ footer p{margin:0;max-width:62em}
   <section class="about" id="comment" aria-labelledby="t-about">
     <div class="wrap">
       <div>
-        <h2 class="sec-h" id="t-about">Fait pour courir à Paris</h2>
-        <p class="sec-p" style="margin-bottom:24px">Pas une carte du monde entier : Perfect Run connaît chaque carrefour à feux, les quais, les parcs et les côtes de Montmartre ou de la Croix-Rousse, à Paris, à Lyon et dans les communes qui les bordent. Gratuit, sans compte, tout se calcule dans ton navigateur.</p>
+        <h2 class="sec-h" id="t-about">Fait pour courir en ville</h2>
+        <p class="sec-p" style="margin-bottom:24px">Pas une carte du monde entier : Perfect Run connaît chaque carrefour à feux, les quais, les parcs et les côtes de chaque ville qu’il couvre, et des communes qui la bordent. Gratuit, sans compte, tout se calcule dans ton navigateur.</p>
         <ul class="facts" aria-label="Perfect Run en chiffres">
-          <li><b>5 400 km</b><span>de rues et chemins</span></li>
-          <li><b>3 539</b><span>carrefours à feux</span></li>
-          <li><b>1 541</b><span>fontaines</span></li>
+          <li><b>{{S_KM}} km</b><span>de rues et chemins</span></li>
+          <li><b>{{S_FEUX}}</b><span>carrefours à feux</span></li>
+          <li><b>{{S_FONT}}</b><span>fontaines</span></li>
         </ul>
       </div>
       <div>
