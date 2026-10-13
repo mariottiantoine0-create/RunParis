@@ -331,6 +331,7 @@ body{font-family:var(--f-body);font-variant-numeric:tabular-nums;-webkit-font-sm
 .seg button{border-radius:3px;color:var(--ink);font-size:15px;font-weight:600;transition:background-color .12s}
 .seg button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px} /* segments de même largeur, quel que soit le libellé */
 .depline .seg button{flex:1 1 auto}
+#arr-seg button{flex:1 1 auto;padding-left:8px;padding-right:8px} /* « Retour au départ » entier : largeur selon le texte */
 @media (max-width:380px){.seg button{white-space:normal;line-height:1.15}} /* petit téléphone : un libellé long passe sur 2 lignes au lieu de déborder */
 .seg button:hover{background:var(--soft)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -868,7 +869,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <button class="link" id="home-save">Enregistrer ce départ comme « Chez moi »</button>
         </div>
         <span class="lbl">Arrivée</span>
-        <div class="seg sm" role="group" aria-label="Arrivée">
+        <div class="seg sm" id="arr-seg" role="group" aria-label="Arrivée">
           <button id="a-back" aria-pressed="true">Retour au départ</button>
           <button id="a-place" aria-pressed="false">Un lieu</button>
           <button id="a-free" aria-pressed="false">N'importe où</button>
