@@ -1286,8 +1286,6 @@ SOFTWARE.
       <div class="btnrow"><button type="button" class="btn ghost" id="fb-cancel">Annuler</button><button type="submit" class="btn primary" id="fb-send">Envoyer</button></div>
     </form>
   </dialog>
-  <!-- static copy of the form so that Netlify Forms detects it at deploy time -->
-  <form name="signalement" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="type"><textarea name="message"></textarea><input name="email"><textarea name="parcours"></textarea><input name="page"></form>
 </div>
 
 <script>
@@ -1934,7 +1932,7 @@ if (NATIVE) { new MutationObserver(sbSync).observe(document.documentElement, { a
 // vibrations du mode course (D-86) : courtes, jamais en continu
 function navBuzz(k) { if (!NATIVE || !NAV.buzz) return; const h = NP.hap; (k === 'off' ? h.impact({ style: 'HEAVY' }).then(() => setTimeout(() => h.impact({ style: 'HEAVY' }), 160)) : k === 'end' ? h.notification({ type: 'SUCCESS' }) : h.impact({ style: 'LIGHT' })).catch(() => {}); }
 document.documentElement.classList.toggle('native', NATIVE);
-const WEB_APP = 'https://runparis.netlify.app/app.html'; // adresse des liens envoyés depuis l'application : le site en production les ouvre (D-88)
+const WEB_APP = 'https://perfectrun.fr/app.html'; // adresse des liens envoyés depuis l'application : le site en production les ouvre (D-88)
 if (NATIVE && NP.geo && navigator.geolocation) navigator.geolocation.getCurrentPosition = (ok, ko, o) => {
   NP.geo.getCurrentPosition({ enableHighAccuracy: !!(o && o.enableHighAccuracy), timeout: (o && o.timeout) || 10000, maximumAge: (o && o.maximumAge) || 0 })
     .then(ok, e => ko && ko({ code: /denied|permission|authoriz/i.test((e && (e.message || e.code)) || '') ? 1 : 2, message: e && e.message }));
@@ -3366,7 +3364,7 @@ function shDraw() {
   g.textBaseline = 'alphabetic'; g.textAlign = 'left'; g.fillStyle = fg;
   if (onPhoto) { g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 8; }
   const logo = (x, y, s, align) => { NARF(800, s); const a = 'RUN', b = 'PARIS', wa = g.measureText(a).width, wb = g.measureText(b).width; let x0 = align === 'center' ? x - (wa + wb) / 2 : x; g.fillStyle = fg; g.fillText(a, x0, y); g.fillStyle = onMap ? ACC : SH.bg === 'uni' ? 'rgba(255,255,255,.72)' : '#7B96FF'; g.fillText(b, x0 + wa, y); g.fillStyle = fg; };
-  const km = fmt(D.km, 1), time = fmtClock(SH.secs), pc = fmtClock(SH.secs / Math.max(.1, D.km)), url = 'runparis.netlify.app';
+  const km = fmt(D.km, 1), time = fmtClock(SH.secs), pc = fmtClock(SH.secs / Math.max(.1, D.km)), url = 'perfectrun.fr';
   const lieux = D.race ? [[D.dep, 'parcours mythique']] : D.loop ? [['Boucle · ' + D.dep, 'départ et arrivée']] : [[D.dep, 'départ'], [D.arr, 'arrivée']];
   const L = 66;
   if (SH.ly === 'big') {
@@ -3399,8 +3397,8 @@ function shBlob() { return new Promise(res => $('#shx-cv').toBlob(b => res(b), '
 async function shShare() {
   const b = await shBlob(); if (!b) return; const f = new File([b], `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, { type: 'image/jpeg' });
   track('partage', 'Image partagée ' + SH.bg + ' ' + SH.ly);
-  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec RunParis · runparis.netlify.app'); return; }
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec RunParis · runparis.netlify.app' }); } catch (e) {} return; }
+  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec RunParis · perfectrun.fr'); return; }
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec RunParis · perfectrun.fr' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
 async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
@@ -4005,16 +4003,16 @@ function gcHit(path, title, ev) {
     const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = `https://${GC}.goatcounter.com/count?${q}`; } catch (e) {}
 }
 function track(ev, title) { try { if (NATIVE) return gcHit('app/evt-' + ev, 'App · ' + (title || ev), true); if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
-// ---------- feedback (Netlify Forms) ----------
+// ---------- feedback : « Signaler un problème » envoie un email via le Worker Cloudflare (worker.js, /api/signalement) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
 const APP_VER = '0.1';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 8 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 13 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
-    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (hébergé par Netlify)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
+    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
     '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
     '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
@@ -4064,8 +4062,8 @@ $('#fb-form').onsubmit = async ev => {
   ev.preventDefault(); const msg = $('#fb-msg').value.trim(); if (!msg) { $('#fb-err').textContent = 'Écris un message.'; $('#fb-err').hidden = false; return; }
   const body = new URLSearchParams({ 'form-name': 'signalement', type: $('#fb-type').value, message: msg, email: $('#fb-mail').value.trim(), parcours: $('#fb-route').checked ? routeContext() : '', page: location.href });
   $('#fb-send').disabled = true;
-  const nf = !NATIVE && /netlify\.app$/.test(location.hostname); /* sur Netlify : formulaire du site ; ailleurs (app, perfectrun.fr) : envoi vers le formulaire Netlify, en attendant son remplacement */
-  try { const r = await fetch(nf ? '/' : 'https://runparis.netlify.app/', { method: 'POST', mode: nf ? 'cors' : 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (nf && !r.ok) throw new Error(r.status);
+  const nf = !NATIVE && /netlify\.app$/.test(location.hostname); /* ancien site Netlify : son propre formulaire */
+  try { const r = await fetch(nf ? '/' : NATIVE ? 'https://perfectrun.fr/api/signalement' : '/api/signalement', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!r.ok) throw new Error(r.status);
     $('#fb').close(); $('#fb-msg').value = ''; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }

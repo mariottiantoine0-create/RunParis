@@ -1,13 +1,22 @@
-// Perfect Run sur Cloudflare (Workers, fichiers statiques) : publie le dossier site/ tel quel, sans étape de construction.
+// Perfect Run sur Cloudflare (Workers) : publie le dossier site/ tel quel, sans étape de construction.
 // Les en-têtes (cache, sécurité) sont dans site/_headers.
+// worker.js ne tourne que pour /api/* (« Signaler un problème » → email) ; tout le reste est servi directement depuis site/.
 // Production (main) : perfectrun.fr · staging : aperçu de la branche staging (onglet Deployments du Worker).
+// Secret à régler dans Cloudflare (Settings → Variables and Secrets) : SIGNAL_TO = adresse qui reçoit les signalements.
 {
   "name": "perfectrun",
+  "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "preview_urls": true,
   "previews": {},
+  "keep_vars": true,
   "assets": {
-    "directory": "./site"
-  }
+    "directory": "./site",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "send_email": [
+    { "name": "MAIL" }
+  ]
 }
