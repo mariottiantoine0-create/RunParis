@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <meta charset="utf-8">
-<meta name="description" content="Perfect Run génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
+<meta name="description" content="Perfect Run génère des parcours de course à Paris, à Lyon et dans leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">
@@ -773,13 +773,30 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 .run-tools button.run-north[hidden]{display:none}
 #run-needle{transition:transform .45s ease}
 @media (prefers-reduced-motion:reduce){#run-needle{transition:none}}
+
+/* ---------- choix de la ville (D-97, CityPicker) ---------- */
+.lgrp{display:flex;align-items:center;min-width:0}
+.citybtn{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 10px 0 12px;margin-left:12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);font-weight:700;font-size:15px;line-height:1;cursor:pointer;flex:none}
+.citybtn svg{flex:none}
+@media (hover:hover){.citybtn:hover{background:var(--field)}}
+.cities{display:flex;flex-direction:column;gap:8px}
+.cityrow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:64px;box-sizing:border-box;padding:10px 14px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.cityrow b{display:block;font-size:17px}.cityrow small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.cityrow[aria-pressed="true"]{background:var(--accent-fill);border:2px solid var(--accent);padding:9px 13px;cursor:default}.cityrow[aria-pressed="true"] svg{color:var(--accent)}
+.cityrow.soon{background:var(--disabled-bg);border-color:var(--disabled-bg);color:var(--disabled-ink);cursor:default}
+.cityrow .tag{font-size:14px;font-weight:600;color:var(--disabled-ink)}
+.cityhint{font-size:13px;color:var(--muted);margin:12px 2px 0;line-height:1.4}
+#citysheet{z-index:63}
+#city-note{margin:12px 16px 0}
+#city-note .run-choice{margin-top:10px}
+@media (min-width:861px){#citysheet{position:fixed;right:auto;bottom:auto;width:320px;max-height:none;border-radius:8px;box-shadow:var(--shadow-pop);padding:0 0 4px}#citysheet .msheet-grab{display:none}#citysheet .msheet-h{padding:12px 12px 8px 16px}#citysheet .msheet-h h2{font-size:22px}#citysheet .msheet-b{padding:4px 12px 12px}}
 </style>
 
 <div id="splash" aria-hidden="true"><svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">PERFECT<span>RUN</span></div></div><div class="app">
   <aside class="panel" aria-label="Réglages et résultats">
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
-      <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
+      <div class="lgrp"><a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a><button type="button" class="citybtn" id="city-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Ville : Paris. Changer de ville"><span id="city-name">Paris</span><svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M6 9l6 6 6-6"/></svg></button></div>
       <button class="iconbtn" id="theme-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
     </div>
     <div class="themepop" id="themepop" hidden>
@@ -801,6 +818,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <button role="tab" id="tab-race" aria-selected="false">Mythiques</button>
       <button role="tab" id="tab-mine" aria-selected="false">Mes parcours</button>
     </div>
+    <div class="note info" id="city-note" role="status" hidden></div>
     <!-- ===== Mes parcours (D-81) ===== -->
     <div class="pbody" id="view-mine" hidden>
       <div id="mine-list">
@@ -914,7 +932,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <div class="row" id="dplus-row" hidden>
           <span style="font-size:14px;white-space:nowrap">D+ visé</span>
           <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
-          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
+          <p class="hint" style="flex:1" id="hill-hint">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
         </div>
         <div class="seg sm" role="group" aria-label="Priorité" id="prio"><button id="p-few" aria-pressed="false">Moins de feux</button><button id="p-eq" aria-pressed="true">Équilibré</button><button id="p-turn" aria-pressed="false">Lignes droites</button></div>
         <p class="hint" id="prio-hint">Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.</p>
@@ -932,7 +950,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           </div>
           <span class="lbl">Arrondissements</span>
           <div class="arr" id="arr"></div>
-          <details class="q"><summary>Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
+          <details class="q"><summary id="zones-sum">Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
           <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
         </div>
         <p class="hint" id="always">Toujours évités : gares et métro, cimetières, passages couverts et centres commerciaux.</p>
@@ -971,7 +989,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 
     <!-- ===== Parcours mythiques ===== -->
     <div class="pbody" id="view-race" hidden>
-      <p class="hint">Les grands parcours de course de Paris, pour s'entraîner dessus en entier ou en partie.</p>
+      <p class="hint" id="race-hint">Les grands parcours de course de Paris, pour s'entraîner dessus en entier ou en partie.</p>
       <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les parcours"></div>
       <div class="alts" id="races" role="group" aria-label="Parcours mythiques"></div>
       <div id="race-detail" class="step" hidden>
@@ -998,8 +1016,8 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   <main class="main">
     <div class="mapwrap" id="mapwrap">
       <div class="bar" id="bar" style="width:0"></div>
-      <canvas id="map" aria-label="Carte de Paris et des communes voisines avec le parcours"></canvas>
-      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
+      <canvas id="map" aria-label="Carte de la ville et des communes voisines avec le parcours"></canvas>
+      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN<span id="attrib-od"> · Paris Open Data</span></span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
       <div class="layers" id="layers">
         <button type="button" class="ly-btn" id="ly-btn" aria-expanded="false" aria-controls="ly-pop" aria-label="Calques : afficher sur la carte" title="Calques"><svg class="ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 3.5l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16l9 4.5 9-4.5"/></svg></button>
         <div class="ly-pop" id="ly-pop" hidden role="group" aria-label="Afficher sur la carte"><span class="ly-h">Afficher sur la carte</span>
@@ -1041,7 +1059,12 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </div>
   </main>
   <div class="mback" id="mback" hidden></div>
-  <div class="msheet" id="msheet" hidden role="dialog" aria-modal="true" aria-labelledby="msheet-t">
+  <div class="msheet" id="citysheet" hidden role="dialog" aria-labelledby="citysheet-t">
+  <div class="msheet-grab" aria-hidden="true"></div>
+  <div class="msheet-h"><h2 id="citysheet-t">Ta ville</h2><button type="button" class="iconbtn" id="city-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+  <div class="msheet-b"><div class="cities" id="city-list" role="group" aria-label="Villes"></div><p class="cityhint">À l’ouverture, Perfect Run choisit la ville où tu es. Les parcours mythiques et la recherche de départ suivent la ville choisie.</p></div>
+</div>
+<div class="msheet" id="msheet" hidden role="dialog" aria-modal="true" aria-labelledby="msheet-t">
     <div class="msheet-grab" aria-hidden="true"></div>
     <div class="msheet-h"><h2 id="msheet-t">Réglages</h2><button type="button" class="iconbtn" id="msheet-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
     <div class="msheet-b" id="msheet-b"></div>
@@ -1953,19 +1976,78 @@ const S = {
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
-const DV = '?v=9f457bc9'; // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
+// ---------- villes (D-97) : une carte et des données par ville ; Paris à la racine, les autres dans leur dossier ----------
+const CITIES = {
+  paris: { name: 'Paris', dir: '', sub: 'et 29 communes voisines', ll: [48.8566, 2.3522], bb: [48.799, 48.975, 2.18, 2.5], end: ['Jardin du Luxembourg', 48.8462, 2.3371],
+    hill: 'Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.', zones: '80 quartiers et 29 communes', avoidEx: 'Un lieu : Tour Eiffel, Châtelet, un marché…', races: 'Les grands parcours de course de Paris, pour s’entraîner dessus en entier ou en partie.', od: 'Paris Open Data' },
+  lyon: { name: 'Lyon', dir: 'lyon/', sub: 'et 15 communes voisines', ll: [45.7578, 4.832], bb: [45.675, 45.855, 4.7, 4.98], end: ['Parc de la Tête d’Or', 45.7772, 4.8556],
+    hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon arrivent bientôt.', od: '' }
+};
+const CITY_SOON = ['Bordeaux', 'Marseille'];
+const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
+const CITY_K = 'runparis-city';
+const CITY_STORED = (() => { try { const v = localStorage.getItem(CITY_K); return CITIES[v] ? v : null; } catch (e) { return null; } })();
+const CITY = (() => { const q = new URLSearchParams(location.search).get('ville'); return CITIES[q] ? q : CITY_STORED || 'paris'; })();
+try { localStorage.setItem(CITY_K, CITY); } catch (e) {}
+const C0 = CITIES[CITY], CD = C0.dir;
+document.documentElement.dataset.city = CITY;
+// changer de ville : on recharge l'app sur la nouvelle carte (le choix est gardé sur l'appareil) ; extra = paramètres à ajouter (parcours à rouvrir…)
+function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
+  const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
+  if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
+const DV = '?v=885fdc77';
+// textes de la ville
+$('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
+$('#hill-hint').textContent = C0.hill; $('#zones-sum').textContent = `Choisir quartier par quartier (${C0.zones})`; $('#avoid-q').placeholder = C0.avoidEx; $('#race-hint').textContent = C0.races;
+$('#map').setAttribute('aria-label', `Carte de ${C0.name} et des communes voisines avec le parcours`); $('#attrib-od').textContent = C0.od ? ' · ' + C0.od : '';
+// ---------- choix de la ville (D-97, CityPicker) : bouton d'en-tête, feuille sur téléphone, liste sous l'en-tête sur ordinateur ----------
+const CHECK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M5 12l5 5 9-10"/></svg>';
+function cityOpen() {
+  const L = $('#city-list'); L.innerHTML = '';
+  for (const [k, c] of Object.entries(CITIES)) { const b = document.createElement('button'); b.type = 'button'; b.className = 'cityrow'; b.setAttribute('aria-pressed', k === CITY);
+    b.innerHTML = `<span><b></b><small></small></span>${k === CITY ? CHECK_SVG : ''}`; b.querySelector('b').textContent = c.name; b.querySelector('small').textContent = c.sub;
+    b.onclick = () => { if (k === CITY) return cityClose(); setCity(k); }; L.appendChild(b); }
+  for (const n of CITY_SOON) { const d = document.createElement('div'); d.className = 'cityrow soon'; d.setAttribute('aria-disabled', 'true'); d.innerHTML = '<span><b></b></span><span class="tag">Bientôt</span>'; d.querySelector('b').textContent = n; L.appendChild(d); }
+  const sh = $('#citysheet'); sh.hidden = false; $('#city-btn').setAttribute('aria-expanded', 'true');
+  if (MOB.matches) { $('#mback').hidden = false; sh.style.left = sh.style.top = ''; }
+  else { const r = $('#city-btn').getBoundingClientRect(); sh.style.left = Math.max(8, Math.min(innerWidth - 328, r.left)) + 'px'; sh.style.top = (r.bottom + 6) + 'px'; }
+}
+function cityClose() { const sh = $('#citysheet'); if (sh.hidden) return; sh.hidden = true; $('#city-btn').setAttribute('aria-expanded', 'false'); if (!MCUR) $('#mback').hidden = true; }
+$('#city-btn').onclick = e => { e.stopPropagation(); $('#citysheet').hidden ? cityOpen() : cityClose(); };
+$('#city-x').onclick = cityClose;
+document.addEventListener('click', e => { const sh = $('#citysheet'); if (!sh.hidden && !sh.contains(e.target) && !$('#city-btn').contains(e.target)) cityClose(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cityClose(); });
+// position dans une autre ville couverte : on propose d'y passer, jamais sans demander
+function cityHint(la, lo) {
+  const k = cityAt(la, lo), n = $('#city-note');
+  if (!k || k === CITY) { n.hidden = true; return false; }
+  const c = CITIES[k];
+  n.innerHTML = '<b class="nt"></b><span></span><div class="run-choice"><button type="button" class="btn primary" id="cn-go"></button><button type="button" class="textbtn" id="cn-stay"></button></div>';
+  n.querySelector('b').textContent = `Tu es à ${c.name}`; n.querySelector('span').textContent = `Passe sur ${c.name} pour créer un parcours autour de toi.`;
+  $('#cn-go').textContent = `Passer sur ${c.name}`; $('#cn-stay').textContent = `Rester sur ${C0.name}`;
+  $('#cn-go').onclick = () => setCity(k); $('#cn-stay').onclick = () => { n.hidden = true; };
+  n.hidden = false; track('ville-proposee', 'Autre ville proposée · ' + c.name); return true;
+}
+// première ouverture : si la position est déjà autorisée, on ouvre directement la ville où l'on est
+function cityFirstRun() {
+  if (CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
+  const go = () => navigator.geolocation.getCurrentPosition(p => { const k = cityAt(p.coords.latitude, p.coords.longitude); if (k && k !== CITY) setCity(k); }, () => {}, { maximumAge: 600000, timeout: 8000 });
+  if (NATIVE && NP.geo && NP.geo.checkPermissions) NP.geo.checkPermissions().then(r => { if (r && r.location === 'granted') go(); }).catch(() => {});
+  else if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted') go(); }).catch(() => {});
+}
+ // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
 let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [];
 
 // ---------- loading ----------
 async function boot() {
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
-    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch('graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch('graph.bin' + DV).then(r => r.arrayBuffer()); };
-    const [meta, buf] = await Promise.all([fetch('meta.json' + DV).then(r => r.json()), loadGraph()]);
+    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(CD + 'graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(CD + 'graph.bin' + DV).then(r => r.arrayBuffer()); };
+    const [meta, buf] = await Promise.all([fetch(CD + 'meta.json' + DV).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv, xc] = await Promise.all([fetch('green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch('fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch('dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch('excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
@@ -1975,7 +2057,7 @@ async function boot() {
     if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
-  } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de Paris (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
+  } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de ' + C0.name + ' (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
   mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; splashDone(); sbSync(); renderAvoid(); renderVias(); renderRaces(); updateConv();
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
@@ -1989,10 +2071,11 @@ async function boot() {
   if (!applyParams() && !S.start) openStart(false);
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
+  cityFirstRun();
 }
 // street trees (OSM natural=tree): x, y in metres as Int16 pairs; loaded after the first route
 function loadTrees() {
-  fetch('trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
+  fetch(CD + 'trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();
@@ -2065,7 +2148,7 @@ function ohOpen(oh, t) {
 function parkOpen(p, t) { if (p.oh) { const v = ohOpen(p.oh, t); if (v !== null) return v; } return municipalOpen(p, t); }
 // sunrise / sunset in Paris for a given day (NOAA approximation, about ±2 min)
 function sunTimes(t) {
-  const rad = Math.PI / 180, lat = 48.8566, lon = 2.3522;
+  const rad = Math.PI / 180, [lat, lon] = C0.ll;
   const start = Date.UTC(t.getFullYear(), 0, 0), n = Math.floor((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - start) / 864e5);
   const g = 2 * Math.PI / 365 * (n - 1);
   const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
@@ -2150,10 +2233,11 @@ function searchBox(inp, res, onPick) {
 function arrLabel(n) { return n === 1 ? '1<sup>er</sup>' : n + '<sup>e</sup>'; }
 function buildZones() {
   const box = $('#arr');
-  for (let a = 1; a <= 20; a++) { const b = document.createElement('button'); b.type = 'button'; b.dataset.ar = a; b.innerHTML = arrLabel(a); b.setAttribute('aria-label', `${a}${a === 1 ? 'er' : 'e'} arrondissement`); b.onclick = () => toggleArr(a); box.appendChild(b); }
+  const NA = Math.max(0, ...M.quartiers.filter(q => q.ar < 100).map(q => q.ar));
+  for (let a = 1; a <= NA; a++) { const b = document.createElement('button'); b.type = 'button'; b.dataset.ar = a; b.innerHTML = arrLabel(a); b.setAttribute('aria-label', `${a}${a === 1 ? 'er' : 'e'} arrondissement`); b.onclick = () => toggleArr(a); box.appendChild(b); }
   const ql = $('#qlist');
-  for (let a = 1; a <= 20; a++) {
-    const h = document.createElement('div'); h.className = 'ah'; h.innerHTML = arrLabel(a) + ' arr.'; ql.appendChild(h);
+  for (let a = 1; a <= NA; a++) {
+    const h = document.createElement('div'); h.className = 'ah'; h.innerHTML = arrLabel(a) + ' arr.'; if (M.quartiers.filter(q => q.ar === a).length > 1) ql.appendChild(h);
     for (const q of M.quartiers.filter(q => q.ar === a)) {
       const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" data-q="${q.id}"><span></span>`; l.lastChild.textContent = q.name;
       l.firstChild.onchange = e => { e.target.checked ? S.exclQ.add(q.id) : S.exclQ.delete(q.id); zonesChanged(); };
@@ -2171,7 +2255,7 @@ function buildZones() {
     }
   }
   // initial view: Paris itself (the graph also covers the neighbouring communes)
-  { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of M.quartiers) if (q.ar <= 20) for (const [la, lo] of q.rings[0]) { const [x, y] = E.toXY(la, lo); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (x1 > x0) M.parisB = [x0, y0, x1, y1]; }
+  { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of M.quartiers) if (q.ar < 100) for (const [la, lo] of q.rings[0]) { const [x, y] = E.toXY(la, lo); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (x1 > x0) M.parisB = [x0, y0, x1, y1]; }
   // centroids of arrondissements for labels
   M.arrC = {};
   for (const q of M.quartiers) { const r = q.rings[0]; let x = 0, y = 0; for (const [la, lo] of r) { const p = E.toXY(la, lo); x += p[0]; y += p[1]; } const c = M.arrC[q.ar] || [0, 0, 0]; c[0] += x / r.length; c[1] += y / r.length; c[2]++; M.arrC[q.ar] = c; }
@@ -2281,7 +2365,7 @@ function setSheet(st, refit) {
 }
 (() => {
   let d = null; const panel = $('.panel');
-  const start = e => { if (!MOB.matches || e.pointerType !== 'mouse' || e.target.closest('#theme-btn, a.logo')) return; /* au doigt : geste tactile plus bas (D-75) */ d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const start = e => { if (!MOB.matches || e.pointerType !== 'mouse' || e.target.closest('#theme-btn, #city-btn, a.logo')) return; /* au doigt : geste tactile plus bas (D-75) */ d = { y: e.clientY, h: panel.getBoundingClientRect().height, moved: false }; panel.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
   const move = e => { if (!d) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 4) d.moved = true; const hs = sheetHeights(); document.documentElement.style.setProperty('--sheet-h', Math.max(hs.peek, Math.min(hs.full, d.h - dy)) + 'px'); };
   const end = () => { if (!d) return; panel.classList.remove('dragging'); const h = panel.getBoundingClientRect().height, hs = sheetHeights();
     if (!d.moved) setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek', true);
@@ -2297,7 +2381,7 @@ function setSheet(st, refit) {
   const H = () => panel.getBoundingClientRect().height;
   panel.addEventListener('touchstart', e => {
     if (!MOB.matches || e.touches.length !== 1) { t = null; return; }
-    const tg = e.target; if (tg.closest('input, select, textarea, #theme-btn, a.logo, .themepop, .chips, #race-filter, #portion-chips')) { t = null; return; }
+    const tg = e.target; if (tg.closest('input, select, textarea, #theme-btn, #city-btn, #citysheet, a.logo, .themepop, .chips, #race-filter, #portion-chips')) { t = null; return; }
     const y = e.touches[0].clientY, x = e.touches[0].clientX;
     t = { y0: y, x0: x, h0: H(), body: tg.closest('.pbody'), handle: !!tg.closest('#grab, .phead, .tabs, .summary, #mset'), on: false, ys: [[y, performance.now()]] };
   }, { passive: true });
@@ -2589,11 +2673,11 @@ function click(sx, sy) {
   const q = M.quartiers.find(q => q.rings.some(r => pip([lat, lon], r)));
   const t = S.tool;
   if (t === 'start' || t === 'end') {
-    if (!q) return toast('Choisis un point sur la carte (Paris et communes voisines).');
+    if (!q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`);
     setPoint(t, { lat, lon, name: `Point sur la carte · ${q.name}` }); setTool(null); generate(); return;
   }
-  if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast('Choisis un point sur la carte (Paris et communes voisines).');
-  if (t === 'via') { if (!q) return toast('Choisis un point sur la carte (Paris et communes voisines).'); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
+  if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`);
+  if (t === 'via') { if (!q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
   if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name}${q.ar > 100 ? '' : ` (${q.ar}${q.ar === 1 ? 'er' : 'e'})`} ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
   if (t === 'place') { S.places.push({ lat, lon, r: 150, name: `Point · ${q.name}` }); renderPlaces(); draw(); toast('Lieu évité (150 m). Rayon modifiable dans « À éviter ».'); return; }
 }
@@ -2615,7 +2699,8 @@ function locate() {
     toast('Recherche de ta position…', 10000);
     navigator.geolocation.getCurrentPosition(p => {
       const la = p.coords.latitude, lo = p.coords.longitude, [x, y] = E.toXY(la, lo), n = E.nearest(x, y);
-      if (n < 0 || Math.hypot(G.NX[n] - x, G.NY[n] - y) > 800) { toast('Tu sembles hors de Paris et des communes voisines : choisis un départ.', 4500); openStart(false); return res(false); }
+      if (n < 0 || Math.hypot(G.NX[n] - x, G.NY[n] - y) > 800) { $('#toast').hidden = true; if (!cityHint(la, lo)) toast(`Tu sembles hors de ${C0.name} et des communes voisines : choisis un départ.`, 4500); openStart(false); return res(false); }
+      cityHint(la, lo);
       $('#toast').hidden = true; setPoint('start', { lat: la, lon: lo, name: 'Ma position' }); if (!$('#start-box').hidden) $('#change-start').click(); fitRoute(true); res(true);
     }, e => { toast(e.code === 1 ? 'Position refusée : choisis un départ dans la recherche.' : 'Position introuvable : choisis un départ dans la recherche.', 4500); openStart(false); res(false); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
   });
@@ -2623,8 +2708,8 @@ function locate() {
 $('#pos-go').onclick = () => locate().then(ok => { if (ok && S.mode === 'loop') generate(); });
 // réglages passés dans le lien, depuis l'accueil : ?km=10&arr=back&dep=pos&type=green&go=1, ou ?race=marathon
 function applyParams() {
-  const Q = new URLSearchParams(location.search); if (![...Q.keys()].length) return false;
-  if (Q.has('p')) { if (openFixed(Q.get('p'), Q.get('n') || '', true)) track('recu', APPF ? 'Parcours reçu ouvert' : 'Parcours reçu ouvert sur le site'); else { linkErr(true); track('recu', 'Lien de parcours incomplet'); } return true; }
+  const Q = new URLSearchParams(location.search); if (![...Q.keys()].some(k => k !== 'ville' && k !== 'web')) return false;
+  if (Q.has('p')) { if (openFixed(Q.get('p'), Q.get('n') || '', !Q.has('refaire'))) track('recu', APPF ? 'Parcours reçu ouvert' : 'Parcours reçu ouvert sur le site'); else { linkErr(true); track('recu', 'Lien de parcours incomplet'); } return true; }
   const rid = Q.get('race');
   if (rid) { const r = RACES.find(x => x.id === rid); setTab('race'); if (r) { S.race = r; showRace(r); renderRaces(); } return true; }
   if (Q.has('min')) { setUnit('min'); $('#dur').value = Math.max(5, Math.min(300, Math.round(parseFloat(Q.get('min')) || 45))); }
@@ -2660,7 +2745,7 @@ function setArrival(k) {
   ['back', 'place', 'free'].forEach(j => $('#a-' + j).setAttribute('aria-pressed', j === k));
   S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
   $('#end-fixed').hidden = k !== 'place'; $('#end-free-hint').hidden = k !== 'free'; $('#end-metro-row').hidden = k !== 'free' || !METRO.st.length;
-  if (k === 'place' && !S.end) { const p = M.poi.find(p => p[0] === 'Jardin du Luxembourg') || ['Jardin du Luxembourg', 'park', 48.8462, 2.3371]; setPoint('end', { lat: p[2], lon: p[3], name: p[0] }); }
+  if (k === 'place' && !S.end) { const p = M.poi.find(p => p[0] === C0.end[0]) || [C0.end[0], 'park', C0.end[1], C0.end[2]]; setPoint('end', { lat: p[2], lon: p[3], name: p[0] }); }
   applyModeLabels(); draw();
 }
 ['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
@@ -2894,7 +2979,7 @@ function raceStats(race) {
 const RACE_CATS = [['all', 'Toutes'], ['10', '10 km'], ['long', 'Semi et plus'], ['bois', 'Bois et trail']];
 function renderRaces() {
   const box = $('#races'), det = $('#race-detail'); $('#view-race').appendChild(det); box.innerHTML = '';
-  if (!RACES.length) { box.innerHTML = '<p class="hint">Tracés indisponibles (données non chargées).</p>'; return; }
+  if (!RACES.length) { $('#race-filter').innerHTML = ''; box.innerHTML = CITY === 'paris' ? '<p class="hint">Tracés indisponibles (données non chargées).</p>' : ''; return; }
   const cat = S.raceCat || 'all';
   const fb = $('#race-filter'); fb.innerHTML = '';
   for (const [k, lab] of RACE_CATS) { const n = k === 'all' ? RACES.length : RACES.filter(r => (r.cat === 'semi' ? 'long' : r.cat === 'trail' ? 'bois' : r.cat) === k).length; if (!n) continue;
@@ -3108,9 +3193,9 @@ async function generate(isAgain) {
   draw();
 }
 function hillHint() {
-  const hills = [['Montmartre', 18], ['Belleville', 20], ['les Buttes-Chaumont', 19], ['Ménilmontant', 20], ['la Butte-aux-Cailles', 13]];
+  const hills = CITY === 'lyon' ? [['la Croix-Rousse', 4], ['Fourvière', 5], ['la montée de la Grande Côte', 1], ['Saint-Just', 5]] : [['Montmartre', 18], ['Belleville', 20], ['les Buttes-Chaumont', 19], ['Ménilmontant', 20], ['la Butte-aux-Cailles', 13]];
   const ok = hills.filter(([, a]) => M.quartiers.filter(q => q.ar === a).some(q => !S.exclQ.has(q.id)));
-  if (!ok.length) return 'Les buttes de Paris sont dans tes zones évitées : réautorise le 18e, 19e ou 20e pour grimper plus.';
+  if (!ok.length) return CITY === 'lyon' ? 'Les collines de Lyon sont dans tes zones évitées : réautorise le 1er, 4e ou 5e pour grimper plus.' : 'Les buttes de Paris sont dans tes zones évitées : réautorise le 18e, 19e ou 20e pour grimper plus.';
   const names = ok.slice(0, 3).map(([n, a]) => `${n} (${a}e)`);
   return 'Pour grimper plus, pars vers ' + (names.length > 1 ? names.slice(0, -1).join(', ') + ' ou ' + names[names.length - 1] : names[0]) + '.';
 }
@@ -3306,7 +3391,7 @@ function shOpen(secs, doneM) {
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
   $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
-  const entry = { id: Date.now(), d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
+  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
   mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
@@ -3910,7 +3995,7 @@ function routeFromCode(code) { const ll = decPoly(code || ''); if (ll.length < 2
 const mineTitle = d => d.race ? d.dep : d.loop ? 'Boucle · ' + d.dep : d.dep + ' → ' + (d.arr || 'arrivée');
 function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
-  const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '');
+  const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '') + (CITY !== 'paris' ? '&ville=' + CITY : '');
   track('envoi', 'Parcours envoyé');
   if (NATIVE) { NP.share.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
@@ -3980,7 +4065,7 @@ function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur
 $('#tab-mine').onclick = () => setTab('mine');
 $('#mine-new').onclick = () => setTab('gen');
 $('#mine-back').onclick = () => { renderMine(); S.route = null; S.alts = []; draw(); };
-$('#md-redo').onclick = () => { const e = mineCurrent(); if (e && openFixed(e.g, e.t || mineTitle(e), false)) track('refaire', 'Parcours refait'); };
+$('#md-redo').onclick = () => { const e = mineCurrent(); if (!e) return; if ((e.city || 'paris') !== CITY) { setCity(e.city || 'paris', { p: e.g, n: e.t || mineTitle(e), refaire: 1 }); return; } if (openFixed(e.g, e.t || mineTitle(e), false)) track('refaire', 'Parcours refait'); };
 $('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.g, e.t || mineTitle(e), e.km); };
 $('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.g); if (!st) return;
   const P = st.geom; SH.data = { pts: P, km: e.km, up: e.up || Math.round(st.up), loop: !!e.loop, dep: e.dep || '', arr: e.arr || '', race: !!e.race, date: new Date(e.d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) };
@@ -4003,7 +4088,7 @@ function gcHit(path, title, ev) {
   try { const q = new URLSearchParams({ p: path, t: title || path, e: ev ? 'true' : 'false', s: `${screen.width},${screen.height},${window.devicePixelRatio || 1}`, rnd: Math.random().toString(36).slice(2) });
     const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = `https://${GC}.goatcounter.com/count?${q}`; } catch (e) {}
 }
-function track(ev, title) { try { if (NATIVE) return gcHit('app/evt-' + ev, 'App · ' + (title || ev), true); if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev, title: title || ev, event: true }); } catch (e) {} }
+function track(ev, title) { try { const cv = CITY !== 'paris' ? '-' + CITY : '', ct = CITY !== 'paris' ? ' · ' + C0.name : ''; if (NATIVE) return gcHit('app/evt-' + ev + cv, 'App · ' + (title || ev) + ct, true); if (STATS && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'evt-' + ev + cv, title: (title || ev) + ct, event: true }); } catch (e) {} }
 // ---------- feedback : « Signaler un problème » envoie un email via le Worker Cloudflare (worker.js, /api/signalement) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
@@ -4021,7 +4106,7 @@ const ABOUT = {
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
     '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
-  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Quartiers : Paris Open Data', 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
+  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +

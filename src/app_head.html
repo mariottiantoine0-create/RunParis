@@ -765,13 +765,30 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 .run-tools button.run-north[hidden]{display:none}
 #run-needle{transition:transform .45s ease}
 @media (prefers-reduced-motion:reduce){#run-needle{transition:none}}
+
+/* ---------- choix de la ville (D-97, CityPicker) ---------- */
+.lgrp{display:flex;align-items:center;min-width:0}
+.citybtn{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 10px 0 12px;margin-left:12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);font-weight:700;font-size:15px;line-height:1;cursor:pointer;flex:none}
+.citybtn svg{flex:none}
+@media (hover:hover){.citybtn:hover{background:var(--field)}}
+.cities{display:flex;flex-direction:column;gap:8px}
+.cityrow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:64px;box-sizing:border-box;padding:10px 14px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.cityrow b{display:block;font-size:17px}.cityrow small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.cityrow[aria-pressed="true"]{background:var(--accent-fill);border:2px solid var(--accent);padding:9px 13px;cursor:default}.cityrow[aria-pressed="true"] svg{color:var(--accent)}
+.cityrow.soon{background:var(--disabled-bg);border-color:var(--disabled-bg);color:var(--disabled-ink);cursor:default}
+.cityrow .tag{font-size:14px;font-weight:600;color:var(--disabled-ink)}
+.cityhint{font-size:13px;color:var(--muted);margin:12px 2px 0;line-height:1.4}
+#citysheet{z-index:63}
+#city-note{margin:12px 16px 0}
+#city-note .run-choice{margin-top:10px}
+@media (min-width:861px){#citysheet{position:fixed;right:auto;bottom:auto;width:320px;max-height:none;border-radius:8px;box-shadow:var(--shadow-pop);padding:0 0 4px}#citysheet .msheet-grab{display:none}#citysheet .msheet-h{padding:12px 12px 8px 16px}#citysheet .msheet-h h2{font-size:22px}#citysheet .msheet-b{padding:4px 12px 12px}}
 </style>
 
 <div class="app">
   <aside class="panel" aria-label="Réglages et résultats">
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
-      <div class="logo" aria-label="Perfect Run">PERFECT<span>RUN</span></div>
+      <div class="lgrp"><div class="logo" aria-label="Perfect Run">PERFECT<span>RUN</span></div><button type="button" class="citybtn" id="city-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Ville : Paris. Changer de ville"><span id="city-name">Paris</span><svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M6 9l6 6 6-6"/></svg></button></div>
       <button class="iconbtn" id="theme-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
     </div>
     <div class="themepop" id="themepop" hidden>
@@ -793,6 +810,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <button role="tab" id="tab-race" aria-selected="false">Mythiques</button>
       <button role="tab" id="tab-mine" aria-selected="false">Mes parcours</button>
     </div>
+    <div class="note info" id="city-note" role="status" hidden></div>
     <!-- ===== Mes parcours (D-81) ===== -->
     <div class="pbody" id="view-mine" hidden>
       <div id="mine-list">
@@ -906,7 +924,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <div class="row" id="dplus-row" hidden>
           <span style="font-size:14px;white-space:nowrap">D+ visé</span>
           <input type="number" id="dplus" min="0" max="600" step="10" value="120" style="width:90px" aria-label="D+ visé en mètres"><span style="color:var(--muted)">m</span>
-          <p class="hint" style="flex:1">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
+          <p class="hint" style="flex:1" id="hill-hint">Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.</p>
         </div>
         <div class="seg sm" role="group" aria-label="Priorité" id="prio"><button id="p-few" aria-pressed="false">Moins de feux</button><button id="p-eq" aria-pressed="true">Équilibré</button><button id="p-turn" aria-pressed="false">Lignes droites</button></div>
         <p class="hint" id="prio-hint">Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.</p>
@@ -924,7 +942,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           </div>
           <span class="lbl">Arrondissements</span>
           <div class="arr" id="arr"></div>
-          <details class="q"><summary>Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
+          <details class="q"><summary id="zones-sum">Choisir quartier par quartier (80 quartiers et 29 communes)</summary><div class="qlist" id="qlist"></div></details>
           <p class="hint">Ou sur la carte : outils « Éviter une zone » et « Éviter un lieu ».</p>
         </div>
         <p class="hint" id="always">Toujours évités : gares et métro, cimetières, passages couverts et centres commerciaux.</p>
@@ -963,7 +981,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 
     <!-- ===== Parcours mythiques ===== -->
     <div class="pbody" id="view-race" hidden>
-      <p class="hint">Les grands parcours de course de Paris, pour s'entraîner dessus en entier ou en partie.</p>
+      <p class="hint" id="race-hint">Les grands parcours de course de Paris, pour s'entraîner dessus en entier ou en partie.</p>
       <div class="chips wrap" id="race-filter" role="group" aria-label="Filtrer les parcours"></div>
       <div class="alts" id="races" role="group" aria-label="Parcours mythiques"></div>
       <div id="race-detail" class="step" hidden>
@@ -990,8 +1008,8 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   <main class="main">
     <div class="mapwrap" id="mapwrap">
       <div class="bar" id="bar" style="width:0"></div>
-      <canvas id="map" aria-label="Carte de Paris et des communes voisines avec le parcours"></canvas>
-      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN · Paris Open Data</span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
+      <canvas id="map" aria-label="Carte de la ville et des communes voisines avec le parcours"></canvas>
+      <div class="attrib">Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a><span class="al"> (ODbL) · altitudes IGN<span id="attrib-od"> · Paris Open Data</span></span> · <button type="button" class="attrib-more" id="attrib-more">Sources</button></div>
       <div class="layers" id="layers">
         <button type="button" class="ly-btn" id="ly-btn" aria-expanded="false" aria-controls="ly-pop" aria-label="Calques : afficher sur la carte" title="Calques"><svg class="ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 3.5l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16l9 4.5 9-4.5"/></svg></button>
         <div class="ly-pop" id="ly-pop" hidden role="group" aria-label="Afficher sur la carte"><span class="ly-h">Afficher sur la carte</span>
@@ -1033,7 +1051,12 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </div>
   </main>
   <div class="mback" id="mback" hidden></div>
-  <div class="msheet" id="msheet" hidden role="dialog" aria-modal="true" aria-labelledby="msheet-t">
+  <div class="msheet" id="citysheet" hidden role="dialog" aria-labelledby="citysheet-t">
+  <div class="msheet-grab" aria-hidden="true"></div>
+  <div class="msheet-h"><h2 id="citysheet-t">Ta ville</h2><button type="button" class="iconbtn" id="city-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+  <div class="msheet-b"><div class="cities" id="city-list" role="group" aria-label="Villes"></div><p class="cityhint">À l’ouverture, Perfect Run choisit la ville où tu es. Les parcours mythiques et la recherche de départ suivent la ville choisie.</p></div>
+</div>
+<div class="msheet" id="msheet" hidden role="dialog" aria-modal="true" aria-labelledby="msheet-t">
     <div class="msheet-grab" aria-hidden="true"></div>
     <div class="msheet-h"><h2 id="msheet-t">Réglages</h2><button type="button" class="iconbtn" id="msheet-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
     <div class="msheet-b" id="msheet-b"></div>
