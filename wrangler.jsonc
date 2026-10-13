@@ -1,0 +1,9 @@
+// Perfect Run sur Cloudflare (Workers, fichiers statiques) : publie le dossier site/ tel quel, sans étape de construction.
+// Les en-têtes (cache, sécurité) sont dans site/_headers.
+{
+  "name": "perfectrun",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./site"
+  }
+}
