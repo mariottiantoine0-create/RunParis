@@ -9,17 +9,23 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(self), camera=(), microphone=()"
 
-# données de Paris : gardées 1 jour par le navigateur
+# données de Paris : appelées avec leur version (?v=…), gardées un an par le navigateur ; une nouvelle version change l'adresse
 [[headers]]
   for = "/*.json"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
 [[headers]]
   for = "/*.txt"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
 [[headers]]
   for = "/graph.bin"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
+    Content-Type = "application/octet-stream"
+# carte compressée : envoyée telle quelle (pas de Content-Encoding), la page la décompresse
+[[headers]]
+  for = "/graph.gz"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
     Content-Type = "application/octet-stream"

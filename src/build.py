@@ -17,6 +17,9 @@ app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engi
 h = hashlib.sha1()
 for f in ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt']:
     h.update((root / 'site' / f).read_bytes())
+# carte de Paris compressée (graph.gz) : servie au navigateur, décompressée dans la page (trafic ÷ 2,7)
+import gzip
+(root / 'site' / 'graph.gz').write_bytes(gzip.compress((root / 'site' / 'graph.bin').read_bytes(), compresslevel=9, mtime=0))
 app = app.replace("'__DATAV__'", "'?v=%s'" % h.hexdigest()[:8])
 # sur le site, le logo ramène à l'accueil (pas d'accueil dans l'artifact)
 app = app.replace('<div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>', '<a class="logo" href="./" aria-label="RunParis, retour à l’accueil" title="Retour à l’accueil">RUN<span>PARIS</span></a>')

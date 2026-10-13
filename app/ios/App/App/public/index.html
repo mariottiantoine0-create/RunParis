@@ -1960,7 +1960,9 @@ let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {},
 // ---------- loading ----------
 async function boot() {
   try {
-    const [meta, buf] = await Promise.all([fetch('meta.json' + DV).then(r => r.json()), fetch('graph.bin' + DV).then(r => r.arrayBuffer())]);
+    // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
+    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch('graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch('graph.bin' + DV).then(r => r.arrayBuffer()); };
+    const [meta, buf] = await Promise.all([fetch('meta.json' + DV).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
