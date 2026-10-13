@@ -28,6 +28,15 @@ for o in json.load(open('bg.json')):
         g=[p for w in o['w'] if w['r']=='outer' for p in w['g']]; la=sum(p[0] for p in g)/len(g); lo=sum(p[1] for p in g)/len(g)
         poi.append(dict(n=o['n'],t='park',la=la,lo=lo))
         if o['oh'] and o['oh']!='24/7': PK['osm'].append(dict(n=o['n'],oh=o['oh'],r=[w['g'] for w in o['w'] if w['r']=='outer']))
+# horaires des parcs de la collectivité (ex. data.grandlyon.com), en plus d'OSM : seulement ceux qui ont de vrais horaires
+import os
+if CFG.get('parks_extra') and os.path.exists(CFG['parks_extra']):
+    known=set(x['n'].lower() for x in PK['osm']); add=0
+    for x in json.load(open(CFG['parks_extra'])):
+        oh=(x.get('oh') or '').strip()
+        if not oh or '24/7' in oh or x['n'].lower() in known: continue
+        PK['osm'].append(dict(n=x['n'].strip()[:1].upper()+x['n'].strip()[1:],oh=oh,r=x['r'])); add+=1
+    print('parcs ajoutés (open data)',add)
 json.dump(F,open('work/fountains_raw.json','w')); json.dump(PK,open('work/parks_raw.json','w')); json.dump(poi,open('work/poi.json','w'),ensure_ascii=False)
 print('fountains',len(F),'poi',len(poi),'parks osm',len(PK['osm']))
 M={'lines':{},'stations':[]}

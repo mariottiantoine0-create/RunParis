@@ -49,5 +49,6 @@
   "69388",
   "69389"
  ],
- "transit_network": "TCL"
+ "transit_network": "TCL",
+ "parks_extra": "/mnt/user-data/uploads/Downloads/PerfectRun-lyon/lyon_parcs_grandlyon.json"
 }
