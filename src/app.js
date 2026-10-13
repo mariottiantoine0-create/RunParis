@@ -14,7 +14,7 @@ const NP = NATIVE ? { share: plug('Share'), fs: plug('Filesystem'), awake: plug(
 // écran de lancement animé (D-86) : la boucle se dessine depuis le D, puis le logo ; retiré quand les données sont prêtes (au moins 1,5 s)
 const SPLASH_T0 = Date.now();
 if (NATIVE && !document.getElementById('splash')) { const sp = document.createElement('div'); sp.id = 'splash'; sp.setAttribute('aria-hidden', 'true');
-  sp.innerHTML = '<svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">RUN<span>PARIS</span></div>';
+  sp.innerHTML = '<svg viewBox="0 0 100 100" width="150" height="150"><g class="sp-st"><path d="M-10 22L110 12M-10 84L110 76M18 -10L24 110M86 -10L82 110"/></g><path class="sp-l sp-c" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><path class="sp-l sp-r" d="M26 33L64 23L76 63L38 75Z" pathLength="140"/><circle class="sp-d" cx="26" cy="33" r="9"/><text class="sp-dt" x="26" y="37" text-anchor="middle">D</text></svg><div class="sp-logo">PERFECT<span>RUN</span></div>';
   document.body.appendChild(sp); }
 function splashDone() { const sp = document.getElementById('splash'); if (!sp) return; setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 320); }, Math.max(0, 1500 - (Date.now() - SPLASH_T0))); }
 // barre d'état : suit le thème de l'app (et l'écran toujours sombre de l'image à partager)
@@ -1348,9 +1348,9 @@ function gpx() {
   const r = S.route; if (!r) return null;
   const pts = routePts(r);
   const esc = s => s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
-  const name = S.tab === 'race' && S.race ? `${S.race.name} – RunParis, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `RunParis ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
+  const name = S.tab === 'race' && S.race ? `${S.race.name} – Perfect Run, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `Perfect Run ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
   const body = pts.map(([x, y]) => { const [la, lo] = E.toLL(x, y); return `<trkpt lat="${la.toFixed(6)}" lon="${lo.toFixed(6)}"></trkpt>`; }).join('\n      ');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="RunParis" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Perfect Run" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
 }
 $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
@@ -1455,7 +1455,7 @@ function shDraw() {
   const BODY = (w, s) => { g.font = `${w} ${s}px Archivo, sans-serif`; try { g.fontStretch = 'normal'; } catch (e) {} };
   g.textBaseline = 'alphabetic'; g.textAlign = 'left'; g.fillStyle = fg;
   if (onPhoto) { g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 8; }
-  const logo = (x, y, s, align) => { NARF(800, s); const a = 'RUN', b = 'PARIS', wa = g.measureText(a).width, wb = g.measureText(b).width; let x0 = align === 'center' ? x - (wa + wb) / 2 : x; g.fillStyle = fg; g.fillText(a, x0, y); g.fillStyle = onMap ? ACC : SH.bg === 'uni' ? 'rgba(255,255,255,.72)' : '#7B96FF'; g.fillText(b, x0 + wa, y); g.fillStyle = fg; };
+  const logo = (x, y, s, align) => { NARF(800, s); const a = 'PERFECT', b = 'RUN', wa = g.measureText(a).width, wb = g.measureText(b).width; let x0 = align === 'center' ? x - (wa + wb) / 2 : x; g.fillStyle = fg; g.fillText(a, x0, y); g.fillStyle = onMap ? ACC : SH.bg === 'uni' ? 'rgba(255,255,255,.72)' : '#7B96FF'; g.fillText(b, x0 + wa, y); g.fillStyle = fg; };
   const km = fmt(D.km, 1), time = fmtClock(SH.secs), pc = fmtClock(SH.secs / Math.max(.1, D.km)), url = 'perfectrun.fr';
   const lieux = D.race ? [[D.dep, 'parcours mythique']] : D.loop ? [['Boucle · ' + D.dep, 'départ et arrivée']] : [[D.dep, 'départ'], [D.arr, 'arrivée']];
   const L = 66;
@@ -1470,7 +1470,7 @@ function shDraw() {
     lieux.forEach(([a, b]) => { NARF(800, 58 * lk); const w = g.measureText(a).width; g.fillText(a, x, y); BODY(700, 32); g.fillText(b, x, y + 40); x += w + 66 * lk; });
     BODY(600, 32); g.globalAlpha = .8; g.fillText(url, L, Hd - 60); g.globalAlpha = 1;
   } else if (SH.ly === 'pills') {
-    const rows = [['RunParis', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
+    const rows = [['Perfect Run', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
     let y = 110; BODY(700, 36); g.shadowBlur = 0;
     rows.forEach(r => { const ws = r.map(t => g.measureText(t).width + 60), tot = ws.reduce((a, b) => a + b, 0) + 18 * (r.length - 1); let x = (Wd - tot) / 2;
       r.forEach((t, i) => { g.lineWidth = 4; g.strokeStyle = onMap ? INK : 'rgba(255,255,255,.9)'; if (onMap) { g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.fill(); } g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.stroke(); g.fillStyle = fg; g.textBaseline = 'middle'; g.fillText(t, x + 30, y + 40); x += ws[i] + 18; });
@@ -1489,8 +1489,8 @@ function shBlob() { return new Promise(res => $('#shx-cv').toBlob(b => res(b), '
 async function shShare() {
   const b = await shBlob(); if (!b) return; const f = new File([b], `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, { type: 'image/jpeg' });
   track('partage', 'Image partagée ' + SH.bg + ' ' + SH.ly);
-  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec RunParis · perfectrun.fr'); return; }
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec RunParis · perfectrun.fr' }); } catch (e) {} return; }
+  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec Perfect Run · perfectrun.fr'); return; }
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec Perfect Run · perfectrun.fr' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
 async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
@@ -1638,7 +1638,7 @@ function navMsg(kind, title, text, ms) {
 // position bloquée : on dit où l'autoriser (message bloquant du design system)
 function navDenied(n) {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
-  const how = NATIVE ? 'Réglages → RunParis → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
+  const how = NATIVE ? 'Réglages → Perfect Run → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
     : ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
     : and ? 'Touche le cadenas à gauche de l’adresse → Autorisations → Position : autoriser, et vérifie que la localisation du téléphone est activée. Recharge ensuite la page.'
     : 'Autorise la position pour ce site dans les réglages du navigateur, puis recharge la page.';
@@ -1671,7 +1671,7 @@ function runStart() {
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
   if (NATIVE) { // application : la position continue écran verrouillé
-    NP.bg.addWatcher({ backgroundTitle: 'RunParis suit ton parcours', backgroundMessage: 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
+    NP.bg.addWatcher({ backgroundTitle: 'Perfect Run suit ton parcours', backgroundMessage: 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
       if (err) { if (err.code === 'NOT_AUTHORIZED') { runStop(); runPrep(); navDenied($('#runp-far')); } return; }
       navFix({ coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() });
     }).then(id => { if (NAV.on) NAV.bgId = id; else NP.bg.removeWatcher({ id }); });
@@ -2003,8 +2003,8 @@ function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
   const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '');
   track('envoi', 'Parcours envoyé');
-  if (NATIVE) { NP.share.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
-  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours RunParis', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (NATIVE) { NP.share.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
@@ -2102,7 +2102,7 @@ const APP_VER = '0.1';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('RunParis n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 13 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('Perfect Run n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 13 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
     '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
     '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
@@ -2131,14 +2131,14 @@ document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stop
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
-$('#erase-go').onclick = () => { // tout ce que RunParis garde sur l'appareil commence par « runparis- »
+$('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
   const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 };
-if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `RunParis ${APP_VER} · bêta`; gcHit('/app', `Application ${APP_VER}`, false); }
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `Perfect Run ${APP_VER} · bêta`; gcHit('/app', `Application ${APP_VER}`, false); }
 { const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
 
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
@@ -2162,7 +2162,7 @@ $('#fb-form').onsubmit = async ev => {
 };
 
 // public site: the logo leads back to the welcome page
-if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'RunParis, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
+if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'Perfect Run, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
 // Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.
 var MPHR = false, MCUR = null, MHOLD = {};

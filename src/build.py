@@ -9,7 +9,7 @@ rd = lambda f: (src / f).read_text(encoding='utf-8')
 
 # 1. application
 meta = ('<!doctype html>\n<html lang="fr">\n<meta charset="utf-8">\n'
-        '<meta name="description" content="RunParis génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">\n'
+        '<meta name="description" content="Perfect Run génère des parcours de course dans Paris et les communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">\n'
         '<meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">\n<meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">\n'
         '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">\n')
 app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engine.js'))
@@ -22,7 +22,7 @@ import gzip
 (root / 'site' / 'graph.gz').write_bytes(gzip.compress((root / 'site' / 'graph.bin').read_bytes(), compresslevel=9, mtime=0))
 app = app.replace("'__DATAV__'", "'?v=%s'" % h.hexdigest()[:8])
 # sur le site, le logo ramène à l'accueil (pas d'accueil dans l'artifact)
-app = app.replace('<div class="logo" aria-label="RunParis">RUN<span>PARIS</span></div>', '<a class="logo" href="./" aria-label="RunParis, retour à l’accueil" title="Retour à l’accueil">RUN<span>PARIS</span></a>')
+app = app.replace('<div class="logo" aria-label="Perfect Run">PERFECT<span>RUN</span></div>', '<a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>')
 (root / 'site' / 'app.html').write_text(app, encoding='utf-8')
 
 # --- cartes « Parcours mythiques » de l'accueil (D-70) ---

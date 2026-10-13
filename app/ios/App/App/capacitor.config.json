@@ -1,6 +1,6 @@
 {
 	"appId": "fr.runparis.app",
-	"appName": "RunParis",
+	"appName": "Perfect Run",
 	"webDir": "www",
 	"ios": {
 		"contentInset": "never"
