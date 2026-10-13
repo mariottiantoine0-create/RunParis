@@ -1913,7 +1913,8 @@ if (typeof module !== 'undefined') module.exports = Engine;
 const $ = s => document.querySelector(s);
 // Fonctions réservées à l'application (D-83) : mode course, Mes parcours, envoi de parcours, « Je l'ai fait » et image à partager.
 // Elles ne s'allument que hors production (staging, tests) ; ?web=1 force la version du site pour la recette.
-const APPF = location.hostname !== 'runparis.netlify.app' && !/[?&]web=1/.test(location.search);
+const PROD = /^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname); // site en production (perfectrun.fr, ancienne adresse Netlify)
+const APPF = !PROD && !/[?&]web=1/.test(location.search);
 document.documentElement.classList.toggle('appf', APPF);
 // Application iPhone (Capacitor, D-85) : même code, avec les modules du téléphone (position écran verrouillé, partage, écran allumé).
 const CAP = window.Capacitor, NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
@@ -3995,8 +3996,8 @@ $('#md-del').onclick = () => {
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
-const PUBLIC = !window.claude && (/netlify\.app$|runparis/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
-const STATS = PUBLIC && location.hostname === 'runparis.netlify.app'; // pas de stats sur staging ni en local
+const PUBLIC = !window.claude && (/netlify\.app$|runparis|perfectrun/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
+const STATS = PUBLIC && PROD; // pas de stats sur staging ni en local
 if (STATS) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = `https://${GC}.goatcounter.com/count`; document.head.appendChild(sc); }
 // application (D-89) : même compte GoatCounter, comptage direct sans script tiers ; ouverture « app » et événements « app/evt-… »
 function gcHit(path, title, ev) {
@@ -4018,7 +4019,7 @@ const ABOUT = {
     '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
     '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
-    '<h3>Hébergeur du site</h3>' + ap('Netlify, Inc., 101 2nd Street, San Francisco, CA 94105, États-Unis — netlify.com') +
+    '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
     '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Quartiers : Paris Open Data', 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
@@ -4063,7 +4064,8 @@ $('#fb-form').onsubmit = async ev => {
   ev.preventDefault(); const msg = $('#fb-msg').value.trim(); if (!msg) { $('#fb-err').textContent = 'Écris un message.'; $('#fb-err').hidden = false; return; }
   const body = new URLSearchParams({ 'form-name': 'signalement', type: $('#fb-type').value, message: msg, email: $('#fb-mail').value.trim(), parcours: $('#fb-route').checked ? routeContext() : '', page: location.href });
   $('#fb-send').disabled = true;
-  try { const r = await fetch(NATIVE ? 'https://runparis.netlify.app/' : '/', { method: 'POST', mode: NATIVE ? 'no-cors' : 'cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!NATIVE && !r.ok) throw new Error(r.status);
+  const nf = !NATIVE && /netlify\.app$/.test(location.hostname); /* sur Netlify : formulaire du site ; ailleurs (app, perfectrun.fr) : envoi vers le formulaire Netlify, en attendant son remplacement */
+  try { const r = await fetch(nf ? '/' : 'https://runparis.netlify.app/', { method: 'POST', mode: nf ? 'cors' : 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (nf && !r.ok) throw new Error(r.status);
     $('#fb').close(); $('#fb-msg').value = ''; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }
