@@ -36,6 +36,8 @@
 	<string>Pour enregistrer l’image de ta sortie dans ta galerie.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Pour choisir une photo de ta galerie pour l’image de ta sortie.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

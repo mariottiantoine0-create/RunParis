@@ -10,7 +10,7 @@ document.documentElement.classList.toggle('appf', APPF);
 const CAP = window.Capacitor, NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
 // sans @capacitor/core (pas de bundler) : on appelle les modules par le pont natif (nativePromise / nativeCallback)
 const plug = n => new Proxy({}, { get: (_, m) => (o, cb) => cb ? Promise.resolve(CAP.nativeCallback(n, m, o || {}, cb)) : CAP.nativePromise(n, m, o || {}) });
-const NP = NATIVE ? { share: plug('Share'), fs: plug('Filesystem'), awake: plug('KeepAwake'), geo: plug('Geolocation'), bg: plug('BackgroundGeolocation'), sb: plug('StatusBar'), hap: plug('Haptics') } : null;
+const NP = NATIVE ? { share: plug('Share'), fs: plug('Filesystem'), awake: plug('KeepAwake'), geo: plug('Geolocation'), bg: plug('BackgroundGeolocation'), sb: plug('StatusBar'), hap: plug('Haptics'), live: plug('LiveRun') } : null;
 // écran de lancement animé (D-86) : la boucle se dessine depuis le D, puis le logo ; retiré quand les données sont prêtes (au moins 1,5 s)
 const SPLASH_T0 = Date.now();
 if (NATIVE && !document.getElementById('splash')) { const sp = document.createElement('div'); sp.id = 'splash'; sp.setAttribute('aria-hidden', 'true');
@@ -127,6 +127,7 @@ async function boot() {
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
   } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de ' + C0.name + ' (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
   mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; splashDone(); sbSync(); renderAvoid(); renderVias(); renderRaces(); updateConv();
+  if (APPF && new URLSearchParams(location.search).get('libre')) { const u = new URL(location.href); u.searchParams.delete('libre'); history.replaceState(null, '', u); setTimeout(soloPrep, 400); } // retour de « Passer sur … » depuis la course libre
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
   renderHome();
@@ -946,7 +947,7 @@ function renderVias() {
   const open = !$('#via-box').hidden;
   add.textContent = open ? 'Fermer' : '+ Passer par un lieu';
   add.onclick = () => { $('#via-box').hidden = !$('#via-box').hidden; renderVias(); if (!$('#via-box').hidden) $('#via-q').focus(); };
-  box.appendChild(add);
+  box.appendChild(add); msync();
 }
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- official races ----------
@@ -1735,6 +1736,16 @@ function runpTexts(solo) {
   if (solo) { const f = $('#runp-far'); f.className = 'note info'; f.innerHTML = '<b>Cours où tu veux.</b> Ta trace est enregistrée pendant la course. À la fin, elle devient un parcours que tu peux refaire ou envoyer.'; f.hidden = false; }
 }
 function soloPrep() { NAV.soloNext = true; runPrep(); }
+// course libre : la ville choisie doit être celle où l'on est (sinon carte vide et tracé perdu)
+function soloWhere(la, lo) {
+  if ($('#runp').hidden || !NAV.soloNext) return;
+  const k = cityAt(la, lo), f = $('#runp-far'); if (k === CITY) return;
+  f.innerHTML = '<b></b><span></span>'; const b = f.querySelector('b'), t = f.querySelector('span');
+  if (k) { const c = CITIES[k]; f.className = 'note info'; b.textContent = `Tu es à ${c.name}.`; t.textContent = ` L’app est sur ${C0.name} : passe sur ${c.name} pour que ta course soit sur la carte.`;
+    const r = document.createElement('div'); r.className = 'run-choice'; r.innerHTML = '<button type="button" class="btn primary"></button>'; r.firstChild.textContent = `Passer sur ${c.name}`; r.firstChild.onclick = () => setCity(k, { libre: 1 }); f.appendChild(r); }
+  else { f.className = 'note'; b.textContent = 'Tu es hors des villes couvertes.'; t.textContent = ' Ta course sera gardée avec ses km et son temps, mais sans tracé.'; }
+  f.hidden = false; track('course-libre', k ? 'Autre ville proposée · ' + CITIES[k].name : 'Hors des villes');
+}
 function runPrep() {
   const solo = !!NAV.soloNext;
   if (!solo && !S.route) return toast("Génère d'abord un parcours.");
@@ -1747,7 +1758,7 @@ function runPrep() {
   $('#runp-far').hidden = true; $('#runp-far').className = 'note info'; $('#runp').hidden = false;
   NAV.denied = false; if (NAV.goHTML) $('#runp-go').innerHTML = NAV.goHTML;
   runpTexts(solo);
-  navigator.geolocation.getCurrentPosition(p => { if (solo) return; // prévenir si on n'est pas encore au départ
+  navigator.geolocation.getCurrentPosition(p => { if (solo) return soloWhere(p.coords.latitude, p.coords.longitude); // prévenir si on n'est pas encore au départ
     const [x, y] = E.toXY(p.coords.latitude, p.coords.longitude), [sx, sy] = NAV.n.pts[0], d = Math.hypot(x - sx, y - sy);
     if (d > 60 && !$('#runp').hidden) { const f = $('#runp-far'); f.innerHTML = ''; const b = document.createElement('b'); b.textContent = `Tu es à ${navDistTxt(d)} du départ.`; f.append(b, ' Rejoins le point D : le chrono démarre quand tu y es.'); f.hidden = false; }
   }, e => { if (e.code === 1) navDenied($('#runp-far')); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
@@ -1782,6 +1793,7 @@ function runStop() {
   if (NATIVE) { if (NAV.bgId) NP.bg.removeWatcher({ id: NAV.bgId }).catch(() => {}); NAV.bgId = null; try { NP.awake.allowSleep(); } catch (e) {} }
   try { NAV.lock && NAV.lock.release(); } catch (e) {} NAV.lock = null;
   try { speechSynthesis.cancel(); } catch (e) {}
+  liveEnd();
   if (NAV.solo && NAV.saved) { S.route = NAV.saved.route; S.alts = NAV.saved.alts; NAV.saved = null; }
   NAV.on = false; mapRotOff(); $('#run').hidden = true; $('#runz').hidden = true; document.documentElement.classList.remove('running');
   setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
@@ -1965,6 +1977,7 @@ function navUI() {
   else if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
   let sub = '';
   if (!NAV.free && NAV.t0) { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = m.arrive && NAV.prog >= n.L - 1 ? 'Arrivée' : navDistTxt(Math.max(0, m.d - NAV.prog));
+    NAV.liveHead = m.arrive ? 'Arrivée' : t + ' dans ' + big + (m.name ? ' · ' + m.name : ''); NAV.liveTurn = ['right', 'left', 'straight'].includes(k) ? k : k === 'sright' || k === 'keepr' || k === 'right2' || k === 'jogr' ? 'right' : k === 'sleft' || k === 'keepl' || k === 'left2' || k === 'jogl' ? 'left' : 'straight';
     small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : '') + (m.pair && m.pair.name && m.pair.name !== m.name ? ', puis ' + m.pair.name : '');
     if (m.pair) { const same = (m.pair.a > 0) === (m.a > 0); sub = `${same ? 'Encore' : 'Puis'} à ${m.pair.a > 0 ? 'droite' : 'gauche'} ${navDistTxt(m.pair.d - m.d)} après`; }
     if (m.jog) sub = `La rue reprend ${navDistTxt(m.jog)} à ${m.a > 0 ? 'droite' : 'gauche'}`;
@@ -1979,7 +1992,26 @@ function navUI() {
   if (NAV.follow && NAV.pos) navCenter(); else draw();
   mapRotFollow();
   { const tb = $('.run-top').getBoundingClientRect().bottom; $('.run-tools').style.top = Math.round(tb + 12) + 'px'; } // outils sous le bandeau ou le message
+  liveSync();
 }
+// ---------- écran verrouillé : Activité en direct (D-100), application iPhone seulement ----------
+function liveState() {
+  const n = NAV.n, secs = navElapsed(), solo = NAV.solo, km = (NAV.base + (NAV.free ? n.L + NAV.extra : NAV.prog)) / 1000;
+  const runHead = solo || NAV.free ? 'Course libre' : NAV.liveHead || 'Suivi du parcours', runTurn = solo || NAV.free ? 'chrono' : NAV.liveTurn || 'straight';
+  const done = !$('#runa').hidden; // arrivée : le coureur choisit de terminer ou de continuer
+  return { mode: solo ? 'solo' : 'route', head: done ? 'Parcours terminé' : NAV.paused ? 'En pause' : runHead, turn: NAV.paused ? 'pause' : runTurn, runHead, runTurn,
+    km: fmt(km, 1) + ' km', kmLabel: solo || NAV.free ? 'faits' : 'faits sur ' + fmt((NAV.base + n.L) / 1000, 1), pace: km > 0.2 ? fmtClock(secs / km) : '–',
+    paused: !!NAV.paused, elapsed: Math.round(secs), progress: solo || NAV.free ? -1 : Math.min(1, (NAV.base + NAV.prog) / (NAV.base + n.L)) };
+}
+function liveSync(force) {
+  if (!NATIVE || !NAV.on || !NAV.t0) return;
+  const st = liveState(), key = [st.head, st.km, st.paused, Math.round(st.progress * 50)].join('|'); // le temps défile seul sur la carte : on n'envoie qu'aux changements (et toutes les 30 s pour l'allure)
+  if (!force && key === NAV.liveK && Date.now() - (NAV.liveT || 0) < 30000) return;
+  NAV.liveK = key; NAV.liveT = Date.now();
+  if (!liveSync.w) { liveSync.w = true; NP.live.watch({}, r => { if (!r || !NAV.on) return; if (r.action === 'pause' && !NAV.paused && NAV.t0) $('#run-pause').onclick(); else if (r.action === 'resume' && NAV.paused) { if (!$('#runa').hidden) navContinue(); else runResume(); } }); }
+  if (NAV.liveOn) NP.live.update(st).catch(() => {}); else { NAV.liveOn = true; NP.live.start(st).catch(() => {}); }
+}
+function liveEnd() { if (NATIVE && NAV.liveOn) { NAV.liveOn = false; NAV.liveK = ''; NP.live.end().catch(() => {}); } }
 function navCenter() {
   const pv = mapPivot(), r = { width: W }, top = pv.top, bot = pv.bot;
   const [x, y] = NAV.pos;
@@ -2129,7 +2161,7 @@ $('#run-pos').onclick = () => { // libre → suivi ; suivi → bascule nord en h
   if (!NAV.follow) NAV.follow = true; else { NAV.headUp = !NAV.headUp; try { localStorage.setItem('runparis-headup', NAV.headUp ? '1' : '0'); } catch (e) {} if (!NAV.headUp) mapRotTo(0, true); }
   navPosBtn(); if (NAV.pos) navCenter(); mapRotFollow(); };
 $('#run-north').onclick = () => { if (NAV.headUp) { NAV.headUp = false; try { localStorage.setItem('runparis-headup', '0'); } catch (e) {} } mapRotTo(0, true); navPosBtn(); };
-$('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt((NAV.solo ? NAV.extra : NAV.base + NAV.prog) / 1000, 1) + ' km'; $('#rz-of').textContent = NAV.solo ? 'faits' : 'faits sur ' + fmt((NAV.base + NAV.n.L) / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
+$('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt((NAV.solo ? NAV.extra : NAV.base + NAV.prog) / 1000, 1) + ' km'; $('#rz-of').textContent = NAV.solo ? 'faits' : 'faits sur ' + fmt((NAV.base + NAV.n.L) / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; liveSync(true); };
 const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; NAV.segBreak = true; } $('#runz').hidden = true; navUI(); };
 $('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
 $('#runa-end').onclick = () => runFinish(true); $('#runa-go').onclick = navContinue;
@@ -2333,7 +2365,8 @@ var MPHR = false, MCUR = null, MHOLD = {};
 const MSH = {
   dist: { t: 'Distance', ok: () => 'Valider ' + $('#mf-dist').textContent, nodes: () => [$('#u-km').parentElement, document.querySelector('.stepper'), $('#chips-km'), $('#chips-min'), $('#conv').parentElement] },
   dep: { t: 'Départ', ok: null, nodes: () => [$('#start-box'), $('#home-row')] },
-  arr: { t: 'Arrivée', ok: () => 'Valider', nodes: () => [$('#a-back').parentElement, $('#end-fixed'), $('#end-free-hint'), $('#end-metro-row'), $('#via-list'), $('#via-box')] },
+  arr: { t: 'Arrivée', ok: () => 'Valider', nodes: () => [$('#a-back').parentElement, $('#end-fixed'), $('#end-free-hint'), $('#end-metro-row')] },
+  via: { t: 'Passer par', ok: () => 'Valider', nodes: () => [$('#via-list'), $('#via-box'), $('#via-hint')] }, // D-101 : au même niveau que « À éviter »
   prefs: { t: 'Préférences', ok: () => 'Appliquer', nodes: () => ['Type de parcours', $('#k-classic').parentElement, $('#k-hint'), 'Dénivelé', $('#d-flat').parentElement, $('#dplus-row'), 'Priorité', $('#prio'), $('#prio-hint'), document.querySelector('.depline'), $('#dep-hint'), $('#prefer-paths').closest('label'), $('#water-on').closest('label'), $('#allow-repeat').closest('label')] },
   avoid: { t: 'À éviter', ok: () => 'Valider', nodes: () => [$('#avoid-list'), $('#addbox'), $('#always')] }
 };
@@ -2361,6 +2394,7 @@ function mOpen(k, focus) {
   const ok = MSH[k].ok; $('#msheet-f').hidden = !ok; if (ok) $('#msheet-ok').textContent = ok();
   if (k === 'dep') $('#start-box').hidden = false;
   if (k === 'avoid' && $('#addbox').hidden && !document.querySelector('#avoid-list .xchip')) $('#addbox').hidden = false;
+  if (k === 'via') $('#via-box').hidden = false;
   $('#mback').hidden = false; $('#msheet').hidden = false; $('#msheet-b').scrollTop = 0;
   if (focus === 'start') $('#start-q').focus(); else if (focus === 'end') $('#end-q').focus();
 }
@@ -2379,7 +2413,8 @@ function msync() {
   if (S.depNow === false && $('#dep-time').value) p.push('départ ' + $('#dep-time').value.replace(':', ' h '));
   $('#mf-prefs').textContent = p.join(' · ');
   const xs = [...document.querySelectorAll('#avoid-list .xchip .name')].map(e => e.textContent);
-  $('#mf-avoid').textContent = xs.length ? `À éviter : ${xs.slice(0, 2).join(', ')}${xs.length > 2 ? ' +' + (xs.length - 2) : ''}` : 'Éviter un quartier ou un lieu';
+  $('#mf-avoid').textContent = xs.length ? xs.join(' · ') : 'Aucun quartier ni lieu';
+  $('#mf-via').textContent = S.vias.length ? S.vias.map(v => v.name.replace(/^Point · /, '')).join(' · ') : 'Aucun lieu';
   if (MCUR && MSH[MCUR].ok) $('#msheet-ok').textContent = MSH[MCUR].ok();
   if (MOB.matches && S.view === 'set' && sheet === 'half') setSheet('half');
 }

@@ -15,7 +15,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         window = UIWindow(windowScene: windowScene)
         window?.backgroundColor = mapBg
-        window?.rootViewController = CAPBridgeViewController()
+        window?.rootViewController = MainViewController() // Perfect Run : enregistre le plugin de l’Activité en direct (D-100)
         window?.makeKeyAndVisible()
         if let webView = (window?.rootViewController as? CAPBridgeViewController)?.webView {
             webView.backgroundColor = mapBg

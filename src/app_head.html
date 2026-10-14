@@ -496,6 +496,10 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .mprefs .t{flex:1;min-width:0}
 .mprefs small{display:block;font-weight:700;font-size:13px;color:var(--muted)}
 .mprefs b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mset .mprefs+.mprefs{margin-top:-6px} /* D-101 : réglages en lignes identiques, 8 px entre elles (gap 14 − 6) */
+.mhold[data-sh=via] #via-list>.link{display:none}
+.mhold[data-sh=via] #via-hint{display:block!important;margin:10px 2px 0}
+#solo-go{margin:2px 0 0}
 .mavoid{display:flex;align-items:center;gap:8px;border:0;background:none;padding:2px 0;font:inherit;font-weight:700;font-size:15px;color:var(--accent);cursor:pointer;text-align:left}
 .mavoid span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mback{position:fixed;inset:0;background:rgba(11,11,12,.42);z-index:60}
@@ -846,8 +850,9 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <div class="mset" id="mset" hidden>
         <p class="msent"><span>Je cours</span> <button type="button" class="mf" data-sh="dist"><span id="mf-dist">10 km</span></button> <button type="button" class="mf" data-sh="arr"><span id="mf-arr">en boucle</span></button> <span>depuis</span> <button type="button" class="mf pos" data-sh="dep"><span id="mf-dep">choisis ton départ</span></button></p>
         <button type="button" class="mprefs" data-sh="prefs"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 6h10"/><path d="M18 6h2"/><circle cx="16" cy="6" r="2"/><path d="M4 12h4"/><path d="M12 12h8"/><circle cx="10" cy="12" r="2"/><path d="M4 18h10"/><path d="M18 18h2"/><circle cx="16" cy="18" r="2"/></svg><span class="t"><small>Préférences</small><b id="mf-prefs">Classique · Normal · feux évités · parcs</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
-        <button type="button" class="mavoid" data-sh="avoid"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 4h16v16H4z"/><path d="M4 12l8-8"/><path d="M4 20L20 4"/><path d="M12 20l8-8"/></svg><span id="mf-avoid">Éviter un quartier ou un lieu</span></button>
-        <button type="button" class="mprefs" id="solo-go"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 4l13 8-13 8z"/></svg><span class="t"><small>Sans parcours</small><b>Courir librement, garder le tracé</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button type="button" class="mprefs" data-sh="via"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg><span class="t"><small>Passer par</small><b id="mf-via">Aucun lieu</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button type="button" class="mprefs" data-sh="avoid"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 4h16v16H4z"/><path d="M4 12l8-8"/><path d="M4 20L20 4"/><path d="M12 20l8-8"/></svg><span class="t"><small>À éviter</small><b id="mf-avoid">Aucun quartier ni lieu</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button type="button" class="btn ghost mine-solo" id="solo-go"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 4l13 8-13 8z"/></svg>Courir sans parcours</button>
       </div>
       <section class="step" aria-labelledby="h-ou">
         <h2 id="h-ou"><i>1</i>Où ?</h2>
@@ -888,6 +893,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <p class="hint" id="end-free-hint" hidden>Le parcours part de A et finit où c'est le plus agréable, à la distance demandée. Plusieurs arrivées te sont proposées.</p>
         <label class="sw" id="end-metro-row" hidden>Finir près d’un métro ou RER<input type="checkbox" id="end-metro" checked></label>
         <div class="avoid" id="via-list"></div>
+        <p class="hint" id="via-hint" hidden>Le parcours passe par ces lieux, dans l’ordre. Jusqu’à 5 lieux.</p>
         <div class="search" id="via-box" hidden>
           <input type="text" id="via-q" placeholder="Passer par : Tour Eiffel, canal Saint-Martin, une rue…" autocomplete="off" aria-label="Rechercher un lieu par où passer">
           <div class="results" id="via-res" hidden></div>
