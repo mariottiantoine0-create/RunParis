@@ -116,7 +116,7 @@ async function boot() {
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
     const [gr, rc, sg, mt, ft, pk, dk, pv, xc] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
-    if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y }; }); }
+    if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
@@ -264,13 +264,26 @@ function drawDrop(sx, sy, r, hi) {
 function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
 function lineBadge(l) { const b = document.createElement('span'); b.className = 'lb'; const c = METRO.lines[l] || '#888'; b.style.background = c;
   const h = c.replace('#', ''), [R, Gc, B] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); b.style.color = (R * 299 + Gc * 587 + B * 114) / 1000 > 150 ? '#111' : '#fff';
-  b.textContent = l.replace(/^M/, ''); b.title = l.startsWith('M') ? 'Métro ' + l.slice(1) : l; return b; }
+  b.textContent = l.replace(/^M/, ''); b.title = l.startsWith('M') ? 'Métro ' + l.slice(1) : isTram(l) ? 'Tram ' + l : l; return b; }
+// tram (D-98) : lignes T1, T3a…
+function isTram(l) { return /^T\d+[ab]?$/.test(l); }
+// libellés selon les lignes de la ville : « Métro, RER et tram » à Paris, « Métro et tram » à Lyon
+function transitTexts() {
+  const ls = Object.keys(METRO.lines), rer = ls.some(l => l.startsWith('RER')), tram = ls.some(isTram);
+  const name = ['Métro'].concat(rer ? ['RER'] : [], tram ? ['tram'] : []), join = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0];
+  const ly = $('#ly-metro'); ly.lastChild.textContent = join(name);
+  $('#end-metro-row').firstChild.textContent = 'Finir près d’un ' + join(name.map(x => x === 'RER' ? x : x.toLowerCase())).replace(/ et ([^ ]+)$/, ' ou $1');
+  $('#lg-metro').lastChild.textContent = join(name.filter(x => x !== 'tram')).replace(' et ', ', ');
+  $('#lg-tram').hidden = !tram;
+}
 
 // ---------- search index ----------
 let IDX = [];
 function buildSearch() {
   const typeLabel = { station: 'Gare / métro', park: 'Parc', attraction: 'Lieu', museum: 'Musée', viewpoint: 'Point de vue', square: 'Place', monument: 'Monument', marketplace: 'Marché', university: 'Université', mall: 'Centre commercial', stadium: 'Stade' };
   for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
+  // arrêts de tram (D-98) : cherchables comme les stations, s'ils ne sont pas déjà des lieux
+  const known = new Set(IDX.map(x => x.k)); for (const st of METRO.st) if (st.tram && !known.has(norm(st.n))) IDX.push({ name: st.n, type: 'Tram ' + st.ls.join(', '), lat: st.lat, lon: st.lon, k: norm(st.n) });
   // streets: centroid of longest edge per name
   const best = new Map();
   // one entry per street name and town (the same name exists in several communes)
@@ -507,13 +520,13 @@ function drawMetro(hiOnly) {
     ctx.font = `700 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const st of METRO.st) {
       const sx = st.x * V.s + V.tx, sy = st.y * V.s + V.ty; if (sx < -60 || sy < -20 || sx > W + 60 || sy > H + 20) continue;
-      const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi)) continue; const r = hi ? 9 : big ? 6.5 : 3;
+      const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi) || (st.tram && !big && !hi)) continue; const r = hi ? 9 : big ? 6.5 : 3;
       ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.metroBg; ctx.fill(); ctx.lineWidth = hi ? 2.5 : big ? 1.6 : 1.2; ctx.strokeStyle = hi ? colors.route : colors.metroInk; ctx.stroke();
-      if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText('M', sx, sy + 0.5); }
+      if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText(st.tram ? 'T' : 'M', sx, sy + 0.5); }
       if (badges || hi) { // line badges + name
         let bx = sx + r + 4; ctx.textAlign = 'left';
         for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', ''), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
-          ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 3) : ctx.rect(bx, sy - 7, w, 14); ctx.fill();
+          ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 7) : ctx.rect(bx, sy - 7, w, 14); ctx.fill(); // pastille ronde (LineBadge)
           const h = c.replace('#', ''), lum = (parseInt(h.substr(0, 2), 16) * 299 + parseInt(h.substr(2, 2), 16) * 587 + parseInt(h.substr(4, 2), 16) * 114) / 1000;
           ctx.fillStyle = lum > 150 ? '#111' : '#fff'; ctx.font = `800 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.fillText(lab, bx + w / 2, sy + 0.5); ctx.textAlign = 'left'; bx += w + 2; }
         if (V.s >= 0.32 || hi) { ctx.font = `700 11.5px ${css('--f-body')}`; ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(st.n, bx + 3, sy + 0.5); ctx.fillStyle = colors.ink; ctx.fillText(st.n, bx + 3, sy + 0.5); }
@@ -1372,7 +1385,7 @@ function showRoute(r, notes) {
     const box = document.createElement('div'); box.className = 'metro-end';
     const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Pour rentrer'; box.appendChild(l);
     const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // walking ≈ 1.25 × straight line
-    t.innerHTML = `<strong></strong> à ${d < 30 ? 'l’arrivée' : '~' + d + ' m à pied'}`; t.querySelector('strong').textContent = (ns.d > 1500 ? 'Pas de station proche · la plus proche : ' : ns.s.ls.every(x => x.startsWith('RER')) ? 'RER ' : 'Métro ') + ns.s.n;
+    t.innerHTML = `<strong></strong> à ${d < 30 ? 'l’arrivée' : '~' + d + ' m à pied'}`; t.querySelector('strong').textContent = (ns.d > 1500 ? 'Pas de station proche · la plus proche : ' : ns.s.ls.every(x => x.startsWith('RER')) ? 'RER ' : ns.s.tram ? 'Tram ' : 'Métro ') + ns.s.n;
     box.appendChild(t); for (const ln of ns.s.ls) box.appendChild(lineBadge(ln));
     $('#via').appendChild(box);
   }

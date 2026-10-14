@@ -879,7 +879,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           </div>
         </div>
         <p class="hint" id="end-free-hint" hidden>Le parcours part de A et finit où c'est le plus agréable, à la distance demandée. Plusieurs arrivées te sont proposées.</p>
-        <label class="sw" id="end-metro-row" hidden>Finir près d'un métro ou RER<input type="checkbox" id="end-metro" checked></label>
+        <label class="sw" id="end-metro-row" hidden>Finir près d’un métro ou RER<input type="checkbox" id="end-metro" checked></label>
         <div class="avoid" id="via-list"></div>
         <div class="search" id="via-box" hidden>
           <input type="text" id="via-q" placeholder="Passer par : Tour Eiffel, canal Saint-Martin, une rue…" autocomplete="off" aria-label="Rechercher un lieu par où passer">
@@ -1037,7 +1037,8 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <li><span class="lg sig"></span>Feu</li>
           <li><span class="lg fontl"></span>Point d’eau</li>
           <li><span class="lg treel"></span>Arbre</li>
-          <li><span class="lg metrol">M</span>Métro, RER</li>
+          <li id="lg-metro"><span class="lg metrol">M</span>Métro, RER</li>
+          <li id="lg-tram" hidden><span class="lg metrol">T</span>Tram</li>
           <li><span class="lg zone"></span>Zone ou lieu évité</li>
           <li><span class="lg via"></span>Lieu connu, lieu de passage</li>
           <li><span class="lg station"></span>Gare (évitée)</li>
