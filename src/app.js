@@ -2004,14 +2004,16 @@ function liveState() {
     paused: !!NAV.paused, elapsed: Math.round(secs), progress: solo || NAV.free ? -1 : Math.min(1, (NAV.base + NAV.prog) / (NAV.base + n.L)) };
 }
 function liveSync(force) {
-  if (!NATIVE || !NAV.on || !NAV.t0) return;
+  if (!NATIVE || !NAV.on || !NAV.t0 || NAV.liveFail) return; // un seul essai par course : pas de message en boucle
   const st = liveState(), key = [st.head, st.km, st.paused, Math.round(st.progress * 50)].join('|'); // le temps défile seul sur la carte : on n'envoie qu'aux changements (et toutes les 30 s pour l'allure)
   if (!force && key === NAV.liveK && Date.now() - (NAV.liveT || 0) < 30000) return;
   NAV.liveK = key; NAV.liveT = Date.now();
   if (!liveSync.w) { liveSync.w = true; NP.live.watch({}, r => { if (!r || !NAV.on) return; if (r.action === 'pause' && !NAV.paused && NAV.t0) $('#run-pause').onclick(); else if (r.action === 'resume' && NAV.paused) { if (!$('#runa').hidden) navContinue(); else runResume(); } }); }
-  if (NAV.liveOn) NP.live.update(st).catch(() => {}); else { NAV.liveOn = true; NP.live.start(st).catch(() => {}); }
+  if (NAV.liveOn) NP.live.update(st).catch(() => {});
+  else { NAV.liveOn = true; NP.live.start(st).then(r => { if (r && r.ok === false) { NAV.liveOn = false; NAV.liveFail = true; toast('Écran verrouillé indisponible : ' + (r.error || 'raison inconnue') + '.', 6000); track('ecran-verrouille', 'Échec · ' + String(r.error || '').slice(0, 60)); } })
+    .catch(e => { NAV.liveOn = false; NAV.liveFail = true; toast('Écran verrouillé indisponible : ' + ((e && e.message) || e) + '.', 6000); }); }
 }
-function liveEnd() { if (NATIVE && NAV.liveOn) { NAV.liveOn = false; NAV.liveK = ''; NP.live.end().catch(() => {}); } }
+function liveEnd() { NAV.liveFail = false; if (NATIVE && NAV.liveOn) { NAV.liveOn = false; NAV.liveK = ''; NP.live.end().catch(() => {}); } }
 function navCenter() {
   const pv = mapPivot(), r = { width: W }, top = pv.top, bot = pv.bot;
   const [x, y] = NAV.pos;

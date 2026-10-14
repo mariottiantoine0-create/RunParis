@@ -47,13 +47,12 @@ private struct Stat: View {
             if let t = timer {
                 // le chrono qui défile réserve toute la largeur possible : largeur fixe, sinon il pousse le reste hors de la carte
                 Text(timerInterval: t...Date.distantFuture, countsDown: false)
-                    .font(DS.cond(28)).monospacedDigit().foregroundColor(DS.ink).lineLimit(1)
-                    .multilineTextAlignment(.leading)
-                    .frame(width: Date().timeIntervalSince(t) > 3300 ? 92 : 66, alignment: .leading)
+                    .font(DS.cond(28)).monospacedDigit().foregroundColor(DS.ink).lineLimit(1).minimumScaleFactor(0.6)
+                    .frame(width: 70, alignment: .leading)
             } else {
-                Text(value ?? "").font(DS.cond(big ? 30 : 28)).monospacedDigit().foregroundColor(DS.ink).lineLimit(1).minimumScaleFactor(0.8).fixedSize()
+                Text(value ?? "").font(DS.cond(big ? 30 : 28)).monospacedDigit().foregroundColor(DS.ink).lineLimit(1).minimumScaleFactor(0.8)
             }
-            Text(label).font(DS.bold(12)).foregroundColor(DS.muted).lineLimit(1).fixedSize()
+            Text(label).font(DS.bold(12)).foregroundColor(DS.muted).lineLimit(1)
         }
     }
 }
@@ -63,7 +62,7 @@ private struct Toggle_: View {
     let st: LiveRunAttributes.ContentState
     var body: some View {
         let label = HStack(spacing: 8) { Ico(k: st.paused ? "play" : "pause", size: 18); Text(st.paused ? "Reprendre" : "Pause").font(DS.bold(16)) }
-            .fixedSize().padding(.horizontal, 14).frame(height: 48).background(DS.accent).foregroundColor(DS.accentInk).clipShape(RoundedRectangle(cornerRadius: 4))
+            .padding(.horizontal, 14).frame(height: 48).background(DS.accent).foregroundColor(DS.accentInk).clipShape(RoundedRectangle(cornerRadius: 4))
         if #available(iOS 17.0, *) { Button(intent: LiveRunToggleIntent(action: st.paused ? "resume" : "pause")) { label }.buttonStyle(.plain) }
         else { EmptyView() } // avant iOS 17 : affichage seul, toucher la carte ouvre l'app
     }

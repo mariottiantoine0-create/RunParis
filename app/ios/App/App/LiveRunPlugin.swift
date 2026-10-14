@@ -56,16 +56,19 @@ public class LiveRunPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func start(_ call: CAPPluginCall) {
-        guard #available(iOS 16.2, *) else { call.resolve(["ok": false]); return }
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { call.resolve(["ok": false]); return }
+        guard #available(iOS 16.2, *) else { call.resolve(["ok": false, "error": "iOS 16.2 minimum"]); return }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { call.resolve(["ok": false, "error": "Activités en direct désactivées dans Réglages"]); return }
         let o = call.options as? [String: Any] ?? [:]; last = o
-        for a in Activity<LiveRunAttributes>.activities { Task { await a.end(nil, dismissalPolicy: .immediate) } }
-        guard let st = state(o) as? LiveRunAttributes.ContentState else { call.resolve(["ok": false]); return }
-        lastStart = st.start
-        do {
-            activity = try Activity.request(attributes: LiveRunAttributes(mode: o["mode"] as? String ?? "solo"), content: ActivityContent(state: st, staleDate: nil), pushType: nil)
-            call.resolve(["ok": true])
-        } catch { call.resolve(["ok": false, "error": error.localizedDescription]) }
+        guard let st = state(o) as? LiveRunAttributes.ContentState else { call.resolve(["ok": false, "error": "état illisible"]); return }
+        Task {
+            // on termine d'abord les cartes restées d'une course précédente (app fermée en pleine course), sinon iOS peut refuser la nouvelle
+            for a in Activity<LiveRunAttributes>.activities { await a.end(nil, dismissalPolicy: .immediate) }
+            do {
+                let act = try Activity.request(attributes: LiveRunAttributes(mode: o["mode"] as? String ?? "solo"), content: ActivityContent(state: st, staleDate: nil), pushType: nil)
+                self.activity = act; self.lastStart = st.start
+                call.resolve(["ok": true, "id": act.id])
+            } catch { call.resolve(["ok": false, "error": "\(error)"]) }
+        }
     }
 
     @objc func update(_ call: CAPPluginCall) {
