@@ -603,7 +603,7 @@ html.appf #copy-m{display:none!important}
 html.native .layers{top:calc(env(safe-area-inset-top) + 6px)}
 @media (min-width:861px){ html.appf .tabs{padding-left:14px;padding-right:14px} html.appf .tabs button{padding-left:0;padding-right:0} }
 /* site en production : sans les fonctions réservées à l'application (D-83) */
-html:not(.appf) #run-go,html:not(.appf) #done,html:not(.appf) #send,html:not(.appf) #tab-mine,html:not(.appf) #view-mine{display:none!important}
+html:not(.appf) #solo-go,html:not(.appf) #mine-solo,html:not(.appf) #run-go,html:not(.appf) #done,html:not(.appf) #send,html:not(.appf) #tab-mine,html:not(.appf) #view-mine{display:none!important}
 .tabs button{white-space:nowrap}
 @media (min-width:861px){ #tab-gen{flex:1.4} }
 .foot-links .textbtn{width:auto;flex:none}
@@ -727,6 +727,11 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .shx-b{padding:0 16px 8px;display:flex;flex-direction:column;gap:10px}
 .shx-lede{margin:-4px 0 4px;color:var(--muted);font-size:15px}
 .shx-time .row{display:flex;align-items:center;gap:12px}
+/* course libre (D-99) : nom du parcours = Field (fond field sans bordure, bordure 2 px accent en saisie) */
+.shx-name{display:block;margin:0 0 14px}.shx-name .lbl{display:block;margin-bottom:6px}
+.shx-name input{display:block;width:100%;box-sizing:border-box;height:48px;border:2px solid var(--field);border-radius:4px;background:var(--field);color:var(--ink);padding:0 12px;font:600 16px var(--f-body)}
+.shx-name input:focus{outline:none;background:var(--panel);border-color:var(--accent)}
+.mine-solo{width:100%;margin:0 0 16px}
 .shx-time input{flex:1;max-width:170px;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px!important;height:52px;border:1px solid var(--field);border-radius:4px;background:var(--field);padding:0 13px;min-height:48px}
 .shx-time input:focus{background:var(--panel);border:2px solid var(--accent);padding:0 12px}
 .shx-time small{color:var(--muted);font-size:13px;line-height:1.3}
@@ -822,6 +827,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <!-- ===== Mes parcours (D-81) ===== -->
     <div class="pbody" id="view-mine" hidden>
       <div id="mine-list">
+        <button type="button" class="btn ghost mine-solo" id="mine-solo"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 4l13 8-13 8z"/></svg>Courir sans parcours</button>
         <div class="mine-tot" id="mine-tot"></div>
         <div class="mine-items" id="mine-items"></div>
         <div class="mine-empty" id="mine-empty" hidden><h2>Pas encore de sortie</h2><p>Génère un parcours, cours-le, puis touche « Je l’ai fait » : il arrive ici avec ton temps. Tout reste sur cet appareil.</p><button type="button" class="btn primary" id="mine-new">Créer un parcours</button></div>
@@ -848,6 +854,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <p class="msent"><span>Je cours</span> <button type="button" class="mf" data-sh="dist"><span id="mf-dist">10 km</span></button> <button type="button" class="mf" data-sh="arr"><span id="mf-arr">en boucle</span></button> <span>depuis</span> <button type="button" class="mf pos" data-sh="dep"><span id="mf-dep">choisis ton départ</span></button></p>
         <button type="button" class="mprefs" data-sh="prefs"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 6h10"/><path d="M18 6h2"/><circle cx="16" cy="6" r="2"/><path d="M4 12h4"/><path d="M12 12h8"/><circle cx="10" cy="12" r="2"/><path d="M4 18h10"/><path d="M18 18h2"/><circle cx="16" cy="18" r="2"/></svg><span class="t"><small>Préférences</small><b id="mf-prefs">Classique · Normal · feux évités · parcs</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
         <button type="button" class="mavoid" data-sh="avoid"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 4h16v16H4z"/><path d="M4 12l8-8"/><path d="M4 20L20 4"/><path d="M12 20l8-8"/></svg><span id="mf-avoid">Éviter un quartier ou un lieu</span></button>
+        <button type="button" class="mprefs" id="solo-go"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 4l13 8-13 8z"/></svg><span class="t"><small>Sans parcours</small><b>Courir librement, garder le tracé</b></span><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <section class="step" aria-labelledby="h-ou">
         <h2 id="h-ou"><i>1</i>Où ?</h2>
@@ -1275,6 +1282,7 @@ SOFTWARE.
       <div class="msheet-h"><h2 id="shx-t1">Bravo !</h2><button type="button" class="iconbtn" id="shx-x1" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="shx-b">
         <p class="shx-lede" id="shx-lede">Immortalise ta sortie et partage-la.</p>
+        <label class="shx-name" id="shx-name-l" hidden><span class="lbl">Nom du parcours</span><input type="text" id="shx-name" autocomplete="off" maxlength="60"></label>
         <label class="shx-time"><span class="lbl">Ton temps</span><span class="row"><input type="text" id="shx-time" inputmode="numeric" autocomplete="off" aria-label="Ton temps, en minutes et secondes"><small>Estimé avec ton allure, modifie-le si besoin</small></span></label>
         <label class="btn primary shx-pick"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13.5" r="4"/></svg>Prendre une photo<input type="file" accept="image/*" capture="environment" id="shx-cam" hidden></label>
         <label class="btn ghost shx-pick"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 4h18v16H3z"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="8.5" r="1.5"/></svg>Choisir dans ma galerie<input type="file" accept="image/*" id="shx-gal" hidden></label>
@@ -3391,10 +3399,11 @@ function shareData() {
   const r = S.route; if (!r) return null; const pts = routePts(r); if (!pts || pts.length < 2) return null;
   const km = r.len / 1000, a = pts[0], b = pts[pts.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150;
   let dep = '', arr = '';
-  if (S.tab === 'race' && S.race) dep = S.race.name;
+  if (r.solo) { dep = soloPlace(a); arr = loop ? '' : soloPlace(b); }
+  else if (S.tab === 'race' && S.race) dep = S.race.name;
   else { dep = shortName(S.start && S.start.name); if (!dep || dep === 'Ma position' || /^Point sur la carte/.test(S.start && S.start.name || '')) { const ns = nearestStation(a[0], a[1]); dep = ns && ns.d < 800 ? ns.s.n : (dep || 'Départ'); } if (!loop) { if (S.mode === 'ab' && !S.endFree && S.end) arr = shortName(S.end.name); else { const ns = nearestStation(b[0], b[1]); arr = ns && ns.d < 600 ? ns.s.n : 'Arrivée'; } } }
   const d = new Date(); const date = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-  return { pts, km, up: Math.round(r.up || 0), loop, dep, arr, race: S.tab === 'race' && !!S.race, date };
+  return { pts, km, up: Math.round(r.up || 0), loop, dep, arr, race: !r.solo && S.tab === 'race' && !!S.race, date, solo: !!r.solo };
 }
 function shOpen(secs, doneM) {
   const meas = typeof secs === 'number';
@@ -3403,11 +3412,12 @@ function shOpen(secs, doneM) {
   SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
   $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
-  $('#shx-lede').textContent = `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
+  $('#shx-name-l').hidden = !d.solo;
+  $('#shx-lede').textContent = d.solo ? `${fmt(d.km, 1)} km ${d.loop ? 'en boucle autour de ' + d.dep : 'de ' + d.dep + ' à ' + d.arr}, mesurés pendant ta course. Ton tracé est gardé dans « Mes parcours » : tu pourras le refaire ou l’envoyer.` : `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
-  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined };
+  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
-  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true;
+  mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true; if (d.solo) $('#shx-name').value = entry.t;
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
 function shClose() {
@@ -3526,7 +3536,7 @@ const RUN_IC = {
   keepl: '<path d="M14 21v-7l-6-8"/><path d="M6 10V5h5"/>', keepr: '<path d="M10 21v-7l6-8"/><path d="M18 10V5h-5"/>',
   left2: '<path d="M18 21v-7h-7V8H5"/><path d="M8 5L5 8l3 3"/>', right2: '<path d="M6 21v-7h7V8h6"/><path d="M16 5l3 3-3 3"/>',
   jogr: '<path d="M9 21v-8h6V4"/><path d="M11 8l4-4 4 4"/>', jogl: '<path d="M15 21v-8H9V4"/><path d="M5 8l4-4 4 4"/>',
-  flag: '<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', start: '<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>'
+  flag: '<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>', chrono: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/>', start: '<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>'
 };
 const runIco = k => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${RUN_IC[k]}</svg>`;
 function navWrong(on, m, wb) {
@@ -3653,50 +3663,72 @@ function navDenied(n) {
   n.className = 'note err'; n.innerHTML = ''; const b = document.createElement('b'); b.textContent = 'Ta position est bloquée'; n.append(b, how); n.hidden = false;
   NAV.denied = true; const g = $('#runp-go'); NAV.goHTML = NAV.goHTML || g.innerHTML; g.textContent = NATIVE ? 'Ouvrir les réglages' : 'Recharger la page';
 }
+// course libre (D-99) : textes de « Prêt ? » selon le mode
+const RUNP_TXT = {};
+function runpTexts(solo) {
+  const v = $('#run-voice').closest('label'), z = $('#run-buzz-l');
+  if (!RUNP_TXT.t) Object.assign(RUNP_TXT, { t: $('#runp-t').textContent, vb: v.querySelector('b').textContent, vs: v.querySelector('small').textContent, zs: z.querySelector('small').textContent });
+  $('#runp-t').textContent = solo ? 'Course libre' : RUNP_TXT.t;
+  v.querySelector('b').textContent = solo ? 'Annonces vocales' : RUNP_TXT.vb; v.querySelector('small').textContent = solo ? 'Chaque kilomètre annoncé, avec ton temps et ton allure' : RUNP_TXT.vs;
+  z.querySelector('small').textContent = solo ? 'À chaque kilomètre' : RUNP_TXT.zs;
+  $('#runp .run-priv').hidden = solo; // « Parcours indicatif » : pas de parcours
+  const g = $('#runp-go'); g.lastChild.textContent = solo ? 'Démarrer' : 'C’est parti';
+  if (solo) { const f = $('#runp-far'); f.className = 'note info'; f.innerHTML = '<b>Cours où tu veux.</b> Ta trace est enregistrée pendant la course. À la fin, elle devient un parcours que tu peux refaire ou envoyer.'; f.hidden = false; }
+}
+function soloPrep() { NAV.soloNext = true; runPrep(); }
 function runPrep() {
-  if (!S.route) return toast("Génère d'abord un parcours.");
+  const solo = !!NAV.soloNext;
+  if (!solo && !S.route) return toast("Génère d'abord un parcours.");
   if (NATIVE && !runPrep.asked) { // application : on explique avant la question de l'iPhone (D-86)
     NP.geo.checkPermissions().then(r => { if (/prompt/.test(r.location)) $('#runperm').hidden = false; else { runPrep.asked = true; runPrep(); } }, () => { runPrep.asked = true; runPrep(); });
     return;
   }
   if (!navigator.geolocation) return toast('Ta position n’est pas disponible sur cet appareil.', 3500);
-  NAV.n = navBuild(S.route); NAV.r_v = (NAV.r_v || 0) + 1;
+  if (!solo) NAV.n = navBuild(S.route); NAV.r_v = (NAV.r_v || 0) + 1;
   $('#runp-far').hidden = true; $('#runp-far').className = 'note info'; $('#runp').hidden = false;
   NAV.denied = false; if (NAV.goHTML) $('#runp-go').innerHTML = NAV.goHTML;
-  navigator.geolocation.getCurrentPosition(p => { // prévenir si on n'est pas encore au départ
+  runpTexts(solo);
+  navigator.geolocation.getCurrentPosition(p => { if (solo) return; // prévenir si on n'est pas encore au départ
     const [x, y] = E.toXY(p.coords.latitude, p.coords.longitude), [sx, sy] = NAV.n.pts[0], d = Math.hypot(x - sx, y - sy);
     if (d > 60 && !$('#runp').hidden) { const f = $('#runp-far'); f.innerHTML = ''; const b = document.createElement('b'); b.textContent = `Tu es à ${navDistTxt(d)} du départ.`; f.append(b, ' Rejoins le point D : le chrono démarre quand tu y es.'); f.hidden = false; }
   }, e => { if (e.code === 1) navDenied($('#runp-far')); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
 }
+const SOLO_N = { L: 0, pts: [[0, 0]], man: [], runs: [], idx: () => 0, at: () => [0, 0] };
 function runStart() {
-  $('#runp').hidden = true;
+  $('#runp').hidden = true; const solo = !!NAV.soloNext;
   Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
-    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null });
+    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null });
+  if (solo) { // course libre (D-99) : pas de parcours, le chrono part tout de suite, la trace est enregistrée
+    Object.assign(NAV, { n: SOLO_N, r: null, free: true, t0: Date.now(), wasPre: false, saved: { route: S.route, alts: S.alts } }); S.route = null; S.alts = [];
+  }
+  document.querySelector('#run .run-prog').hidden = solo;
   $('#run-vol').setAttribute('aria-pressed', NAV.voice); navPosBtn(); mapRotOn();
   document.documentElement.classList.add('running'); $('#run').hidden = false; navMsg(null);
   if (NAV.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} } // iOS : la voix doit démarrer après un geste
-  navSay('Suivi du parcours activé.');
+  navSay(solo ? 'Course libre. Le chrono est lancé.' : 'Suivi du parcours activé.');
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
   if (NATIVE) { // application : la position continue écran verrouillé
-    NP.bg.addWatcher({ backgroundTitle: 'Perfect Run suit ton parcours', backgroundMessage: 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
+    NP.bg.addWatcher({ backgroundTitle: solo ? 'Perfect Run enregistre ta course' : 'Perfect Run suit ton parcours', backgroundMessage: solo ? 'Ta trace est enregistrée écran verrouillé.' : 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
       if (err) { if (err.code === 'NOT_AUTHORIZED') { runStop(); runPrep(); navDenied($('#runp-far')); } return; }
       navFix({ coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() });
     }).then(id => { if (NAV.on) NAV.bgId = id; else NP.bg.removeWatcher({ id }); });
   } else
   NAV.watch = navigator.geolocation.watchPosition(navFix, e => { if (e.code === 1) { runStop(); runPrep(); } }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
   NAV.tick = setInterval(navUI, 1000);
-  track('suivi', 'Suivi lancé ' + Math.round(NAV.n.L / 1000) + ' km');
+  if (solo) track('course-libre', 'Course libre lancée'); else track('suivi', 'Suivi lancé ' + Math.round(NAV.n.L / 1000) + ' km');
 }
 function runStop() {
   if (NAV.watch != null) navigator.geolocation.clearWatch(NAV.watch); NAV.watch = null; clearInterval(NAV.tick);
   if (NATIVE) { if (NAV.bgId) NP.bg.removeWatcher({ id: NAV.bgId }).catch(() => {}); NAV.bgId = null; try { NP.awake.allowSleep(); } catch (e) {} }
   try { NAV.lock && NAV.lock.release(); } catch (e) {} NAV.lock = null;
   try { speechSynthesis.cancel(); } catch (e) {}
+  if (NAV.solo && NAV.saved) { S.route = NAV.saved.route; S.alts = NAV.saved.alts; NAV.saved = null; }
   NAV.on = false; mapRotOff(); $('#run').hidden = true; $('#runz').hidden = true; document.documentElement.classList.remove('running');
   setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
 }
 function runFinish(arrived) {
+  if (NAV.solo) { const secs = navElapsed(), tr = NAV.track.slice(), dist = NAV.extra, up = NAV.up; runStop(); return soloFinish(tr, dist, secs, up); }
   const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, base = NAV.base || 0, done = base + (free ? NAV.n.L + extra : NAV.prog);
   const streets = free ? [...NAV.streets.entries()].sort((a, b) => b[1] - a[1]).map(q => q[0]).slice(0, 3) : [];
   runStop(); $('#runa').hidden = true;
@@ -3716,6 +3748,68 @@ function navContinue() {
   Object.assign(NAV, { free: true, extra: 0, track: NAV.pos ? [NAV.pos.slice()] : [], streets: new Map(), offOn: false, errShown: false });
   navMsg(null); navSay('Course libre : tes kilomètres en plus sont comptés.'); navUI();
 }
+// ---------- course libre (D-99) : courir sans parcours, la trace devient un parcours ----------
+// quartier ou commune d'un nœud : « Paris 11e », « Lyon 2e », « Villeurbanne »
+function zoneName(v) { const q = M.quartiers[G.nq[v] - 1]; if (!q) return ''; if (q.ar > 100) return q.name; return q.ar ? C0.name + ' ' + q.ar + (q.ar === 1 ? 'er' : 'e') : ''; }
+function soloFix(x, y, c, t, last, d) {
+  if (!last || NAV.segBreak) { NAV.track.push([x, y, t, last ? 1 : 0]); NAV.segBreak = false; }
+  else if (d >= Math.max(4, c.accuracy * 0.5)) {
+    const dt = Math.max(1, (t - last[2]) / 1000);
+    if (d < 150 || d / dt < 7) NAV.extra += d, NAV.track.push([x, y, t, 0]);
+    else { NAV.track.push([x, y, t, 1]); return; } // saut de position (tunnel, signal perdu) : trou dans la trace, pas compté
+  } else return;
+  const v = E.nearest(x, y);
+  if (v >= 0 && Math.hypot(G.NX[v] - x, G.NY[v] - y) < 40) { // D+ : altitude des carrefours proches, lissée comme pour un parcours généré
+    NAV.prof.push([NAV.extra, G.NZ[v]]); NAV.up = E.smoothClimb(NAV.prof);
+    NAV.curZone = zoneName(v);
+  }
+  const nm = streetAt(x, y); if (nm && last) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm;
+}
+// nom d'un point : station proche, sinon la rue
+function soloPlace(p) { const ns = nearestStation(p[0], p[1]); if (ns && ns.d < 400) return ns.s.n; return streetAt(p[0], p[1]) || 'Point sur la carte'; }
+// la trace devient un parcours : nettoyée, recalée sur les rues de la carte quand c'est possible
+function soloRoute(tr) {
+  let inMap = 0; for (const p of tr) { const v = E.nearest(p[0], p[1]); if (v >= 0 && Math.hypot(G.NX[v] - p[0], G.NY[v] - p[1]) < 80) inMap++; }
+  if (!tr.length || inMap / tr.length < 0.6) return null; // course hors de la carte
+  const segs = []; let cur = []; for (const p of tr) { if (p[3] && cur.length) { segs.push(cur); cur = []; } cur.push([p[0], p[1]]); } if (cur.length) segs.push(cur);
+  const out = [], add = q => { const l = out[out.length - 1]; if (!l || Math.hypot(l[0] - q[0], l[1] - q[1]) > 0.5) out.push([q[0], q[1]]); };
+  for (const sg of segs) {
+    const P = simplifyPts(sg, 3), W = [P[0]]; let acc = 0;
+    for (let i = 1; i < P.length; i++) { acc += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); if (acc >= 40 || i === P.length - 1) { W.push(P[i]); acc = 0; } }
+    let pv = -1, pw = null;
+    if (out.length) { // trou dans la trace (signal perdu) : on relie par les rues si c'est plausible, sinon tout droit
+      const l = out[out.length - 1], u = E.nearest(l[0], l[1]), v = E.nearest(W[0][0], W[0][1]), raw = Math.hypot(W[0][0] - l[0], W[0][1] - l[1]);
+      const leg = u >= 0 && v >= 0 && u !== v ? E.routeThrough([u, v]) : null;
+      if (leg && leg.reduce((s, [e]) => s + G.LEN[e], 0) <= raw * 1.6 + 60) for (const [e, fa] of leg) { const q = E.edgePts(e); if (!fa) q.reverse(); q.forEach(add); }
+    }
+    for (const w of W) {
+      const v = E.nearest(w[0], w[1]), near = v >= 0 && Math.hypot(G.NX[v] - w[0], G.NY[v] - w[1]) < 35;
+      if (!pw) add(w);
+      else if (near && pv >= 0 && v !== pv) {
+        const leg = E.routeThrough([pv, v]), raw = Math.hypot(w[0] - pw[0], w[1] - pw[1]);
+        if (leg && leg.reduce((s, [e]) => s + G.LEN[e], 0) <= raw * 1.6 + 25) { add([G.NX[pv], G.NY[pv]]); for (const [e, fa] of leg) { const q = E.edgePts(e); if (!fa) q.reverse(); q.forEach(add); } }
+        else add(w);
+      } else if (!(near && v === pv)) add(w);
+      pv = near ? v : -1; pw = w;
+    }
+  }
+  for (let i = 1; i < out.length - 1; i++) { const a = out[i - 1], b = out[i], c = out[i + 1]; if (Math.hypot(a[0] - c[0], a[1] - c[1]) < 6 && Math.hypot(a[0] - b[0], a[1] - b[1]) < 45) { out.splice(i, 2); i = Math.max(0, i - 2); } } // petits allers-retours dus au recalage
+  if (out.length < 2) return null;
+  const st = geomRoute(simplifyPts(out, 2)); st.kind = 'solo'; st.solo = true; return st;
+}
+function soloFinish(tr, dist, secs, up) {
+  if (dist < 300 || secs < 120) { toast('Course trop courte pour être gardée.', 3500); track('course-libre', 'Course libre trop courte'); return; }
+  track('course-libre', 'Course libre terminée ' + Math.round(dist / 1000) + ' km');
+  const st = soloRoute(tr);
+  if (!st) { // hors de la carte : km et temps gardés, sans tracé
+    const L = mineLoad(); L.unshift({ id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(dist / 100) / 10, up: Math.round(up), dep: 'Course libre', loop: true, t: 'Course libre', g: '', secs: Math.round(secs), meas: true, solo: 1 }); mineSave(L);
+    setTab('mine'); mineOpen(0); toast('Course gardée sans son tracé : elle est hors de la carte.', 4000); return;
+  }
+  st.up = up; S.route = st; S.alts = [st]; S.recv = null; SH.extra = null; draw();
+  shOpen(secs, dist);
+}
+$('#shx-name').addEventListener('input', () => { const v = $('#shx-name').value.trim(), d = SH.data; if (SH.entryId) minePatch(SH.entryId, { t: v || mineTitle(d) }); });
+
 // rue la plus proche d'un point (course libre)
 function streetAt(x, y) {
   const v = E.nearest(x, y); if (v < 0) return ''; let best = '', bd = 40;
@@ -3739,8 +3833,9 @@ function navFix(p) {
   if (NAV.free) { // course libre après l'arrivée : on compte les km et les rues en plus
     if (NAV.paused) return navUI();
     const last = NAV.track[NAV.track.length - 1], d = last ? Math.hypot(x - last[0], y - last[1]) : 0;
-    if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
-    const tot = NAV.base + n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètres. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
+    if (NAV.solo) soloFix(x, y, c, p.timestamp || Date.now(), last, d);
+    else if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
+    const tot = NAV.base + n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
     return navUI();
   }
   // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
@@ -3800,13 +3895,14 @@ function navFix(p) {
 function navUI() {
   if (!NAV.on) return;
   const n = NAV.n, secs = navElapsed(), km = (NAV.base + (NAV.free ? n.L + NAV.extra : NAV.prog)) / 1000;
-  $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = NAV.free ? '+' + fmt(NAV.extra / 1000, 1) + ' km' : fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km'; $('#rs-rest-l').textContent = NAV.free ? 'en plus' : 'restants';
+  $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = NAV.solo ? Math.round(NAV.up) + ' m' : NAV.free ? '+' + fmt(NAV.extra / 1000, 1) + ' km' : fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km'; $('#rs-rest-l').textContent = NAV.solo ? 'D+' : NAV.free ? 'en plus' : 'restants';
   $('#rs-time').textContent = fmtClock(secs); $('#rs-pace').textContent = km > 0.2 ? fmtClock(secs / km) : '–';
-  $('#run-bar').style.width = (100 * (NAV.base + NAV.prog) / (NAV.base + n.L)).toFixed(1) + '%';
+  if (!NAV.solo) $('#run-bar').style.width = (100 * (NAV.base + NAV.prog) / (NAV.base + n.L)).toFixed(1) + '%';
   { const pb = $('#run-pause'), pre = !NAV.t0 && !NAV.free; if (pb.dataset.pre !== String(pre)) { pb.dataset.pre = pre; // avant le départ : on peut arrêter le suivi (pas de pause sans chrono)
     pb.innerHTML = pre ? '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>Arrêter le suivi' : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3v16H7z"/><path d="M14 4h3v16h-3z"/></svg>Pause'; } }
   let ic, big, small;
-  if (NAV.free) { ic = 'straight'; big = '+' + navDistTxt(NAV.extra); small = 'Course libre' + (NAV.curFree ? ' · ' + NAV.curFree : ''); }
+  if (NAV.solo) { ic = 'chrono'; big = 'Course libre'; small = NAV.curFree ? NAV.curFree + (NAV.curZone ? ' · ' + NAV.curZone : '') : NAV.track.length ? NAV.curZone : 'Recherche de ta position…'; }
+  else if (NAV.free) { ic = 'straight'; big = '+' + navDistTxt(NAV.extra); small = 'Course libre' + (NAV.curFree ? ' · ' + NAV.curFree : ''); }
   else if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
   let sub = '';
   if (!NAV.free && NAV.t0) { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = m.arrive && NAV.prog >= n.L - 1 ? 'Arrivée' : navDistTxt(Math.max(0, m.d - NAV.prog));
@@ -3839,7 +3935,7 @@ function navCenter() {
 function navDrawDone(px) {
   if (NAV.on && NAV.oldRest && NAV.oldRest.length > 1) { const q = new Path2D(); NAV.oldRest.forEach(([x, y], i) => i ? q.lineTo(x, y) : q.moveTo(x, y)); ctx.save(); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(3.5); ctx.setLineDash([px(6), px(6)]); ctx.stroke(q); ctx.restore(); }
   if (NAV.on && NAV.doneSegs) for (const sg of NAV.doneSegs) if (sg.length > 1) { const q = new Path2D(); sg.forEach(([x, y], i) => i ? q.lineTo(x, y) : q.moveTo(x, y)); ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(q); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(q); }
-  if (NAV.on && NAV.free && NAV.track.length > 1) { const q = new Path2D(); NAV.track.forEach(([x, y], i) => i ? q.lineTo(x, y) : q.moveTo(x, y)); ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(q); ctx.strokeStyle = css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(q); }
+  if (NAV.on && NAV.free && NAV.track.length > 1) { const q = new Path2D(); NAV.track.forEach(([x, y, , gap], i) => i && !gap ? q.lineTo(x, y) : q.moveTo(x, y)); ctx.strokeStyle = colors.casing; ctx.lineWidth = px(8); ctx.stroke(q); ctx.strokeStyle = NAV.solo ? colors.route : css('--route-done'); ctx.lineWidth = px(4.5); ctx.stroke(q); }
   if (!NAV.on || !NAV.t0 || NAV.prog <= 0) return;
   const n = NAV.n, k = n.idx(NAV.prog), p = new Path2D(); p.moveTo(n.pts[0][0], n.pts[0][1]);
   for (let i = 1; i <= k; i++) p.lineTo(n.pts[i][0], n.pts[i][1]); const e = n.at(NAV.prog); p.lineTo(e[0], e[1]);
@@ -3963,7 +4059,8 @@ function navRefollow() { if (!NAV.on) return; clearTimeout(NAV.refT); NAV.follow
 function navIdleArm() { if (!NAV.on) return; clearTimeout(NAV.refT); if (NAV.follow) return; NAV.refT = setTimeout(() => { if (NAV.on && !NAV.follow && !ptrs.size) navRefollow(); else navIdleArm(); }, 10000); }
 function navPosBtn() { const b = $('#run-pos'); b.setAttribute('aria-pressed', !!NAV.follow); b.dataset.mode = NAV.headUp ? 'head' : 'north'; b.setAttribute('aria-label', !NAV.follow ? 'Recentrer sur ma position' : NAV.headUp ? 'Carte orientée dans ta direction (toucher : nord en haut)' : 'Nord en haut (toucher : orienter dans ta direction)'); }
 if (/[?&]navtest=1/.test(location.search)) { window.RP_NAV = NAV; window.RP_VS = () => V.s; } // recette automatique uniquement
-$('#run-go').onclick = runPrep;
+$('#run-go').onclick = () => { NAV.soloNext = false; runPrep(); };
+$('#solo-go').onclick = $('#mine-solo').onclick = soloPrep;
 $('#runp-x').onclick = $('#runp-back').onclick = () => { $('#runp').hidden = true; };
 $('#runp-go').onclick = () => { if (NAV.denied) { NAV.denied = false; if (NATIVE) { $('#runp').hidden = true; return NP.bg.openSettings().catch(() => {}); } return location.reload(); } runStart(); };
 $('#runperm-go').onclick = () => { $('#runperm').hidden = true; runPrep.asked = true; NP.geo.requestPermissions({ permissions: ['location'] }).then(() => runPrep(), () => runPrep()); };
@@ -3973,8 +4070,8 @@ $('#run-pos').onclick = () => { // libre → suivi ; suivi → bascule nord en h
   if (!NAV.follow) NAV.follow = true; else { NAV.headUp = !NAV.headUp; try { localStorage.setItem('runparis-headup', NAV.headUp ? '1' : '0'); } catch (e) {} if (!NAV.headUp) mapRotTo(0, true); }
   navPosBtn(); if (NAV.pos) navCenter(); mapRotFollow(); };
 $('#run-north').onclick = () => { if (NAV.headUp) { NAV.headUp = false; try { localStorage.setItem('runparis-headup', '0'); } catch (e) {} } mapRotTo(0, true); navPosBtn(); };
-$('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt((NAV.base + NAV.prog) / 1000, 1) + ' km'; $('#rz-of').textContent = 'faits sur ' + fmt((NAV.base + NAV.n.L) / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
-const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; } $('#runz').hidden = true; navUI(); };
+$('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt((NAV.solo ? NAV.extra : NAV.base + NAV.prog) / 1000, 1) + ' km'; $('#rz-of').textContent = NAV.solo ? 'faits' : 'faits sur ' + fmt((NAV.base + NAV.n.L) / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; };
+const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; NAV.segBreak = true; } $('#runz').hidden = true; navUI(); };
 $('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
 $('#runa-end').onclick = () => runFinish(true); $('#runa-go').onclick = navContinue;
 $('#runz-end').onclick = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.pauseAt = 0; } runFinish(false); };
@@ -4052,7 +4149,7 @@ function renderMine() {
     const m = mineDate(e.d, { month: 'long', year: 'numeric' }); if (m !== month) { month = m; const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = m; items.appendChild(hh); }
     const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
     b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
-    b.querySelector('.k').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'short' }) + (e.secs ? (e.meas ? ' · mesuré' : ' · estimé') : '');
+    b.querySelector('.k').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'short' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré' : ' · estimé') : '');
     b.querySelector('.t').textContent = e.t || mineTitle(e);
     b.querySelector('.s').textContent = [e.secs ? fmtClock(e.secs) : '', e.secs && e.km ? fmtClock(e.secs / e.km) + ' /km' : '', e.up != null ? e.up + ' m D+' : ''].filter(Boolean).join(' · ');
     b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
@@ -4065,12 +4162,12 @@ function mineOpen(i) {
   S.mineCur = e.id || e.d;
   $('#mine-list').hidden = true; $('#mine-detail').hidden = false; $('#view-mine').scrollTop = 0;
   $('#md-t').textContent = e.t || mineTitle(e);
-  $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
+  $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
   $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
   $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
   const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
   const has = !!(e.g && decPoly(e.g).length > 1);
-  $('#md-old').hidden = has; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
+  $('#md-old').hidden = has; $('#md-old').textContent = e.solo ? 'Course faite hors de la carte : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.' : 'Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.'; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
   // la carte montre la sortie
   if (has) { const st = routeFromCode(e.g); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
   draw();
