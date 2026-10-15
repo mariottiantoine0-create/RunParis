@@ -254,6 +254,7 @@ canvas#map.pick{cursor:crosshair}
 .legend ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .legend li{display:flex;align-items:center;gap:8px}
 .lg{width:22px;flex:none;display:inline-block}
+.lg.pinl{display:inline-grid;place-items:center}
 .lg.route{height:0;border-top:4px solid var(--route)}
 .lg.twice{height:10px;border-top:4px solid var(--route);border-bottom:4px solid var(--route-2);box-sizing:border-box}
 .lg.dash{height:0;border-top:3px dashed var(--route);opacity:.55}
@@ -338,7 +339,7 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .link:hover{text-decoration:underline;text-underline-offset:4px}
 .startcard{border:0;border-radius:8px}
 .pin{width:28px;height:28px;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:15px}
-.pin.d{background:var(--accent);color:var(--accent-ink)} .pin.a{background:var(--pin-b);color:var(--panel)}
+.pin.d{background:var(--ink);color:var(--panel)} .pin.a{background:var(--panel);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)} /* D-105 : comme les épingles de la carte */
 .chip-btn{border-radius:4px}
 .chip-btn::before{border-radius:2px;background:var(--accent)}
 /* distance */
@@ -881,7 +882,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         </div>
         <div id="end-fixed" class="step" hidden>
           <div class="startcard">
-            <span class="pin a">B</span>
+            <span class="pin a">A</span>
             <div class="txt"><span class="name" id="end-name">—</span><small>Arrivée</small></div>
             <button class="link" id="pick-end">Sur la carte</button>
           </div>
@@ -1046,6 +1047,8 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <li><span class="lg route"></span>Ton parcours</li>
           <li><span class="lg twice"></span>Rue prise 2 fois</li>
           <li><span class="lg dash"></span>Autres propositions</li>
+          <li><span class="lg pinl"><svg viewBox="0 0 22 26" width="18" height="22" aria-hidden="true"><path d="M11 25C9 20 2 16 2 10a9 9 0 0 1 18 0c0 6-7 10-9 15z" fill="var(--ink)" stroke="var(--panel)" stroke-width="2"/><text x="11" y="11" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="800" fill="var(--panel)">D</text></svg></span>Départ</li>
+          <li><span class="lg pinl"><svg viewBox="0 0 22 26" width="18" height="22" aria-hidden="true"><path d="M11 25C9 20 2 16 2 10a9 9 0 0 1 18 0c0 6-7 10-9 15z" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><text x="11" y="11" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="800" fill="var(--ink)">A</text></svg></span>Arrivée</li>
           <li><span class="lg km">1</span>Borne kilométrique</li>
           <li><span class="lg sig"></span>Feu</li>
           <li><span class="lg fontl"></span>Point d’eau</li>

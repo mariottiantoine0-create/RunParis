@@ -560,6 +560,8 @@ function drawMetro(hiOnly) {
     }
   }
 }
+// épingles dessinées (position à l'écran) et épingle survolée à la souris (D-105)
+const PINS = []; let PIN_HOVER = '';
 let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function render() {
   if (!G || !paths.minor) return;
@@ -677,7 +679,20 @@ function render() {
   // pins
   // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
   const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
-  const pin = (p, label, col, txt) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = txt || '#fff'; ctx.font = `700 13px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); };
+  // départ et arrivée (D-105) : épingle qui pointe le point exact, avec une ombre ; D plein (ink), A en creux (panel cerclé d'ink).
+  // Sur ordinateur (souris), l'épingle survolée se déroule en « Départ » / « Arrivée ».
+  const pin = (p, k) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty, isD = k === 'D';
+    const full = PIN_HOVER === k ? (isD ? (S.mode === 'loop' && S.tab !== 'race' ? 'Départ et arrivée' : 'Départ') : 'Arrivée') : '';
+    const h = 34, r = 14, cy = sy - h + r; ctx.font = `800 ${full ? 14 : 15}px ${css(full ? '--f-body' : '--f-display')}`;
+    const hw = full ? ctx.measureText(full).width / 2 + 12 : 0;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2; ctx.beginPath(); ctx.moveTo(sx, sy);
+    if (full) { ctx.lineTo(sx - 6, cy + r); ctx.lineTo(sx - hw, cy + r); ctx.arc(sx - hw, cy, r, Math.PI / 2, Math.PI * 1.5); ctx.lineTo(sx + hw, cy - r); ctx.arc(sx + hw, cy, r, -Math.PI / 2, Math.PI / 2); ctx.lineTo(sx + 6, cy + r); }
+    else { ctx.bezierCurveTo(sx - 4, sy - 8, sx - r, cy + r * .6, sx - r, cy); ctx.arc(sx, cy, r, Math.PI, 0); ctx.bezierCurveTo(sx + r, cy + r * .6, sx + 4, sy - 8, sx, sy); }
+    ctx.closePath(); ctx.fillStyle = isD ? colors.ink : colors.panel; ctx.fill(); ctx.restore(); ctx.lineWidth = 2.5; ctx.strokeStyle = isD ? colors.panel : colors.ink; ctx.stroke();
+    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, 7); ctx.fillStyle = isD ? colors.panel : colors.ink; ctx.fill(); ctx.strokeStyle = isD ? colors.ink : colors.panel; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = isD ? colors.panel : colors.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(full || k, sx, cy + 1);
+    PINS.push({ k, x: sx, y: cy, w: Math.max(r, hw + r) }); };
+  PINS.length = 0;
   if (R && S.alts && !NAV.on) for (const a of S.alts) if (a !== R && a._label) {
     const [x, y, n] = a._label, sx = x * V.s + V.tx, sy = y * V.s + V.ty;
     ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
@@ -691,13 +706,13 @@ function render() {
       ctx.lineWidth = 3.5; ctx.strokeStyle = colors.bg; ctx.strokeText(nm, sx + 10, sy); ctx.fillStyle = colors.ink; ctx.fillText(nm, sx + 10, sy); }
   }
   if (S.tab === 'race') {
-    if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(a), 'D', colors.route, colors.accentInk); pin(ll(b), 'A', colors.pinB, colors.panel); }
+    if (R) { const a = R.nodes[0], b = R.nodes[R.nodes.length - 1]; const ll = v => { const [la, lo] = E.toLL(G.NX[v], G.NY[v]); return { lat: la, lon: lo }; }; pin(ll(b), 'A'); pin(ll(a), 'D'); }
     navDrawMe(); return;
   }
   S.vias.forEach((v, i) => dia(v, String(i + 1), 13));
-  pin(S.start, S.mode === 'ab' ? 'A' : 'D', colors.route, colors.accentInk);
-  if (S.mode === 'ab' && !S.endFree) pin(S.end, 'B', colors.pinB, colors.panel);
-  if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'B', colors.pinB, colors.panel); }
+  if (S.mode === 'ab' && !S.endFree) pin(S.end, 'A');
+  if (S.mode === 'ab' && S.endFree && S.route) { const v = S.route.nodes[S.route.nodes.length - 1]; const [la, lo] = E.toLL(G.NX[v], G.NY[v]); pin({ lat: la, lon: lo }, 'A'); }
+  pin(S.start, 'D');
   navDrawMe();
 }
 
@@ -756,6 +771,7 @@ const ptrs = new Map(); let drag = null, pinch = null, pinchRot = null;
 const ptrC = new Map();
 cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (er) {} ptrs.set(e.pointerId, [e.offsetX, e.offsetY]); ptrC.set(e.pointerId, [e.clientX, e.clientY]); if (ptrC.size === 2) { const [a, b] = [...ptrC.values()]; pinchRot = { a0: Math.atan2(b[1] - a[1], b[0] - a[0]), r0: MAPROT, on: false }; } if (ptrs.size === 1) drag = { x: e.offsetX, y: e.offsetY, tx: V.tx, ty: V.ty, moved: false }; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s: V.s, tx: V.tx, ty: V.ty, cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2 }; drag = null; } });
 cv.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse' && !NATIVE && !ptrs.size) { const h = PINS.slice().reverse().find(p => Math.abs(e.offsetX - p.x) <= p.w && Math.abs(e.offsetY - p.y) <= 16); const k = h ? h.k : ''; if (k !== PIN_HOVER) { PIN_HOVER = k; cv.style.cursor = k ? 'default' : ''; draw(); } }
   if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.offsetX, e.offsetY]); ptrC.set(e.pointerId, [e.clientX, e.clientY]);
   if (NAV.on && pinchRot && ptrC.size === 2) { const [a, b] = [...ptrC.values()]; let d = (Math.atan2(b[1] - a[1], b[0] - a[0]) - pinchRot.a0) * 180 / Math.PI; while (d > 180) d -= 360; while (d < -180) d += 360;
     if (!pinchRot.on && Math.abs(d) > 12) { pinchRot.on = true; pinchRot.a0 += Math.sign(d) * 12 * Math.PI / 180; d -= Math.sign(d) * 12; if (NAV.follow) { NAV.follow = false; navPosBtn(); } }
@@ -764,6 +780,7 @@ cv.addEventListener('pointermove', e => {
   if (drag) { const dx = e.offsetX - drag.x, dy = e.offsetY - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved) { V.tx = drag.tx + dx; V.ty = drag.ty + dy; if (NAV.on && NAV.follow) { NAV.follow = false; navPosBtn(); } draw(); } }
 });
 cv.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); ptrC.delete(e.pointerId); if (ptrs.size < 2) { pinch = null; pinchRot = null; } if (drag && !drag.moved) click(e.offsetX, e.offsetY); drag = null;  navIdleArm(); });
+cv.addEventListener('pointerleave', () => { if (PIN_HOVER) { PIN_HOVER = ''; cv.style.cursor = ''; draw(); } });
 cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); ptrC.delete(e.pointerId); drag = null; pinch = null; pinchRot = null; });
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.offsetX, e.offsetY, V.s * Math.exp(-e.deltaY * 0.0015)); navIdleArm(); }, { passive: false });
 function zoomAt(cx, cy, s, base) {
@@ -857,10 +874,10 @@ function setArrival(k) {
 ['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
 function applyModeLabels() {
   const ab = S.mode === 'ab';
-  $('#start-pin').textContent = ab ? 'A' : 'D';
+  $('#start-pin').textContent = 'D';
   $('#start-sub').textContent = ab ? 'Départ (A)' : 'Départ et arrivée';
   $('#start-q').placeholder = ab ? 'Rechercher le départ A (lieu, rue, métro…)' : 'Rechercher un départ (lieu, rue, métro…)';
-  $('#tl-start').textContent = ab ? 'Placer A (départ)' : 'Placer le départ';
+  $('#tl-start').textContent = 'Placer le départ';
   document.querySelector('[data-tool="end"]').hidden = !ab || S.endFree;
 }
 // Distance ou durée
@@ -1140,7 +1157,7 @@ $('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($
 function renderSummary() {
   const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
   const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
-  const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'B'}`);
+  const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'l’arrivée'}`);
   $('#sum-t').textContent = `${mode} · ${kmTxt} · ${where}`;
   const d = S.dmode === 'flat' ? 'Plat' : S.dmode === 'target' ? `Vallonné (D+ ${$('#dplus').value} m)` : 'Dénivelé normal';
   const f = PRIO[S.prio || 'eq'].txt;
@@ -1222,7 +1239,7 @@ async function generate(isAgain) {
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
       opt.water = { set, pts, every: 3000 };
     }
-    const ab = S.mode === 'ab', A = ab ? 'A' : 'le départ';
+    const ab = S.mode === 'ab', A = 'le départ';
     const [sx, sy] = E.toXY(S.start.lat, S.start.lon);
     const s = snapNode(sx, sy);
     if (s < 0) errs.push(`Aucune rue accessible autour de ${A} avec ces exclusions. Réautorise un quartier proche ou retire un lieu évité.`);
@@ -1550,7 +1567,7 @@ function shDraw() {
   g.strokeStyle = onMap ? ACC : '#fff'; g.lineWidth = lw; g.stroke(); g.restore();
   const P = ([x, y]) => [x * T.sc + T.ox, y * T.sc + T.oy];
   const dot = (pt, label, fill, txt) => { const [X, Y] = P(pt); g.beginPath(); g.arc(X, Y, label ? 30 : 18, 0, 7); g.fillStyle = fill; g.fill(); g.lineWidth = 7; g.strokeStyle = onMap ? '#fff' : 'rgba(0,0,0,.35)'; g.stroke(); if (label) { g.fillStyle = txt; g.font = '800 34px Archivo, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, X, Y + 2); } };
-  if (onMap) { if (!D.loop) dot(D.pts[D.pts.length - 1], 'B', INK, '#fff'); dot(D.pts[0], D.loop ? 'D' : 'A', ACC, '#fff'); }
+  if (onMap) { if (!D.loop) dot(D.pts[D.pts.length - 1], 'A', INK, '#fff'); dot(D.pts[0], 'D', ACC, '#fff'); }
   else { if (!D.loop) { const [X, Y] = P(D.pts[D.pts.length - 1]); g.beginPath(); g.arc(X, Y, 24, 0, 7); g.lineWidth = 9; g.strokeStyle = '#fff'; g.stroke(); g.beginPath(); g.arc(X, Y, 10, 0, 7); g.fillStyle = '#fff'; g.fill(); } dot(D.pts[0], '', '#fff'); }
   // textes
   const NARF = (w, s) => { g.font = `${w} ${s}px Archivo, sans-serif`; try { g.fontStretch = 'condensed'; } catch (e) {} };
