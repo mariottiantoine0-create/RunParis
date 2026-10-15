@@ -307,16 +307,42 @@ function buildSearch() {
     const name = M.names[n - 1], tw = key.split('|')[1]; IDX.push({ name, type: tw ? 'Rue · ' + tw : 'Rue', lat: la, lon: lo, k: norm(name + (tw ? ' ' + tw : '')) });
   }
 }
+// recherche : lieux et rues de la carte, plus les adresses avec numéro (API Adresse de l'IGN, D-106).
+// Rien n'est envoyé sans numéro ; avec un numéro, seul le texte tapé part à l'IGN (pas de position, pas d'identifiant).
+const ADDR_RE = /^\s*\d+\s*(bis|ter|[a-z])?\b\s*,?\s*\S{3,}/i;
+async function geoAddr(q) {
+  const u = 'https://data.geopf.fr/geocodage/search?index=address&limit=10&autocomplete=1&q=' + encodeURIComponent(q) + '&lat=' + C0.ll[0] + '&lon=' + C0.ll[1];
+  const r = await fetch(u); if (!r.ok) throw new Error(r.status); const j = await r.json();
+  return (j.features || []).filter(f => f.properties.type === 'housenumber').map(f => { const [lo, la] = f.geometry.coordinates, p = f.properties; return { name: p.name, town: p.city, lat: la, lon: lo, city: cityAt(la, lo) }; });
+}
 function searchBox(inp, res, onPick) {
+  let seq = 0, tm = 0;
+  const row = (name, type, onclick, cls) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = `<span></span><em></em>`; b.firstChild.textContent = name; b.lastChild.textContent = type; if (onclick) b.onclick = onclick; else b.disabled = true; res.appendChild(b); return b; };
+  const local = q => { const words = q.split(/\s+/); return IDX.filter(x => words.every(w => x.k.includes(w))).sort((a, b) => (a.k.startsWith(q) ? 0 : 1) - (b.k.startsWith(q) ? 0 : 1) || a.type.startsWith('Rue') - b.type.startsWith('Rue') || a.name.length - b.name.length); };
+  const pick = h => { onPick(h); inp.value = ''; res.hidden = true; };
   const run = () => {
-    const q = norm(inp.value.trim()); if (q.length < 2) { res.hidden = true; return; }
-    const words = q.split(/\s+/);
-    const hits = IDX.filter(x => words.every(w => x.k.includes(w)))
-      .sort((a, b) => (a.k.startsWith(q) ? 0 : 1) - (b.k.startsWith(q) ? 0 : 1) || a.type.startsWith('Rue') - b.type.startsWith('Rue') || a.name.length - b.name.length).slice(0, 8);
-    res.innerHTML = '';
-    if (!hits.length) { res.innerHTML = '<button disabled>Aucun résultat sur la carte</button>'; res.hidden = false; return; }
-    for (const h of hits) { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `<span></span><em></em>`; b.firstChild.textContent = h.name; b.lastChild.textContent = h.type; b.onclick = () => { onPick(h); inp.value = ''; res.hidden = true; }; res.appendChild(b); }
-    res.hidden = false;
+    const raw = inp.value.trim(), q = norm(raw); clearTimeout(tm); const my = ++seq;
+    if (q.length < 2) { res.hidden = true; return; }
+    const isAddr = ADDR_RE.test(raw), hits = local(q.replace(/^\d+\s*(bis|ter)?\s*,?\s*/, '') || q).slice(0, isAddr ? 4 : 8);
+    const paint = (addr, state) => {
+      res.innerHTML = '';
+      if (isAddr) {
+        if (state === 'load') row('Recherche des adresses…', '', null, 'muted');
+        else if (state === 'off') row('Adresses indisponibles sans connexion', 'Les lieux et les rues restent cherchables', null, 'muted');
+        else {
+          const here = addr.filter(a => a.city === CITY), other = addr.filter(a => a.city && a.city !== CITY);
+          for (const a of here.slice(0, 4)) row(a.name, 'Adresse · ' + a.town, () => { track('adresse', 'Adresse choisie'); pick({ name: a.name, type: 'Adresse', lat: a.lat, lon: a.lon }); });
+          if (!here.length && other.length) { const a = other[0], c = CITIES[a.city].name; row(a.name + ' · ' + a.town, 'À ' + c + ' · Passer sur ' + c, () => setCity(a.city)); }
+          if (!here.length && !other.length && !hits.length) row('Aucune adresse trouvée à ' + C0.name, 'Vérifie le numéro et le nom de la rue', null, 'muted');
+        }
+      }
+      for (const h of hits) row(h.name, h.type, () => pick(h));
+      if (!isAddr && !hits.length) row('Aucun résultat sur la carte', 'Avec un numéro, cherche une adresse : « 12 rue … »', null, 'muted');
+      res.hidden = false;
+    };
+    if (!isAddr) { paint([], ''); return; }
+    paint([], 'load');
+    tm = setTimeout(() => geoAddr(raw).then(a => { if (my === seq) paint(a, ''); }).catch(() => { if (my === seq) paint([], 'off'); }), 250);
   };
   inp.addEventListener('input', run); inp.addEventListener('focus', run);
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = res.querySelector('button:not([disabled])'); if (b) b.click(); } if (e.key === 'Escape') res.hidden = true; });
@@ -875,8 +901,8 @@ function setArrival(k) {
 function applyModeLabels() {
   const ab = S.mode === 'ab';
   $('#start-pin').textContent = 'D';
-  $('#start-sub').textContent = ab ? 'Départ (A)' : 'Départ et arrivée';
-  $('#start-q').placeholder = ab ? 'Rechercher le départ A (lieu, rue, métro…)' : 'Rechercher un départ (lieu, rue, métro…)';
+  $('#start-sub').textContent = ab ? 'Départ' : 'Départ et arrivée';
+  $('#start-q').placeholder = 'Rechercher un départ (adresse, lieu, rue…)';
   $('#tl-start').textContent = 'Placer le départ';
   document.querySelector('[data-tool="end"]').hidden = !ab || S.endFree;
 }
@@ -2341,9 +2367,9 @@ const APP_VER = '0.1';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('Perfect Run n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 13 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('Perfect Run n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 15 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
-    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
+    '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La recherche d’une adresse avec numéro (« 12 rue … ») : le texte tapé est envoyé au service d’adresses de l’IGN, sans ta position ni identifiant ; sans numéro, la recherche reste dans l’app', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
     '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
     '<h3>Tes droits</h3>' + ap((NATIVE ? 'Tout s’efface avec « Effacer mes données » ou en supprimant l’app.' : 'Tout s’efface en vidant les données de ce site dans ton navigateur.') + ' Pour un message envoyé : écris via « Signaler un problème ».')],
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
@@ -2351,7 +2377,7 @@ const ABOUT = {
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
     '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
-  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
+  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +

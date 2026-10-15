@@ -90,6 +90,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .results button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 12px}
 .results button:hover,.results button:focus{background:var(--soft)}
 .results em{font-style:normal;color:var(--muted);font-size:12px;white-space:nowrap}
+.results button.muted{flex-direction:column;align-items:flex-start;gap:2px;color:var(--muted)} .results button.muted em{white-space:normal} /* D-106 : lignes d'état de la recherche d'adresses */
 .home{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .chip-btn{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
 .chip-btn::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
@@ -864,7 +865,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         </div>
         <div class="step" id="start-box" hidden>
           <div class="search">
-            <input type="text" id="start-q" placeholder="Rechercher un départ (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher un départ">
+            <input type="text" id="start-q" placeholder="Rechercher un départ (adresse, lieu, rue…)" autocomplete="off" aria-label="Rechercher un départ">
             <div class="results" id="start-res" hidden></div>
           </div>
           <button class="link" id="pick-start" style="align-self:flex-start">Ou le choisir sur la carte</button>
@@ -887,7 +888,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
             <button class="link" id="pick-end">Sur la carte</button>
           </div>
           <div class="search">
-            <input type="text" id="end-q" placeholder="Rechercher l'arrivée (lieu, rue, métro…)" autocomplete="off" aria-label="Rechercher l'arrivée">
+            <input type="text" id="end-q" placeholder="Rechercher l'arrivée (adresse, lieu, rue…)" autocomplete="off" aria-label="Rechercher l'arrivée">
             <div class="results" id="end-res" hidden></div>
           </div>
         </div>
