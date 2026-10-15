@@ -890,7 +890,7 @@ let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m;
 
 // ---------- controls ----------
 function seg(ids, onPick) { ids.forEach(id => $('#' + id).onclick = () => { ids.forEach(j => $('#' + j).setAttribute('aria-pressed', j === id)); onPick(id); }); }
-// Arrivée : Retour au départ (boucle) / Un lieu (A→B) / N'importe où (aller simple)
+// Arrivée : En boucle / Jusqu'à un lieu / N'importe où (mêmes mots que l'accueil)
 function setArrival(k) {
   ['back', 'place', 'free'].forEach(j => $('#a-' + j).setAttribute('aria-pressed', j === k));
   S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
@@ -1307,7 +1307,7 @@ async function generate(isAgain) {
       if (ab && !S.endFree) {
         const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = snapNode(ex, ey);
         if (endN < 0) errs.push('Aucune rue accessible autour de l’arrivée avec ces exclusions.');
-        else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « Retour au départ » ou « N’importe où ».');
+        else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « En boucle » ou « N’importe où ».');
       }
       const endArg = !ab ? s : S.endFree ? 'free' : endN;
       if (errs.length) { /* reported below */ }

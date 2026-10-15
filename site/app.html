@@ -334,7 +334,7 @@ body{font-family:var(--f-body);font-variant-numeric:tabular-nums;-webkit-font-sm
 .seg button{border-radius:3px;color:var(--ink);font-size:15px;font-weight:600;transition:background-color .12s}
 .seg button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px} /* segments de même largeur, quel que soit le libellé */
 .depline .seg button{flex:1 1 auto}
-#arr-seg button{flex:1 1 auto;padding-left:8px;padding-right:8px} /* « Retour au départ » entier : largeur selon le texte */
+#arr-seg button{flex:1 1 auto;padding-left:8px;padding-right:8px} /* « Jusqu’à un lieu » entier : largeur selon le texte (mêmes mots que l’accueil) */
 @media (max-width:380px){.seg button{white-space:normal;line-height:1.15}} /* petit téléphone : un libellé long passe sur 2 lignes au lieu de déborder */
 .seg button:hover{background:var(--soft)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -886,9 +886,9 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         </div>
         <span class="lbl">Arrivée</span>
         <div class="seg sm" id="arr-seg" role="group" aria-label="Arrivée">
-          <button id="a-back" aria-pressed="true">Retour au départ</button>
-          <button id="a-place" aria-pressed="false">Un lieu</button>
-          <button id="a-free" aria-pressed="false">N'importe où</button>
+          <button id="a-back" aria-pressed="true">En boucle</button>
+          <button id="a-place" aria-pressed="false">Jusqu’à un lieu</button>
+          <button id="a-free" aria-pressed="false">N’importe où</button>
         </div>
         <div id="end-fixed" class="step" hidden>
           <div class="startcard">
@@ -2843,7 +2843,7 @@ let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m;
 
 // ---------- controls ----------
 function seg(ids, onPick) { ids.forEach(id => $('#' + id).onclick = () => { ids.forEach(j => $('#' + j).setAttribute('aria-pressed', j === id)); onPick(id); }); }
-// Arrivée : Retour au départ (boucle) / Un lieu (A→B) / N'importe où (aller simple)
+// Arrivée : En boucle / Jusqu'à un lieu / N'importe où (mêmes mots que l'accueil)
 function setArrival(k) {
   ['back', 'place', 'free'].forEach(j => $('#a-' + j).setAttribute('aria-pressed', j === k));
   S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
@@ -3260,7 +3260,7 @@ async function generate(isAgain) {
       if (ab && !S.endFree) {
         const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = snapNode(ex, ey);
         if (endN < 0) errs.push('Aucune rue accessible autour de l’arrivée avec ces exclusions.');
-        else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « Retour au départ » ou « N’importe où ».');
+        else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « En boucle » ou « N’importe où ».');
       }
       const endArg = !ab ? s : S.endFree ? 'free' : endN;
       if (errs.length) { /* reported below */ }
