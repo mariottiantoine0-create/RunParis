@@ -71,7 +71,7 @@ def city_stats():
     et = ' et '.join([', '.join(names[:-1]), names[-1]]) if len(names) > 1 else names[0]
     a = ', à '.join(names)
     line = '<b>' + ' · '.join(names) + '</b> et leurs communes voisines' + (' · ' + ' et '.join([', '.join(CITY_SOON[:-1]), CITY_SOON[-1]] if len(CITY_SOON) > 1 else CITY_SOON) + ' bientôt' if CITY_SOON else '')
-    return dict(S_KM=nb(round(km / 100) * 100), S_FEUX=nb(feux), S_FONT=nb(font), S_ARBRES=nb(round(trees / 1000) * 1000), S_RACES=str(len(races)), CITIES_ET=et, CITIES_A=a, CITIES_LINE=line), races
+    return dict(S_KM=nb(round(km / 100) * 100), S_FEUX=nb(feux), S_FONT=nb(font), S_ARBRES=nb(round(trees / 1000) * 1000), S_RACES=str(len(races)), CITIES_ET=et, CITIES_A=a, CITIES_LINE=line, CITY_OPTIONS=''.join(f'<option value="{k}">{n}</option>' for _, n, k in CITY_NAMES)), races
 import base64
 STATS, ALL_RACES = city_stats()
 print('chiffres', STATS)

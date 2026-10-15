@@ -52,8 +52,8 @@ const CITIES = {
     hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon arrivent bientôt.', od: '' },
   bordeaux: { name: 'Bordeaux', dir: 'bordeaux/', sub: 'et 12 communes voisines', ll: [44.8425, -0.5743], bb: [44.74, 44.96, -0.77, -0.48], end: ['Jardin public', 44.8487, -0.5793],
     hill: 'Bordeaux va de 3 m (Garonne) à 30 m ; les coteaux de la rive droite (Cenon, Floirac, Lormont) montent à 70 m.', zones: '8 quartiers et 12 communes', avoidEx: 'Un lieu : place de la Bourse, Saint-Michel, un marché…', races: 'Les grands parcours de course de Bordeaux arrivent bientôt.', od: '' },
-  nantes: { name: 'Nantes', dir: 'nantes/', sub: 'et 11 communes voisines', ll: [47.2129, -1.5598], bb: [47.105, 47.37, -1.7, -1.39], end: ['Jardin des Plantes', 47.2197, -1.5433],
-    hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 11 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes arrivent bientôt.', od: '' }
+  nantes: { name: 'Nantes', dir: 'nantes/', sub: 'et 13 communes voisines', ll: [47.2129, -1.5598], bb: [47.105, 47.37, -1.855, -1.39], end: ['Jardin des Plantes', 47.2197, -1.5433],
+    hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 13 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes arrivent bientôt.', od: '' }
 };
 const CITY_SOON = ['Toulouse', 'Lille'];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
@@ -70,6 +70,7 @@ function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(
 const DV = '__DATAV__';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
+$('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
 $('#hill-hint').textContent = C0.hill; $('#zones-sum').textContent = `Choisir quartier par quartier (${C0.zones})`; $('#avoid-q').placeholder = C0.avoidEx; $('#race-hint').textContent = C0.races;
 $('#map').setAttribute('aria-label', `Carte de ${C0.name} et des communes voisines avec le parcours`); $('#attrib-od').textContent = C0.od ? ' · ' + C0.od : '';
 // ---------- choix de la ville (D-97, CityPicker) : bouton d'en-tête, feuille sur téléphone, liste sous l'en-tête sur ordinateur ----------

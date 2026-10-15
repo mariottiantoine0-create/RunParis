@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Perfect Run · Ton parcours de course à Paris, Lyon, Bordeaux et Nantes">
-<meta property="og:description" content="Choisis ta distance, Perfect Run trace ton parcours : dénivelé, moins de feux rouges, parcs, fontaines, métro pour rentrer. Gratuit, sans compte.">
+<meta property="og:description" content="Choisis ta distance, Perfect Run trace ton parcours : dénivelé, moins de feux rouges, parcs, fontaines, métro pour rentrer.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://perfectrun.fr/">
 <meta property="og:image" content="https://perfectrun.fr/og.jpg">
@@ -165,6 +165,7 @@ footer p{margin:0;max-width:62em}
 .fld select:hover{background-color:var(--soft)}
 .fld select:focus-visible{outline:none;box-shadow:var(--ring)}
 .fld.pos select{padding-left:40px}
+@media (max-width:760px){.cityw{display:none!important}} /* téléphone : la ville se choisit dans l'app, avec la position (D-104) */
 .fld.pos::before{content:"";position:absolute;left:12px;top:50%;width:20px;height:20px;margin-top:-10px;background:var(--accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}
 .ask .btn{width:100%;height:56px;font-size:17px}
 .ask-hint{margin:-6px 0 0;font-size:14px;color:var(--muted)}
@@ -283,13 +284,15 @@ footer p{margin:0;max-width:62em}
           <span class="fld"><select id="q-arr" aria-label="Arrivée">
             <option value="back" selected>en boucle</option><option value="free">droit devant</option><option value="place">jusqu’à un lieu</option>
           </select></span>
+          <span class="cityw">à</span>
+          <span class="fld cityw"><select id="q-city" aria-label="Ville"><option value="paris">Paris</option><option value="lyon">Lyon</option><option value="bordeaux">Bordeaux</option><option value="nantes">Nantes</option></select></span>
           <span>depuis</span>
           <span class="fld pos"><select id="q-dep" aria-label="Départ">
-            <option value="pos" selected>autour de moi</option><option value="pick">une adresse</option>
+            <option value="pos" selected>ma position</option><option value="pick">une adresse</option>
           </select></span>
         </p>
         <button class="btn primary" type="submit">Générer mes parcours</button>
-        <p class="ask-hint" id="ask-hint">Gratuit, sans compte. « Droit devant » finit près d’un métro pour rentrer.</p>
+        <p class="ask-hint" id="ask-hint">Trois parcours au choix.</p>
       </form>
     </div>
   </section>
@@ -321,9 +324,9 @@ footer p{margin:0;max-width:62em}
   <section class="how" id="comment-m" aria-labelledby="t-how">
     <div class="wrap">
       <ul class="facts" aria-label="Perfect Run en chiffres">
-        <li><b>17 600 km</b><span>de rues et chemins</span></li>
+        <li><b>18 000 km</b><span>de rues et chemins</span></li>
         <li><b>5 615</b><span>carrefours à feux</span></li>
-        <li><b>2 468</b><span>fontaines</span></li>
+        <li><b>2 471</b><span>fontaines</span></li>
         <li><b>16</b><span>parcours mythiques</span></li>
       </ul>
       <h2 class="visually-hidden" id="t-how">Comment ça marche</h2>
@@ -340,11 +343,11 @@ footer p{margin:0;max-width:62em}
     <div class="wrap">
       <div>
         <h2 class="sec-h" id="t-about">Fait pour courir en ville</h2>
-        <p class="sec-p" style="margin-bottom:24px">Pas une carte du monde entier : Perfect Run connaît chaque carrefour à feux, les quais, les parcs et les côtes de chaque ville qu’il couvre, et des communes qui la bordent. Gratuit, sans compte, tout se calcule dans ton navigateur.</p>
+        <p class="sec-p" style="margin-bottom:24px">Pas une carte du monde entier : Perfect Run connaît chaque carrefour à feux, les quais, les parcs et les côtes de chaque ville qu’il couvre, et des communes qui la bordent. Tout se calcule dans ton navigateur.</p>
         <ul class="facts" aria-label="Perfect Run en chiffres">
-          <li><b>17 600 km</b><span>de rues et chemins</span></li>
+          <li><b>18 000 km</b><span>de rues et chemins</span></li>
           <li><b>5 615</b><span>carrefours à feux</span></li>
-          <li><b>2 468</b><span>fontaines</span></li>
+          <li><b>2 471</b><span>fontaines</span></li>
         </ul>
       </div>
       <div>
@@ -371,13 +374,16 @@ footer p{margin:0;max-width:62em}
 if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname)) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
 // formulaire de l'accueil (D-70) : construit le lien vers l'app
 (() => {
-  const $ = s => document.querySelector(s), dist = $('#q-dist'), arr = $('#q-arr'), dep = $('#q-dep');
+  const $ = s => document.querySelector(s), dist = $('#q-dist'), arr = $('#q-arr'), dep = $('#q-dep'), city = $('#q-city');
+  // ville (D-104) : la dernière choisie sur l'appareil, sinon Paris ; sur téléphone le champ est masqué et l'app choisit avec la position
+  try { const c = localStorage.getItem('runparis-city'); if (c && city.querySelector(`option[value="${c}"]`)) city.value = c; } catch (e) {}
+  const cityOn = () => getComputedStyle(city.parentNode).display !== 'none', TRAM = ['bordeaux', 'nantes'];
   let home = null; try { home = JSON.parse(localStorage.getItem('runparis-home') || 'null'); } catch (e) {}
   if (home && isFinite(home.lat)) { const o = new Option('chez moi', 'home'); dep.add(o, 0); dep.value = 'home'; }
   if (!navigator.geolocation) { const o = dep.querySelector('option[value="pos"]'); if (o) o.remove(); }
   const params = type => {
     const [u, v] = dist.value.split(':'), q = new URLSearchParams();
-    q.set(u === 'km' ? 'km' : 'min', v); q.set('arr', arr.value); q.set('dep', dep.value);
+    q.set(u === 'km' ? 'km' : 'min', v); q.set('arr', arr.value); q.set('dep', dep.value); if (cityOn()) q.set('ville', city.value);
     if (type) q.set('type', type);
     if (arr.value !== 'place' && dep.value !== 'pick') q.set('go', '1');
     return 'app.html?' + q.toString();
@@ -385,12 +391,12 @@ if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname))
   const label = () => {
     const d = dist.options[dist.selectedIndex].text, a = { back: 'en boucle', free: 'droit devant', place: 'jusqu’à un lieu' }[arr.value];
     const f = { pos: 'autour de toi', home: 'depuis chez toi', pick: 'depuis l’adresse de ton choix' }[dep.value];
-    $('#idea-ctx').textContent = `${d[0].toUpperCase() + d.slice(1)} ${a}, ${f}`;
+    $('#idea-ctx').textContent = `${d[0].toUpperCase() + d.slice(1)} ${a}${cityOn() ? ' à ' + city.options[city.selectedIndex].text : ''}, ${f}`;
     document.querySelectorAll('.idea').forEach(a => a.href = params(a.dataset.type));
-    const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: '« Droit devant » finit près d’un métro pour rentrer.', back: 'Gratuit, sans compte. Trois parcours au choix.' }[arr.value];
+    const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: `« Droit devant » finit près d’un ${TRAM.includes(city.value) ? 'arrêt de tram' : 'métro'} pour rentrer.`, back: 'Trois parcours au choix.' }[arr.value];
     $('#ask-hint').textContent = dep.value === 'pick' ? 'Tu choisiras ton départ sur la carte ou dans la recherche.' : hint;
   };
-  [dist, arr, dep].forEach(s => s.addEventListener('change', label));
+  [dist, arr, dep, city].forEach(s => s.addEventListener('change', label));
   $('#ask').addEventListener('submit', e => { e.preventDefault(); location.href = params(); });
   label();
 })();
