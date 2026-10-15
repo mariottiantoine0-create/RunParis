@@ -3995,7 +3995,7 @@ function navUI() {
   else if (!NAV.t0) { ic = 'start'; big = NAV.toStart ? navDistTxt(NAV.toStart) : '…'; small = NAV.toStart ? 'Rejoins le départ · point D' : 'Recherche de ta position…'; }
   let sub = '';
   if (!NAV.free && NAV.t0) { const m = n.man[NAV.mi] || n.man[n.man.length - 1], [k, t] = navDir(m); ic = k; big = m.arrive && NAV.prog >= n.L - 1 ? 'Arrivée' : navDistTxt(Math.max(0, m.d - NAV.prog));
-    NAV.liveHead = m.arrive ? 'Arrivée' : t + ' dans ' + big + (m.name ? ' · ' + m.name : ''); NAV.liveTurn = ['right', 'left', 'straight'].includes(k) ? k : k === 'sright' || k === 'keepr' || k === 'right2' || k === 'jogr' ? 'right' : k === 'sleft' || k === 'keepl' || k === 'left2' || k === 'jogl' ? 'left' : 'straight';
+    NAV.liveHead = m.arrive ? 'Arrivée' : t.replace(/, puis .*$/, '') + ' dans ' + big + (m.name ? ' · ' + m.name : ''); // écran verrouillé : un seul virage, le nom de la rue reste lisible (le second est annoncé dans l'app) NAV.liveTurn = ['right', 'left', 'straight'].includes(k) ? k : k === 'sright' || k === 'keepr' || k === 'right2' || k === 'jogr' ? 'right' : k === 'sleft' || k === 'keepl' || k === 'left2' || k === 'jogl' ? 'left' : 'straight';
     small = m.arrive ? (S.mode === 'loop' && S.tab !== 'race' ? 'Arrivée · retour au départ' : 'Arrivée') : t + (m.name ? ' · ' + m.name : '') + (m.pair && m.pair.name && m.pair.name !== m.name ? ', puis ' + m.pair.name : '');
     if (m.pair) { const same = (m.pair.a > 0) === (m.a > 0); sub = `${same ? 'Encore' : 'Puis'} à ${m.pair.a > 0 ? 'droite' : 'gauche'} ${navDistTxt(m.pair.d - m.d)} après`; }
     if (m.jog) sub = `La rue reprend ${navDistTxt(m.jog)} à ${m.a > 0 ? 'droite' : 'gauche'}`;
