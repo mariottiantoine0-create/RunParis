@@ -284,7 +284,7 @@ footer p{margin:0;max-width:62em}
             <option value="min:30">30 min</option><option value="min:45">45 min</option><option value="min:60">1 h</option><option value="min:90">1 h 30</option>
           </select></span>
           <span class="fld"><select id="q-arr" aria-label="Arrivée">
-            <option value="back" selected>en boucle</option><option value="free">droit devant</option><option value="place">jusqu’à un lieu</option>
+            <option value="back" selected>en boucle</option><option value="place">jusqu’à un lieu</option><option value="free">n’importe où</option>
           </select></span>
           <span class="cityw brk" aria-hidden="true"></span>
           <span class="cityw">à</span>
@@ -392,11 +392,11 @@ if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname))
     return 'app.html?' + q.toString();
   };
   const label = () => {
-    const d = dist.options[dist.selectedIndex].text, a = { back: 'en boucle', free: 'droit devant', place: 'jusqu’à un lieu' }[arr.value];
+    const d = dist.options[dist.selectedIndex].text, a = { back: 'en boucle', free: 'n’importe où', place: 'jusqu’à un lieu' }[arr.value];
     const f = { pos: 'autour de toi', home: 'depuis chez toi', pick: 'depuis l’adresse de ton choix' }[dep.value];
     $('#idea-ctx').textContent = `${d[0].toUpperCase() + d.slice(1)} ${a}${cityOn() ? ' à ' + city.options[city.selectedIndex].text : ''}, ${f}`;
     document.querySelectorAll('.idea').forEach(a => a.href = params(a.dataset.type));
-    const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: `« Droit devant » finit près d’un ${TRAM.includes(city.value) ? 'arrêt de tram' : 'métro'} pour rentrer.`, back: '' }[arr.value];
+    const hint = { place: 'Tu choisiras l’arrivée sur la carte.', free: `« N’importe où » finit près d’un ${TRAM.includes(city.value) ? 'arrêt de tram' : 'métro'} pour rentrer.`, back: '' }[arr.value];
     const ht = dep.value === 'pick' ? 'Tu choisiras ton départ sur la carte ou dans la recherche.' : hint; $('#ask-hint').textContent = ht; $('#ask-hint').hidden = !ht; // D-104 : rien sous le bouton en boucle
   };
   [dist, arr, dep, city].forEach(s => s.addEventListener('change', label));

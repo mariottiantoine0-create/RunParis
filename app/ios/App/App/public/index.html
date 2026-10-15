@@ -2948,7 +2948,7 @@ function scrollToMap() {
   if (r.top < -10 || r.top > innerHeight * 0.4) window.scrollTo({ top: Math.max(0, scrollY + r.top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 // ---------- Lancer en 2 gestes (D-107) : l'app rouvre avec les réglages de la dernière fois (gardés sur l'appareil) ----------
-// Gardé à chaque « Générer » : distance ou durée, allure, arrivée (boucle / droit devant), départ « Chez moi » ou « autour de moi »,
+// Gardé à chaque « Générer » : distance ou durée, allure, arrivée (boucle / n'importe où), départ « Chez moi » ou « autour de moi »,
 // préférences ; zones et lieux à éviter par ville. Pas gardé : départ cherché ou posé, « jusqu'à un lieu », « Passer par ».
 const LAST_K = 'runparis-last';
 let LAST_DEF = null;
@@ -4456,7 +4456,7 @@ function msync() {
   if (!MPHR) return;
   const km = parseFloat(String($('#km').value).replace(',', '.')), mn = parseFloat($('#dur').value);
   $('#mf-dist').textContent = S.unit === 'min' ? (mn >= 60 ? `${Math.floor(mn / 60)} h${mn % 60 ? ' ' + String(Math.round(mn % 60)).padStart(2, '0') : ''}` : `${Math.round(mn || 0)} min`) : `${fmt(km || 0, km % 1 ? 1 : 0)} km`;
-  $('#mf-arr').textContent = S.mode === 'loop' ? 'en boucle' : S.endFree ? 'droit devant' : S.end ? 'jusqu’à ' + mShort(S.end.name) : 'jusqu’à un lieu';
+  $('#mf-arr').textContent = S.mode === 'loop' ? 'en boucle' : S.endFree ? 'n’importe où' : S.end ? 'jusqu’à ' + mShort(S.end.name) : 'jusqu’à un lieu';
   $('#mf-dep').textContent = S.start ? mShort(S.start.name) : 'choisis ton départ';
   const kind = { classic: 'Classique', green: 'Vert', discover: 'Découverte' }[S.kind] || 'Classique';
   const dn = { flat: 'Plat', any: 'Normal', target: 'Vallonné' }[S.dmode] || 'Normal';
