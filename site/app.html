@@ -164,6 +164,7 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .fb .btnrow{display:flex;gap:8px;justify-content:flex-end}
 .fb .btn{flex:none;min-height:44px;padding:0 18px}
 .textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
+.lastline{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;line-height:1.3;font-weight:700;color:var(--muted);margin:0 0 4px}.lastline .textbtn{font-size:13px;padding:0;min-height:36px} /* D-107 : texte label, lien d'action control-sm */
 
 /* ---------- results ---------- */
 .summary{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
@@ -855,6 +856,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </div>
     <!-- ===== Réglages ===== -->
     <div class="pbody" id="view-set">
+      <div class="lastline" id="last-line" hidden><span>Tes réglages de la dernière fois</span><button type="button" class="textbtn" id="last-reset">Repartir de zéro</button></div>
       <!-- mobile : réglages en phrase (D-74) ; les contrôles ci-dessous sont déplacés dans des feuilles -->
       <div class="mset" id="mset" hidden>
         <p class="msent"><span>Je cours</span> <button type="button" class="mf" data-sh="dist"><span id="mf-dist">10 km</span></button> <button type="button" class="mf" data-sh="arr"><span id="mf-arr">en boucle</span></button> <span>depuis</span> <button type="button" class="mf pos" data-sh="dep"><span id="mf-dep">choisis ton départ</span></button></p>
@@ -2093,7 +2095,7 @@ async function boot() {
   $('#run-go').hidden = !navigator.geolocation || !!window.claude;
   if (window.claude || NATIVE) $('#mlinks').hidden = true;
   if (NATIVE) { $('#run-wake').checked = false; $('#run-wake').closest('label').hidden = true; $('#run-buzz-l').hidden = false; } // application : le suivi marche écran verrouillé, plus besoin de garder l'écran allumé (D-86) // pas d'accueil dans l'artifact
-  if (!applyParams() && !S.start) openStart(false);
+  if (!applyParams()) { const lg = lastApply(); if (lg && lg.dep === 'pos' && !/^Chez moi/.test(S.start && S.start.name || '') && navigator.geolocation && !window.claude) locate(); else if (!S.start) openStart(false); }
   addEventListener('hashchange', () => { if (/^#cours/.test(location.hash) && S.tab !== 'race') setTab('race'); });
   loadTrees();
   cityFirstRun();
@@ -2660,12 +2662,13 @@ function render() {
   // Sur ordinateur (souris), l'épingle survolée se déroule en « Départ » / « Arrivée ».
   const pin = (p, k) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty, isD = k === 'D';
     const full = PIN_HOVER === k ? (isD ? (S.mode === 'loop' && S.tab !== 'race' ? 'Départ et arrivée' : 'Départ') : 'Arrivée') : '';
-    const h = 34, r = 14, cy = sy - h + r; ctx.font = `800 ${full ? 14 : 15}px ${css(full ? '--f-body' : '--f-display')}`;
+    const h = 34, r = 14, cy = sy - h + r; ctx.font = full ? `600 15px ${css('--f-body')}` : `800 15px ${css('--f-display')}`; // survol : style control (15 px 600) ; lettre : comme les bornes km
     const hw = full ? ctx.measureText(full).width / 2 + 12 : 0;
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2; ctx.beginPath(); ctx.moveTo(sx, sy);
+    const dk = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    ctx.save(); ctx.shadowColor = dk ? 'rgba(0,0,0,.55)' : 'rgba(0,0,0,.18)'; ctx.shadowBlur = dk ? 6 : 4; ctx.shadowOffsetY = 1; ctx.beginPath(); ctx.moveTo(sx, sy); // shadow-float, comme les outils posés sur la carte
     if (full) { ctx.lineTo(sx - 6, cy + r); ctx.lineTo(sx - hw, cy + r); ctx.arc(sx - hw, cy, r, Math.PI / 2, Math.PI * 1.5); ctx.lineTo(sx + hw, cy - r); ctx.arc(sx + hw, cy, r, -Math.PI / 2, Math.PI / 2); ctx.lineTo(sx + 6, cy + r); }
     else { ctx.bezierCurveTo(sx - 4, sy - 8, sx - r, cy + r * .6, sx - r, cy); ctx.arc(sx, cy, r, Math.PI, 0); ctx.bezierCurveTo(sx + r, cy + r * .6, sx + 4, sy - 8, sx, sy); }
-    ctx.closePath(); ctx.fillStyle = isD ? colors.ink : colors.panel; ctx.fill(); ctx.restore(); ctx.lineWidth = 2.5; ctx.strokeStyle = isD ? colors.panel : colors.ink; ctx.stroke();
+    ctx.closePath(); ctx.fillStyle = isD ? colors.ink : colors.panel; ctx.fill(); ctx.restore(); ctx.lineWidth = 2.5; ctx.strokeStyle = isD ? colors.casing : colors.ink; ctx.stroke();
     ctx.beginPath(); ctx.arc(sx, sy, 3, 0, 7); ctx.fillStyle = isD ? colors.panel : colors.ink; ctx.fill(); ctx.strokeStyle = isD ? colors.ink : colors.panel; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = isD ? colors.panel : colors.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(full || k, sx, cy + 1);
     PINS.push({ k, x: sx, y: cy, w: Math.max(r, hw + r) }); };
@@ -2943,6 +2946,33 @@ function scrollToMap() {
   const r = $('#mapwrap').getBoundingClientRect();
   if (r.top < -10 || r.top > innerHeight * 0.4) window.scrollTo({ top: Math.max(0, scrollY + r.top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
+// ---------- Lancer en 2 gestes (D-107) : l'app rouvre avec les réglages de la dernière fois (gardés sur l'appareil) ----------
+// Gardé à chaque « Générer » : distance ou durée, allure, arrivée (boucle / droit devant), départ « Chez moi » ou « autour de moi »,
+// préférences ; zones et lieux à éviter par ville. Pas gardé : départ cherché ou posé, « jusqu'à un lieu », « Passer par ».
+const LAST_K = 'runparis-last';
+let LAST_DEF = null;
+function lastLoad() { try { return JSON.parse(localStorage.getItem(LAST_K) || 'null'); } catch (e) { return null; } }
+function lastSave() { try {
+  const st = S.start && S.start.name || '';
+  const g = { unit: S.unit, km: $('#km').value, dur: $('#dur').value, pace: $('#pace').value, arr: S.mode === 'loop' ? 'back' : S.endFree ? 'free' : null, kind: S.kind, dmode: S.dmode, dplus: $('#dplus').value,
+    paths: $('#prefer-paths').checked, metro: $('#end-metro').checked, dep: /^Chez moi/.test(st) ? 'home' : st === 'Ma position' ? 'pos' : null };
+  const o = lastLoad() || {}; o.g = g; o.c = o.c || {}; o.c[CITY] = { q: [...S.exclQ], p: S.places.map(({ lat, lon, r, name }) => ({ lat, lon, r, name })) };
+  localStorage.setItem(LAST_K, JSON.stringify(o)); } catch (e) {} }
+function lastSet(g, c) {
+  setUnit(g.unit === 'min' ? 'min' : 'km'); $('#km').value = g.km; $('#dur').value = g.dur; $('#pace').value = g.pace;
+  setArrival(g.arr || 'back');
+  const kb = $('#k-' + (g.kind || 'classic')); (kb && !kb.disabled ? kb : $('#k-classic')).click();
+  ($('#d-' + (g.dmode || 'any')) || $('#d-any')).click(); $('#dplus').value = g.dplus;
+  $('#prefer-paths').checked = g.paths !== false; $('#end-metro').checked = g.metro !== false;
+  S.exclQ = new Set(((c && c.q) || []).filter(id => M.quartiers.some(q => q.id === id))); S.places = (c && c.p) || []; zonesChanged(); renderPlaces();
+  updateConv(); if (typeof msync === 'function') msync();
+}
+function lastApply() {
+  LAST_DEF = { unit: 'km', km: $('#km').value, dur: $('#dur').value, pace: $('#pace').value, arr: 'back', kind: 'classic', dmode: S.dmode, dplus: $('#dplus').value, paths: $('#prefer-paths').checked, metro: $('#end-metro').checked };
+  const o = lastLoad(); if (!o || !o.g) return null;
+  lastSet(Object.assign({}, LAST_DEF, o.g), (o.c || {})[CITY]); $('#last-line').hidden = false; return o.g;
+}
+$('#last-reset').onclick = () => { try { localStorage.removeItem(LAST_K); } catch (e) {} if (LAST_DEF) lastSet(LAST_DEF, null); $('#last-line').hidden = true; toast('Réglages remis à zéro.'); };
 // ---------- type of route ----------
 const KHINT = { green: 'Passe au maximum par les parcs, jardins, quais et rues bordées d’arbres (≈ 160 000 arbres recensés dans OpenStreetMap), quitte à faire quelques détours.', discover: 'Passe devant des monuments et lieux connus à portée de ta distance. Tu peux aussi choisir tes lieux avec « Passer par un lieu ».' };
 ['classic', 'green', 'discover'].forEach(k => $('#k-' + k).onclick = () => { S.kind = k; ['classic', 'green', 'discover'].forEach(j => $('#k-' + j).setAttribute('aria-pressed', j === k)); $('#k-hint').hidden = k === 'classic'; $('#k-hint').textContent = KHINT[k] || ''; });
@@ -3188,6 +3218,7 @@ async function generate(isAgain) {
   if (!G || busy) return; mClose();
   const notes = [], errs = [];
   if (!S.start) { showView('set'); openStart(true); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
+  if (S.tab !== 'race') lastSave();
   const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
   if (k.info) notes.push(k.info);
   const km = k.km, target = km * 1000;
