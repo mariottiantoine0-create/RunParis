@@ -6,7 +6,7 @@ fs.rmSync(WWW, { recursive: true, force: true }); fs.mkdirSync(path.join(WWW, 'f
 const DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt'];
 for (const f of DATA) fs.copyFileSync(path.join(SITE, f), path.join(WWW, f));
 // autres villes (D-97) : un dossier par ville, mêmes fichiers
-for (const d of ['lyon']) { fs.mkdirSync(path.join(WWW, d), { recursive: true }); for (const f of DATA) if (fs.existsSync(path.join(SITE, d, f))) fs.copyFileSync(path.join(SITE, d, f), path.join(WWW, d, f)); }
+for (const d of ['lyon', 'bordeaux', 'nantes']) { fs.mkdirSync(path.join(WWW, d), { recursive: true }); for (const f of DATA) if (fs.existsSync(path.join(SITE, d, f))) fs.copyFileSync(path.join(SITE, d, f), path.join(WWW, d, f)); }
 for (const f of fs.readdirSync(path.join(__dirname, 'fonts'))) fs.copyFileSync(path.join(__dirname, 'fonts', f), path.join(WWW, 'fonts', f));
 let html = fs.readFileSync(path.join(SITE, 'app.html'), 'utf8');
 const FACE = `<style>

@@ -51,7 +51,7 @@ for r in json.load(open('osm_routes.json')):
         if nm and inz(la,lo): M['stations'].append([nm,round(la,5),round(lo,5),[line]])
 json.dump(M,open('work/metro_raw.json','w'),ensure_ascii=False); print('metro lines',sorted(M['lines']),'stops',len(M['stations']))
 shutil.copy('out/graph.bin','work/graph.bin'); shutil.copy('out/meta.json','work/meta.json')
-shutil.copy('/mnt/user-data/outputs/RunParis/src/engine.js','work/engine.js')
+shutil.copy('/mnt/user-data/uploads/Downloads/RunParis/src/engine.js','work/engine.js')
 # zones rings + poi (build2)
 meta=json.load(open('work/meta.json')); Q=json.load(open('zones.geojson'))
 for q,f in zip(meta['quartiers'],Q['features']):
@@ -78,21 +78,22 @@ def bg_poly(o):
         if hp: P=P.difference(unary_union(hp))
     return make_valid(P)
 M2=1/(111320*0.70*110540)
+WMIN=float(os.environ.get('WMIN','300')); GMIN=float(os.environ.get('GMIN','2500')); SIMP=float(os.environ.get('SIMP','0.00003'))
 layers={'water':[],'green':[]}
 for o in json.load(open('osm_bg.json')):
     if o['c']=='cemetery' or o['k']=='fountain': continue
     p=bg_poly(o)
     if p is None or p.is_empty: continue
     p=p.intersection(clip)
-    if p.area < (300 if o['c']=='water' else 2500)*M2: continue
+    if p.area < (WMIN if o['c']=='water' else GMIN)*M2: continue
     layers[o['c']].append(p)
 out={}
 for k,ps in layers.items():
-    U=unary_union(ps).simplify(0.00003)
+    U=unary_union(ps).simplify(SIMP)
     geoms=[U] if U.geom_type=='Polygon' else [x for x in getattr(U,'geoms',[]) if x.geom_type=='Polygon']
     polys=[]
     for g in geoms:
-        if g.area < (300 if k=='water' else 2500)*M2: continue
+        if g.area < (WMIN if k=='water' else GMIN)*M2: continue
         rings=[[[round(y,5),round(x,5)] for x,y in g.exterior.coords]]
         for h in g.interiors:
             if Polygon(h).area > 800*M2: rings.append([[round(y,5),round(x,5)] for x,y in h.coords])

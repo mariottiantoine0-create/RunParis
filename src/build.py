@@ -16,7 +16,7 @@ app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engi
 # version des données : change dès qu'un fichier de données change, pour que le navigateur recharge la nouvelle version
 h = hashlib.sha1()
 DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt']
-CITY_DIRS = ['', 'lyon/']  # Paris à la racine, puis une ville par dossier (D-97)
+CITY_DIRS = ['', 'lyon/', 'bordeaux/', 'nantes/']  # Paris à la racine, puis une ville par dossier (D-97)
 for d in CITY_DIRS:
     for f in DATA:
         if (root / 'site' / d / f).exists(): h.update((root / 'site' / d / f).read_bytes())
@@ -53,8 +53,8 @@ def myth_cards(races):
 
 # --- villes et chiffres, calculés depuis les données : rien à réécrire à la main quand une ville arrive (D-97) ---
 import struct
-CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon')]  # même ordre que CITY_DIRS
-CITY_SOON = ['Bordeaux', 'Marseille']
+CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon'), ('bordeaux/', 'Bordeaux', 'bordeaux'), ('nantes/', 'Nantes', 'nantes')]  # même ordre que CITY_DIRS
+CITY_SOON = ['Toulouse', 'Lille']
 def nb(n): return f'{n:,}'.replace(',', '\u00a0')
 def city_stats():
     km = feux = font = trees = 0; races = []

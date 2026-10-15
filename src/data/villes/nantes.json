@@ -1,0 +1,40 @@
+{
+ "city": "nantes",
+ "name": "Nantes",
+ "pbf": "/home/claude/villes/raw/nantes.osm.pbf",
+ "bbox": [
+  47.105,
+  47.37,
+  -1.7,
+  -1.39
+ ],
+ "dem": {
+  "file": "/home/claude/villes/nantes_dem.f32",
+  "bbox": [
+   47.105,
+   47.37,
+   -1.7,
+   -1.39
+  ],
+  "W": 4000,
+  "H": 5000
+ },
+ "center_insee": "44109",
+ "communes": [
+  "44009",
+  "44020",
+  "44026",
+  "44035",
+  "44109",
+  "44114",
+  "44143",
+  "44162",
+  "44172",
+  "44190",
+  "44209",
+  "44215"
+ ],
+ "arr_insee": [],
+ "transit_network": "Naolib|TAN",
+ "quartiers": true
+}

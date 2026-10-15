@@ -17,6 +17,12 @@ feats=[]
 ARR=sorted([a for a in A if a['level']=='9' and a['insee'] in CFG.get('arr_insee',[])],key=lambda a:a['insee'])
 for a in ARR:
     n=int(a['insee'][-1]); feats.append(dict(type='Feature',properties=dict(l_qu=CFG['name']+' '+(str(n)+('er' if n==1 else 'e')),c_ar=n),geometry=apoly(a).__geo_interface__))
+# quartiers de la ville centre (OSM admin_level 10), quand elle n'a pas d'arrondissements : ar 50 à 99
+if CFG.get('quartiers'):
+    CEN=apoly([a for a in A if a['level']=='8' and a['insee']==CFG['center_insee']][0])
+    QS=sorted([a for a in A if a['level']=='10' and CEN.contains(apoly(a).representative_point())],key=lambda a:a['name'])
+    for i,a in enumerate(QS): feats.append(dict(type='Feature',properties=dict(l_qu=a['name'],c_ar=50+i),geometry=(apoly(a).intersection(CEN)).__geo_interface__))
+    print('quartiers',[a['name'] for a in QS])
 CF=sorted([a for a in A if a['level']=='8' and a['insee'] in CFG['communes'] and a['insee']!=CFG['center_insee']],key=lambda a:a['name'])
 for a in CF: feats.append(dict(type='Feature',properties=dict(l_qu=a['name'],c_ar=int(a['insee'])),geometry=apoly(a).__geo_interface__))
 Q=dict(type='FeatureCollection',features=feats)
@@ -247,7 +253,7 @@ def qy(v): return max(0,min(65535,round((v-la0)/(la1-la0)*65535)))
 def qx(v): return max(0,min(65535,round((v-lo0)/(lo1-lo0)*65535)))
 import array
 ny=array.array('H',[qy(lat[u]) for u in nodes]); nx=array.array('H',[qx(lon[u]) for u in nodes])
-nz=array.array('H',[round(ele[u]*10) for u in nodes]); nc=array.array('H',[nodeclus.get(u,0) for u in nodes])
+nz=array.array('H',[round(max(0,ele[u])*10) for u in nodes]); nc=array.array('H',[nodeclus.get(u,0) for u in nodes])
 nqq=array.array('B',nq)
 ea=array.array('I',[e['a'] for e in out_e]); eb=array.array('I',[e['b'] for e in out_e])
 el=array.array('H',[min(65535,round(e['len']*2)) for e in out_e])  # half-metres

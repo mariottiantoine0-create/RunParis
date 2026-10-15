@@ -1,0 +1,41 @@
+{
+ "city": "bordeaux",
+ "name": "Bordeaux",
+ "pbf": "/home/claude/villes/raw/bordeaux.osm.pbf",
+ "bbox": [
+  44.74,
+  44.96,
+  -0.77,
+  -0.48
+ ],
+ "dem": {
+  "file": "/home/claude/villes/bordeaux_dem.f32",
+  "bbox": [
+   44.74,
+   44.96,
+   -0.77,
+   -0.48
+  ],
+  "W": 4000,
+  "H": 4000
+ },
+ "center_insee": "33063",
+ "communes": [
+  "33032",
+  "33039",
+  "33056",
+  "33063",
+  "33069",
+  "33075",
+  "33119",
+  "33162",
+  "33167",
+  "33249",
+  "33281",
+  "33318",
+  "33522"
+ ],
+ "arr_insee": [],
+ "transit_network": "TBM",
+ "quartiers": true
+}

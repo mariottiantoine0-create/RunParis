@@ -49,9 +49,13 @@ const CITIES = {
   paris: { name: 'Paris', dir: '', sub: 'et 29 communes voisines', ll: [48.8566, 2.3522], bb: [48.799, 48.975, 2.18, 2.5], end: ['Jardin du Luxembourg', 48.8462, 2.3371],
     hill: 'Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.', zones: '80 quartiers et 29 communes', avoidEx: 'Un lieu : Tour Eiffel, Châtelet, un marché…', races: 'Les grands parcours de course de Paris, pour s’entraîner dessus en entier ou en partie.', od: 'Paris Open Data' },
   lyon: { name: 'Lyon', dir: 'lyon/', sub: 'et 15 communes voisines', ll: [45.7578, 4.832], bb: [45.675, 45.855, 4.7, 4.98], end: ['Parc de la Tête d’Or', 45.7772, 4.8556],
-    hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon arrivent bientôt.', od: '' }
+    hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon arrivent bientôt.', od: '' },
+  bordeaux: { name: 'Bordeaux', dir: 'bordeaux/', sub: 'et 12 communes voisines', ll: [44.8425, -0.5743], bb: [44.74, 44.96, -0.77, -0.48], end: ['Jardin public', 44.8487, -0.5793],
+    hill: 'Bordeaux va de 3 m (Garonne) à 30 m ; les coteaux de la rive droite (Cenon, Floirac, Lormont) montent à 70 m.', zones: '8 quartiers et 12 communes', avoidEx: 'Un lieu : place de la Bourse, Saint-Michel, un marché…', races: 'Les grands parcours de course de Bordeaux arrivent bientôt.', od: '' },
+  nantes: { name: 'Nantes', dir: 'nantes/', sub: 'et 11 communes voisines', ll: [47.2129, -1.5598], bb: [47.105, 47.37, -1.7, -1.39], end: ['Jardin des Plantes', 47.2197, -1.5433],
+    hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 11 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes arrivent bientôt.', od: '' }
 };
-const CITY_SOON = ['Bordeaux', 'Marseille'];
+const CITY_SOON = ['Toulouse', 'Lille'];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
 const CITY_K = 'runparis-city';
 const CITY_STORED = (() => { try { const v = localStorage.getItem(CITY_K); return CITIES[v] ? v : null; } catch (e) { return null; } })();
@@ -265,17 +269,24 @@ function drawDrop(sx, sy, r, hi) {
 function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
 function lineBadge(l) { const b = document.createElement('span'); b.className = 'lb'; const c = METRO.lines[l] || '#888'; b.style.background = c;
   const h = c.replace('#', ''), [R, Gc, B] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); b.style.color = (R * 299 + Gc * 587 + B * 114) / 1000 > 150 ? '#111' : '#fff';
-  b.textContent = l.replace(/^M/, ''); b.title = l.startsWith('M') ? 'Métro ' + l.slice(1) : isTram(l) ? 'Tram ' + l : l; return b; }
-// tram (D-98) : lignes T1, T3a…
-function isTram(l) { return /^T\d+[ab]?$/.test(l); }
-// libellés selon les lignes de la ville : « Métro, RER et tram » à Paris, « Métro et tram » à Lyon
+  b.textContent = l.replace(/^M/, '').replace(/^T([A-Z])$/, '$1'); b.title = l.startsWith('M') ? 'Métro ' + l.slice(1) : isTram(l) ? 'Tram ' + l.replace(/^T([A-Z])$/, '$1') : l; return b; }
+// tram (D-98) : lignes T1, T3a… ; à Bordeaux les lignes A à F sont notées TA à TF (D-103)
+function isTram(l) { return /^T(\d+[ab]?|[A-Z])$/.test(l); }
+// libellés selon les lignes de la ville : « Métro, RER et tram » à Paris, « Métro et tram » à Lyon, « Tram » à Bordeaux et Nantes (D-103)
 function transitTexts() {
-  const ls = Object.keys(METRO.lines), rer = ls.some(l => l.startsWith('RER')), tram = ls.some(isTram);
-  const name = ['Métro'].concat(rer ? ['RER'] : [], tram ? ['tram'] : []), join = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0];
-  const ly = $('#ly-metro'); ly.lastChild.textContent = join(name);
-  $('#end-metro-row').firstChild.textContent = 'Finir près d’un ' + join(name.map(x => x === 'RER' ? x : x.toLowerCase())).replace(/ et ([^ ]+)$/, ' ou $1');
+  const ls = Object.keys(METRO.lines), met = ls.some(l => /^M/.test(l)), rer = ls.some(l => l.startsWith('RER')), tram = ls.some(isTram);
+  METRO.onlyTram = tram && !met && !rer;
+  const name = (met ? ['Métro'] : []).concat(rer ? ['RER'] : [], tram ? ['tram'] : []), join = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1] : a[0] || '';
+  const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+  const ly = $('#ly-metro'); ly.lastChild.textContent = cap(join(name)); ly.querySelector('.ld').textContent = METRO.onlyTram ? 'T' : 'M';
+  $('#end-metro-row').firstChild.textContent = METRO.onlyTram ? 'Finir près d’un arrêt de tram' : 'Finir près d’un ' + join(name.map(x => x === 'RER' ? x : x.toLowerCase())).replace(/ et ([^ ]+)$/, ' ou $1');
   $('#lg-metro').lastChild.textContent = join(name.filter(x => x !== 'tram')).replace(' et ', ', ');
+  $('#lg-metro').hidden = !met && !rer;
   $('#lg-tram').hidden = !tram;
+  if (METRO.onlyTram) {
+    for (const id of ['#start-q', '#end-q']) $(id).placeholder = $(id).placeholder.replace('métro', 'tram');
+    $('#always').textContent = $('#always').textContent.replace('gares et métro', 'gares');
+  }
 }
 
 // ---------- search index ----------
@@ -284,7 +295,7 @@ function buildSearch() {
   const typeLabel = { station: 'Gare / métro', park: 'Parc', attraction: 'Lieu', museum: 'Musée', viewpoint: 'Point de vue', square: 'Place', monument: 'Monument', marketplace: 'Marché', university: 'Université', mall: 'Centre commercial', stadium: 'Stade' };
   for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
   // arrêts de tram (D-98) : cherchables comme les stations, s'ils ne sont pas déjà des lieux
-  const known = new Set(IDX.map(x => x.k)); for (const st of METRO.st) if (st.tram && !known.has(norm(st.n))) IDX.push({ name: st.n, type: 'Tram ' + st.ls.join(', '), lat: st.lat, lon: st.lon, k: norm(st.n) });
+  const known = new Set(IDX.map(x => x.k)); for (const st of METRO.st) if (st.tram && !known.has(norm(st.n))) IDX.push({ name: st.n, type: 'Tram ' + st.ls.map(l => l.replace(/^T([A-Z])$/, '$1')).join(', '), lat: st.lat, lon: st.lon, k: norm(st.n) });
   // streets: centroid of longest edge per name
   const best = new Map();
   // one entry per street name and town (the same name exists in several communes)
@@ -315,8 +326,10 @@ function searchBox(inp, res, onPick) {
 function arrLabel(n) { return n === 1 ? '1<sup>er</sup>' : n + '<sup>e</sup>'; }
 function buildZones() {
   const box = $('#arr');
-  const NA = Math.max(0, ...M.quartiers.filter(q => q.ar < 100).map(q => q.ar));
+  const NA = Math.max(0, ...M.quartiers.filter(q => q.ar < 50).map(q => q.ar));
   for (let a = 1; a <= NA; a++) { const b = document.createElement('button'); b.type = 'button'; b.dataset.ar = a; b.innerHTML = arrLabel(a); b.setAttribute('aria-label', `${a}${a === 1 ? 'er' : 'e'} arrondissement`); b.onclick = () => toggleArr(a); box.appendChild(b); }
+  // ville sans arrondissements : pas de grille, la liste des quartiers est ouverte d'emblée (D-103)
+  if (!NA) { box.hidden = true; $('#qlist').closest('details').open = true; }
   const ql = $('#qlist');
   for (let a = 1; a <= NA; a++) {
     const h = document.createElement('div'); h.className = 'ah'; h.innerHTML = arrLabel(a) + ' arr.'; if (M.quartiers.filter(q => q.ar === a).length > 1) ql.appendChild(h);
@@ -326,8 +339,18 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
+  // quartiers de la ville centre quand elle n'a pas d'arrondissements (Bordeaux, Nantes : ar 50 à 99, D-103)
+  const vq = M.quartiers.filter(q => q.ar >= 50 && q.ar < 100).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  if (vq.length) {
+    const h = document.createElement('div'); h.className = 'ah'; h.textContent = C0.name; ql.appendChild(h);
+    for (const q of vq) {
+      const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" data-q="${q.id}"><span></span>`; l.lastChild.textContent = q.name;
+      l.firstChild.onchange = e => { e.target.checked ? S.exclQ.add(q.id) : S.exclQ.delete(q.id); zonesChanged(); };
+      ql.appendChild(l);
+    }
+  }
   // neighbouring communes: one zone each
-  const cs = M.quartiers.filter(q => q.ar > 100);
+  const cs = M.quartiers.filter(q => q.ar > 100).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   if (cs.length) {
     const h = document.createElement('div'); h.className = 'ah'; h.textContent = 'Communes voisines'; ql.appendChild(h);
     for (const q of cs) {
@@ -372,7 +395,7 @@ function renderAvoid() {
     if (ex.length === qs.length) mk(a === 1 ? '1er arr.' : a + 'e arr.', () => toggleArr(a));
     else for (const q of ex) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
   }
-  if (M) for (const q of M.quartiers) if (q.ar > 100 && S.exclQ.has(q.id)) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
+  if (M) for (const q of M.quartiers) if (q.ar >= 50 && S.exclQ.has(q.id)) mk(q.name, () => { S.exclQ.delete(q.id); zonesChanged(); });
   S.places.forEach((p, i) => {
     const c = mk(p.name, () => { S.places.splice(i, 1); renderPlaces(); draw(); }, `<select aria-label="Rayon d'évitement">${[100, 150, 300, 500].map(r => `<option value="${r}" ${r === p.r ? 'selected' : ''}>${r} m</option>`).join('')}</select>`);
     c.querySelector('select').onchange = e => { p.r = +e.target.value; markStale(); draw(); };
@@ -521,12 +544,12 @@ function drawMetro(hiOnly) {
     ctx.font = `700 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const st of METRO.st) {
       const sx = st.x * V.s + V.tx, sy = st.y * V.s + V.ty; if (sx < -60 || sy < -20 || sx > W + 60 || sy > H + 20) continue;
-      const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi) || (st.tram && !big && !hi)) continue; const r = hi ? 9 : big ? 6.5 : 3;
+      const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi) || (st.tram && !big && !hi && !METRO.onlyTram)) continue; const r = hi ? 9 : big ? 6.5 : 3;
       ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.metroBg; ctx.fill(); ctx.lineWidth = hi ? 2.5 : big ? 1.6 : 1.2; ctx.strokeStyle = hi ? colors.route : colors.metroInk; ctx.stroke();
       if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText(st.tram ? 'T' : 'M', sx, sy + 0.5); }
       if (badges || hi) { // line badges + name
         let bx = sx + r + 4; ctx.textAlign = 'left';
-        for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', ''), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
+        for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', '').replace(/^T([A-Z])$/, '$1'), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
           ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 7) : ctx.rect(bx, sy - 7, w, 14); ctx.fill(); // pastille ronde (LineBadge)
           const h = c.replace('#', ''), lum = (parseInt(h.substr(0, 2), 16) * 299 + parseInt(h.substr(2, 2), 16) * 587 + parseInt(h.substr(4, 2), 16) * 114) / 1000;
           ctx.fillStyle = lum > 150 ? '#111' : '#fff'; ctx.font = `800 10px ${css('--f-cond')}`; ctx.textAlign = 'center'; ctx.fillText(lab, bx + w / 2, sy + 0.5); ctx.textAlign = 'left'; bx += w + 2; }
@@ -644,7 +667,7 @@ function render() {
   // arrondissement numbers when zoomed out
   if (V.s < 0.12 && M.arrC) {
     ctx.font = `800 ${V.s < 0.07 ? 14 : 17}px ${css('--f-display')}`; if ('fontStretch' in ctx) ctx.fontStretch = 'condensed'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
-    for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a > 100) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
+    for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a >= 50) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
     ctx.globalAlpha = 1; if ('fontStretch' in ctx) ctx.fontStretch = 'normal';
   }
   drawMetro(true);
@@ -760,7 +783,7 @@ function click(sx, sy) {
   }
   if ((t === 'quart' || t === 'place' || t === 'via') && !q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`);
   if (t === 'via') { if (!q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`); addVia({ lat, lon, name: `Point · ${q.name}` }); setTool(null); return; }
-  if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name}${q.ar > 100 ? '' : ` (${q.ar}${q.ar === 1 ? 'er' : 'e'})`} ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
+  if (t === 'quart') { S.exclQ.has(q.id) ? S.exclQ.delete(q.id) : S.exclQ.add(q.id); zonesChanged(); toast(`${q.name}${q.ar >= 50 ? '' : ` (${q.ar}${q.ar === 1 ? 'er' : 'e'})`} ${S.exclQ.has(q.id) ? 'évité' : 'réautorisé'}`); return; }
   if (t === 'place') { S.places.push({ lat, lon, r: 150, name: `Point · ${q.name}` }); renderPlaces(); draw(); toast('Lieu évité (150 m). Rayon modifiable dans « À éviter ».'); return; }
 }
 function setTool(t) {
@@ -1364,7 +1387,7 @@ function showRoute(r, notes) {
   const top = [...r.names].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([i]) => M.names[i]);
   const arrs = [...new Set([...r.quart.keys()].map(q => M.quartiers[q - 1]?.ar).filter(Boolean))].sort((a, b) => a - b);
   $('#via').innerHTML = ''; const sp = document.createElement('span');
-  sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a > 100 ? M.quartiers.find(q => q.ar === a).name : a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
+  sp.innerHTML = `Par <strong></strong> · ${arrs.map(a => a >= 50 ? M.quartiers.find(q => q.ar === a).name : a === 1 ? '1er' : a + 'e').join(', ')}`; sp.querySelector('strong').textContent = top.join(', ');
   if (r.green != null && G.GR) sp.appendChild(document.createTextNode(` · ${Math.round(r.green * 100)} % du parcours au vert (parcs, rues arborées)`));
   if (r.sightsN) sp.appendChild(document.createTextNode(` · Lieux : ${r.sights.join(', ')}`));
   if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));
@@ -1821,7 +1844,7 @@ function navContinue() {
 }
 // ---------- course libre (D-99) : courir sans parcours, la trace devient un parcours ----------
 // quartier ou commune d'un nœud : « Paris 11e », « Lyon 2e », « Villeurbanne »
-function zoneName(v) { const q = M.quartiers[G.nq[v] - 1]; if (!q) return ''; if (q.ar > 100) return q.name; return q.ar ? C0.name + ' ' + q.ar + (q.ar === 1 ? 'er' : 'e') : ''; }
+function zoneName(v) { const q = M.quartiers[G.nq[v] - 1]; if (!q) return ''; if (q.ar >= 50) return q.name; return q.ar ? C0.name + ' ' + q.ar + (q.ar === 1 ? 'er' : 'e') : ''; }
 function soloFix(x, y, c, t, last, d) {
   if (!last || NAV.segBreak) { NAV.track.push([x, y, t, last ? 1 : 0]); NAV.segBreak = false; }
   else if (d >= Math.max(4, c.accuracy * 0.5)) {
