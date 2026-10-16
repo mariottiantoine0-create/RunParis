@@ -2002,11 +2002,11 @@ const CITIES = {
   paris: { name: 'Paris', dir: '', sub: 'et 29 communes voisines', ll: [48.8566, 2.3522], bb: [48.799, 48.975, 2.18, 2.5], end: ['Jardin du Luxembourg', 48.8462, 2.3371],
     hill: 'Paris va de 26 m (Seine) à 130 m (Montmartre), Saint-Cloud monte à 160 m.', zones: '80 quartiers et 29 communes', avoidEx: 'Un lieu : Tour Eiffel, Châtelet, un marché…', races: 'Les grands parcours de course de Paris, pour s’entraîner dessus en entier ou en partie.', od: 'Paris Open Data' },
   lyon: { name: 'Lyon', dir: 'lyon/', sub: 'et 15 communes voisines', ll: [45.7578, 4.832], bb: [45.675, 45.855, 4.7, 4.98], end: ['Parc de la Tête d’Or', 45.7772, 4.8556],
-    hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon arrivent bientôt.', od: '' },
+    hill: 'Lyon va de 160 m (Rhône) à 300 m (Fourvière, Croix-Rousse) ; les Monts d’Or montent bien plus haut.', zones: '9 arrondissements et 15 communes', avoidEx: 'Un lieu : Bellecour, Part-Dieu, un marché…', races: 'Les grands parcours de course de Lyon, pour s’entraîner dessus en entier ou en partie.', od: '' },
   bordeaux: { name: 'Bordeaux', dir: 'bordeaux/', sub: 'et 12 communes voisines', ll: [44.8425, -0.5743], bb: [44.74, 44.96, -0.77, -0.48], end: ['Jardin public', 44.8487, -0.5793],
-    hill: 'Bordeaux va de 3 m (Garonne) à 30 m ; les coteaux de la rive droite (Cenon, Floirac, Lormont) montent à 70 m.', zones: '8 quartiers et 12 communes', avoidEx: 'Un lieu : place de la Bourse, Saint-Michel, un marché…', races: 'Les grands parcours de course de Bordeaux arrivent bientôt.', od: '' },
+    hill: 'Bordeaux va de 3 m (Garonne) à 30 m ; les coteaux de la rive droite (Cenon, Floirac, Lormont) montent à 70 m.', zones: '8 quartiers et 12 communes', avoidEx: 'Un lieu : place de la Bourse, Saint-Michel, un marché…', races: 'Les grands parcours de course de Bordeaux, pour s’entraîner dessus en entier ou en partie.', od: '' },
   nantes: { name: 'Nantes', dir: 'nantes/', sub: 'et 13 communes voisines', ll: [47.2129, -1.5598], bb: [47.105, 47.37, -1.855, -1.39], end: ['Jardin des Plantes', 47.2197, -1.5433],
-    hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 13 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes arrivent bientôt.', od: '' }
+    hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 13 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes, pour s’entraîner dessus en entier ou en partie.', od: '' }
 };
 const CITY_SOON = ['Toulouse', 'Lille'];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
@@ -2020,7 +2020,7 @@ document.documentElement.dataset.city = CITY;
 function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
   const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
   if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
-const DV = '?v=00085442';
+const DV = '?v=64f7d7e1';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
 $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
@@ -4359,7 +4359,7 @@ const ABOUT = {
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
     '<h3>Application</h3>' + ap('Application iPhone en essai, installée par l’éditeur ; elle fonctionne sans serveur.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
-  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX publics']) +
+  src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
