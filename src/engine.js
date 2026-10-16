@@ -144,6 +144,8 @@ const Engine = (() => {
   // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
   function setPrivate(bits) { G.PRIV = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.PRIV[e] = (bits[e >> 3] >> (e & 7)) & 1; }
   function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
+  function setCrowd(u8) { G.CR = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.CR[e] = (u8[e >> 2] >> (2 * (e & 3))) & 3; } // rues bondées, niveau 0 à 3 (D-109)
+  const CROWD = [0, 0.25, 0.6, 1.2];
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
   function setWeights(w) { W = Object.assign({}, W, w); }
 
@@ -154,6 +156,7 @@ const Engine = (() => {
     const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
     if (W.green && G.GR) m -= W.green * G.GR[e];
     if (W.dark && G.DK && G.DK[e]) m += W.dark; // at night, keep to lit streets
+    if (W.crowd && G.CR && G.CR[e]) m += W.crowd * CROWD[G.CR[e]]; // commerces, terrasses, sites touristiques, selon l'heure
     let cost = L * m;
     const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
     cost += W.climb * up;
@@ -414,14 +417,15 @@ const Engine = (() => {
     const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
     const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
     for (let c = 0; c < NC + NB; c++) {
-      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
+      let theta = opt.dir != null ? opt.dir + ((c % NC) / Math.max(1, NC - 1) - 0.5) * 1.0 + (rng() - 0.5) * 0.1 // direction choisie : éventail de ±30°
+        : off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
       let st;
       if (c < NC) {
         let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // more waypoints = more water stops
-        if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
+        if (opt.hill && opt.dir == null) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
         st = candidateLoop(start, target, opt, rng, theta, nW);
       } else {
-        if (opt.hill) theta = hillTheta(sx, sy, target / 2.5, rng, theta);
+        if (opt.hill && opt.dir == null) theta = hillTheta(sx, sy, target / 2.5, rng, theta);
         st = candidateOutBack(start, target, opt, theta);
       }
       if (st) { st.score = score(st, target, opt); cands.push(st); }
@@ -468,8 +472,8 @@ const Engine = (() => {
     const NC = opt.candidates || (opt.endNodes ? 16 : 12), cands = [], endSet = opt.endNodes ? new Set(opt.endNodes.map(q => q.n)) : null;
     const ax = G.NX[A], ay = G.NY[A], off = rng() * 2 * Math.PI;
     for (let c = 0; c < NC; c++) {
-      let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
-      if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
+      let theta = opt.dir != null ? opt.dir + (c / Math.max(1, NC - 1) - 0.5) * 0.9 + (rng() - 0.5) * 0.1 : off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
+      if (opt.hill && opt.dir == null) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
       let D = target / 1.3, cb = null;
       const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // Paris is ~12 km wide: long one-ways zigzag through waypoints
       const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
@@ -610,6 +614,6 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setDark, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
+  return { init, setDark, setCrowd, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;
