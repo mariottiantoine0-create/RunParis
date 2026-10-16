@@ -2407,7 +2407,7 @@ const ABOUT = {
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
     '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
-    '<h3>Application</h3>' + ap('Application iPhone Perfect Run, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : perfectrun.fr/confidentialite et perfectrun.fr/aide.') +
+    '<h3>Application</h3>' + ap('Application iPhone Perfect Run, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : <a href="https://perfectrun.fr/confidentialite" target="_blank" rel="noopener">perfectrun.fr/confidentialite</a> et <a href="https://perfectrun.fr/aide" target="_blank" rel="noopener">perfectrun.fr/aide</a>.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
@@ -2421,6 +2421,7 @@ $('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
   $('#themepop').hidden = true; $('#theme-btn').setAttribute('aria-expanded', false);
   if (k === 'fb') return $('#fb-open').click();
+  if (k === 'aide') { if (NATIVE) window.open('https://perfectrun.fr/aide', '_blank'); else location.href = 'aide.html'; return; } // page publique Aide et contact (D-112)
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
   $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
 }
