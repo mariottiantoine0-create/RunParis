@@ -91,4 +91,5 @@ for k, v in rep.items(): a = a.replace('{{%s}}' % k, v)
 a = a.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
 assert '{{' not in a
 (root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
+import sys; sys.path.insert(0, str(root / 'src')); from pages import build_pages; build_pages(a, root)  # confidentialité et aide (D-112)
 print('site/app.html', len(app), '· site/index.html', len(t))
