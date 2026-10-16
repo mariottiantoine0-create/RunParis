@@ -9,9 +9,15 @@ PAGE_CSS = """
 .page p,.page li{font-size:16px;line-height:1.55}
 .page ul{padding-left:20px;margin:8px 0}
 .page li{margin:4px 0}
-.page form{display:flex;flex-direction:column;gap:14px;margin-top:12px}
-.page label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:14px}
-.page input,.page select,.page textarea{font:inherit;font-weight:400;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink)}
+.page form{display:flex;flex-direction:column;gap:14px;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px} /* les champs Field se posent sur panel, comme dans l'app */
+/* champs = composant Field du design system : fond field, bord invisible, coins 4 px, 44 px mini, focus 2 px accent */
+.page label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:13px;color:var(--muted)}
+.page input,.page select,.page textarea{font:inherit;font-weight:400;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--field);border-radius:4px;padding:11px 12px;min-height:44px;box-sizing:border-box}
+.page textarea{resize:vertical;min-height:110px}
+.page input:focus,.page select:focus,.page textarea:focus{outline:none;background:var(--panel,var(--bg));border:2px solid var(--accent);padding:10px 11px}
+.page form .btn{align-self:flex-start}
+.page form :is(input,select,textarea):focus-visible{outline:none}
+.page .msg:empty{display:none}
 .page .hp{position:absolute;left:-9999px}
 .page .msg{font-weight:700}
 """
