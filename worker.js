@@ -4,20 +4,30 @@
 //   Adresse de destination : secret SIGNAL_TO (réglé dans Cloudflare, jamais dans le dépôt). Expéditeur : signalement@perfectrun.fr.
 import { EmailMessage } from 'cloudflare:email';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*', // l'app iPhone (capacitor://localhost) envoie aussi ici
+// Sécurité (D-111) : on n'accepte que le site lui-même (production et aperçus staging, même adresse que la page)
+// et l'app iPhone ; un même appareil ne peut pas envoyer plus de 3 signalements par minute.
+const APP_ORIGINS = ['capacitor://localhost', 'ionic://localhost'];
+const allowed = (req) => { const o = req.headers.get('Origin'); if (!o) return false; if (APP_ORIGINS.includes(o)) return true; try { return new URL(o).host === new URL(req.url).host; } catch (e) { return false; } };
+const cors = (req) => ({
+  'Access-Control-Allow-Origin': allowed(req) ? req.headers.get('Origin') : 'https://perfectrun.fr',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
-};
-const json = (status, data) => new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' } });
+  'Vary': 'Origin',
+});
+// réponse JSON avec les en-têtes CORS de la requête à laquelle elle répond (pas d'état partagé entre requêtes simultanées)
+const reply = (req) => (status, data) => new Response(JSON.stringify(data), { status, headers: { ...cors(req), 'Content-Type': 'application/json; charset=utf-8' } });
 
 // texte UTF-8 → base64 (en-têtes et corps de l'email)
 const b64 = s => { const u = new TextEncoder().encode(s); let bin = ''; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(bin); };
 const clean = (v, n) => String(v || '').replace(/\r/g, '').slice(0, n).trim();
 
 async function signalement(req, env) {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  const json = reply(req);
+  if (req.method === 'OPTIONS') return new Response(null, { status: allowed(req) ? 204 : 403, headers: cors(req) });
   if (req.method !== 'POST') return json(405, { ok: false });
+  if (!allowed(req)) return json(403, { ok: false, error: 'origine refusée' });
+  if (env.SIGNAL_LIMIT) { const ip = req.headers.get('CF-Connecting-IP') || 'inconnu'; const { success } = await env.SIGNAL_LIMIT.limit({ key: ip }); if (!success) return json(429, { ok: false, error: 'trop d’envois, réessaie dans une minute' }); }
+  if ((req.headers.get('Content-Length') | 0) > 20000) return json(413, { ok: false, error: 'message trop long' });
   let d = {};
   try { d = Object.fromEntries(new URLSearchParams(await req.text())); } catch (e) { return json(400, { ok: false }); }
   if (d['bot-field']) return json(200, { ok: true }); // piège à robots : on fait comme si
@@ -62,7 +72,7 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === '/api/signalement') return signalement(req, env);
-    if (url.pathname.startsWith('/api/')) return json(404, { ok: false });
+    if (url.pathname.startsWith('/api/')) return reply(req)(404, { ok: false });
     return env.ASSETS.fetch(req);
   },
 };

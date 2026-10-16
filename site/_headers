@@ -3,6 +3,10 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(self), camera=(), microphone=()
+  # sécurité (D-111) : HTTPS imposé pendant un an ; liste des seules adresses que les pages ont le droit d'appeler ; pas d'affichage dans un cadre d'un autre site
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://runparis.goatcounter.com; connect-src 'self' https://data.geopf.fr https://runparis.goatcounter.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  X-Frame-Options: DENY
 
 # données de Paris : appelées avec leur version (?v=…), gardées un an par le navigateur
 /*.json
