@@ -1319,6 +1319,7 @@ SOFTWARE.
       <p class="hint">Ton message aide à améliorer Perfect Run. Il est lu par Antoine, l'auteur de l'app.</p>
       <label class="fl">Type
         <select name="type" id="fb-type">
+          <option value="" disabled selected>Choisis un sujet</option>
           <option>Passage impossible ou dangereux</option>
           <option>Parcours bizarre ou trop long</option>
           <option>Problème d'affichage ou bug</option>
@@ -4407,12 +4408,14 @@ function routeContext() {
   return `${head} | ${fmt(S.route.len / 1000)} km | points : ${pts}`;
 }
 $('#fb-form').onsubmit = async ev => {
-  ev.preventDefault(); const msg = $('#fb-msg').value.trim(); if (!msg) { $('#fb-err').textContent = 'Écris un message.'; $('#fb-err').hidden = false; return; }
+  ev.preventDefault(); const msg = $('#fb-msg').value.trim();
+  if (!$('#fb-type').value) { $('#fb-err').textContent = 'Choisis un sujet.'; $('#fb-err').hidden = false; $('#fb-type').focus(); return; }
+  if (msg.length < 10) { $('#fb-err').textContent = 'Écris un peu plus (10 caractères au moins), par exemple où et quoi.'; $('#fb-err').hidden = false; $('#fb-msg').focus(); return; }
   const body = new URLSearchParams({ 'form-name': 'signalement', type: $('#fb-type').value, message: msg, email: $('#fb-mail').value.trim(), parcours: $('#fb-route').checked ? routeContext() : '', page: location.href });
   $('#fb-send').disabled = true;
   const nf = !NATIVE && /netlify\.app$/.test(location.hostname); /* ancien site Netlify : son propre formulaire */
   try { const r = await fetch(nf ? '/' : NATIVE ? 'https://perfectrun.fr/api/signalement' : '/api/signalement', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() }); if (!r.ok) throw new Error(r.status);
-    $('#fb').close(); $('#fb-msg').value = ''; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
+    $('#fb').close(); $('#fb-msg').value = ''; $('#fb-type').value = ''; $('#fb-err').hidden = true; toast('Merci ! Ton message a bien été envoyé.'); track('signalement', $('#fb-type').value);
   } catch (e) { $('#fb-err').textContent = 'Envoi impossible pour le moment (connexion ?). Réessaie dans un instant.'; $('#fb-err').hidden = false; }
   finally { $('#fb-send').disabled = false; }
 };

@@ -207,8 +207,8 @@ footer p{margin:0;max-width:62em}
 <ul><li><b>Quelles villes ?</b> Paris, Lyon, Bordeaux et Nantes, avec leurs communes voisines.</li><li><b>Faut-il un compte ?</b> Non. Tout reste sur ton téléphone.</li><li><b>Le guidage marche-t-il écran verrouillé ?</b> Oui, dans l’application, si tu autorises la position « Toujours » pendant la course.</li><li><b>Un parcours passe par un endroit fermé ?</b> Les parcours sont indicatifs : respecte la signalisation et dis-le-nous ci-dessous, avec le kilomètre.</li><li><b>Effacer mes données ?</b> Menu, À propos, « Effacer mes données », ou supprime l’app. Voir aussi la page <a href="confidentialite.html">Confidentialité</a>.</li></ul>
 <h2>Écrire à Perfect Run</h2>
 <form id="contact">
-<label>Sujet<select name="type"><option>Question</option><option>Passage impossible ou dangereux</option><option>Problème d’affichage ou bug</option><option>Idée d’amélioration</option><option>Autre</option></select></label>
-<label>Message<textarea name="message" rows="5" required></textarea></label>
+<label>Sujet<select name="type" required><option value="" disabled selected>Choisis un sujet</option><option>Question</option><option>Passage impossible ou dangereux</option><option>Problème d’affichage ou bug</option><option>Idée d’amélioration</option><option>Autre</option></select></label>
+<label>Message<textarea name="message" rows="5" required minlength="10" placeholder="Ex. : au km 3,2 la grille du parc était fermée"></textarea></label>
 <label>Ton e-mail (facultatif, pour te répondre)<input type="email" name="email" autocomplete="email"></label>
 <label class="hp" aria-hidden="true">Ne pas remplir<input name="bot-field" tabindex="-1" autocomplete="off"></label>
 <button class="btn primary" type="submit">Envoyer</button>
