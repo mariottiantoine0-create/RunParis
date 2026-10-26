@@ -1649,6 +1649,8 @@ const Engine = (() => {
     // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
     out = out.filter(b => b.out || Math.abs(b.a) <= 150);
     const ex = out.find(b => b.out); if (!ex) return null;
+    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (retour testeur 26/10)
+    if (ex.name) out = out.filter(b => b.out || b.name !== ex.name || Math.abs(b.a - ex.a) >= 40);
     // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
     const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
     const fwd = out.filter(b => Math.abs(b.a) < 165);
@@ -3698,6 +3700,8 @@ function navBuild(r) {
       if (jx && jx.j > i + 1 || jx && jx.complex || jx && Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10) {
         const jog = Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10 && jx.br.some(b => b.maj && !b.out && Math.abs(Math.abs(b.a) - 90) < 45);
         const name = nmAfter(jx.j);
+        // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (retour testeur 26/10)
+        if (!jog && name && segs[jx.k][2] === name && (Math.abs(jx.a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(name) && Math.abs(turn((segs[jx.k][1] + segs[jx.j][0]) / 2, 60)) < 45)) { i = jx.j - 1; continue; }
         if (jog) man.push({ d: dd, a: jx.lat > 0 ? 1 : -1, jog: Math.abs(jx.lat), lat: jx.lat, name, jx, cross: (jx.br.find(b => b.maj && !b.out) || {}).name || '' });
         else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: Math.abs(jx.a) < 20 });
         i = jx.j - 1; continue;
@@ -3712,6 +3716,7 @@ function navBuild(r) {
       if (Math.abs(a) < 35) { if (fork && Math.abs(a) >= 12) keep = true; else continue; } // petit angle sans fourche : on continue, rien à dire
       else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // « légèrement » supprimé (course test du 8/10)
       let nm = ''; for (let j = i + 1; j < segs.length && segs[j][0] < dd + 60; j++) if (segs[j][2]) { nm = segs[j][2]; break; }
+      if (nm && segs[i][2] === nm && (Math.abs(a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(nm) && Math.abs(turn(dd, 60)) < 45)) continue; // même rue qui tourne un peu (ou trottoir qui contourne un coin) : on continue
       man.push({ d: dd, a, name: nm, keep, jx });
     }
   } else { // trace publiée : là où le cap change nettement
@@ -3720,6 +3725,8 @@ function navBuild(r) {
     for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
   }
   man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
+  // même consigne répétée à quelques mètres sur la même rue (trottoirs qui se croisent au carrefour) : une seule (retour testeur 26/10)
+  man = man.filter((m, i) => !(i && m.name && m.name === man[i - 1].name && m.d - man[i - 1].d < 50 && Math.sign(m.a) === Math.sign(man[i - 1].a) && !m.jog && !man[i - 1].jog));
   // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (build 4)
   for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (m.jog || q.jog || m.straight || q.straight) continue;
     if (q.d - m.d <= 45 && Math.abs(m.a) >= 50 && Math.abs(m.a) <= 130 && Math.abs(q.a) >= 50 && Math.abs(q.a) <= 130 && Math.sign(m.a) !== Math.sign(q.a) && Math.abs(m.a + q.a) < 35) {
@@ -3824,7 +3831,7 @@ function runPrep() {
 const SOLO_N = { L: 0, pts: [[0, 0]], man: [], runs: [], idx: () => 0, at: () => [0, 0] };
 function runStart() {
   $('#runp').hidden = true; const solo = !!NAV.soloNext;
-  Object.assign(NAV, { free: false, extra: 0, track: [], streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
+  Object.assign(NAV, { free: false, extra: 0, track: [], trail: [], okT: 0, streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
     r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null });
   if (solo) { // course libre (D-99) : pas de parcours, le chrono part tout de suite, la trace est enregistrée
     Object.assign(NAV, { n: SOLO_N, r: null, free: true, t0: Date.now(), wasPre: false, saved: { route: S.route, alts: S.alts } }); S.route = null; S.alts = [];
@@ -3946,9 +3953,12 @@ function streetAt(x, y) {
     for (let i = 1; i < p.length; i++) { const vx = p[i][0] - p[i - 1][0], vy = p[i][1] - p[i - 1][1], l = vx * vx + vy * vy || 1e-9, t = Math.max(0, Math.min(1, ((x - p[i - 1][0]) * vx + (y - p[i - 1][1]) * vy) / l)), d = Math.hypot(x - p[i - 1][0] - vx * t, y - p[i - 1][1] - vy * t); if (d < bd) { bd = d; best = M.names[G.en[e] - 1]; } } }
   return best;
 }
-function navProject(x, y, d0, d1) {
+// mv : sens dans lequel le coureur avance ; un passage du tracé parcouru dans l'autre sens est ignoré
+// (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, retour testeur 26/10)
+function navProject(x, y, d0, d1, mv, strict) {
   const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
   for (let i = i0; i <= i1; i++) { const [ax, ay] = n.pts[i], [bx, by] = n.pts[i + 1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1e-9;
+    if (mv && (vx * mv[0] + vy * mv[1]) < (strict ? 0.5 : -0.5) * Math.sqrt(l2)) continue; // strict : seulement un bout pris dans le même sens
     const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)), px = ax + vx * t, py = ay + vy * t, dd = Math.hypot(x - px, y - py);
     if (!best || dd < best.dd) best = { dd, d: n.cum[i] + t * Math.sqrt(l2), px, py }; }
   return best;
@@ -3970,14 +3980,20 @@ function navFix(p) {
   // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
   if (!NAV.t0) {
     const b = navProject(x, y, 0, 150), toStart = Math.hypot(x - n.pts[0][0], y - n.pts[0][1]);
-    if (toStart <= 40 || (b && b.dd <= 25)) { NAV.t0 = Date.now(); NAV.prog = b ? b.d : 0; NAV.proj = b; navSay('C’est parti.'); }
+    if (toStart <= 40 || (b && b.dd <= 25)) { NAV.t0 = Date.now(); NAV.okT = p.timestamp || NAV.t0; NAV.prog = b ? b.d : 0; NAV.proj = b; navSay('C’est parti.'); }
     else { NAV.toStart = toStart; NAV.proj = null; }
     navUI(); return;
   }
   if (NAV.paused) { navUI(); return; }
   const tol = Math.max(35, Math.min(60, c.accuracy * 1.2));
-  let b = navProject(x, y, NAV.prog - 60, NAV.prog + (NAV.reacq ? 2500 : 400));
-  if (b && b.dd > tol && NAV.off >= 2) { const w = navProject(x, y, NAV.prog - 200, NAV.prog + 3000); if (w && w.dd < b.dd) b = w; } // on a pu couper ou sauter un bout
+  // sens de déplacement : depuis la dernière position à plus de 12 m (dans les 40 dernières secondes)
+  const now = p.timestamp || Date.now(); NAV.trail = (NAV.trail || []).filter(q => now - q[2] < 40000); let mv = null;
+  for (let k = NAV.trail.length - 1; k >= 0; k--) { const q = NAV.trail[k], dx = x - q[0], dy = y - q[1], l = Math.hypot(dx, dy); if (l >= 12) { mv = [dx / l, dy / l]; break; } }
+  NAV.trail.push([x, y, now]);
+  // on ne peut pas avoir avancé plus vite qu'un coureur depuis la dernière position sur le parcours
+  const dt = NAV.okT ? (now - NAV.okT) / 1000 : 60, ahead = Math.min(NAV.reacq ? 2500 : 400, 60 + 8 * dt);
+  let b = navProject(x, y, NAV.prog - 60, NAV.prog + ahead, mv);
+  if (b && b.dd > tol && NAV.off >= 2 && mv) { const w = navProject(x, y, NAV.prog - 200, NAV.prog + 3000, mv, true); if (w && w.dd < b.dd && (w.d - NAV.prog <= ahead || NAV.off >= 3)) b = w; } // on a pu couper ou sauter un bout
   NAV.reacq = false;
   if (!b) return;
   if (b.dd > tol) {
@@ -3992,7 +4008,7 @@ function navFix(p) {
     else if (NAV.offOn && NAV.ask && Date.now() - NAV.offAt > 20000 && !NAV.busy) navReroute('back', true);
   } else {
     if (NAV.offOn) { navSay('Tu es de retour sur le parcours.'); }
-    NAV.off = 0; NAV.offOn = false; NAV.ask = false; NAV.autoHere = false; NAV.proj = b;
+    NAV.off = 0; NAV.offOn = false; NAV.ask = false; NAV.autoHere = false; NAV.proj = b; NAV.okT = now;
     if (b.d > NAV.prog) NAV.prog = b.d;
     if (NAV.mode === 'back' && NAV.prog >= NAV.rejoinD) NAV.mode = null;
   }
@@ -4354,7 +4370,7 @@ function track(ev, title) { try { const cv = CITY !== 'paris' ? '-' + CITY : '',
 // ---------- feedback : « Signaler un problème » envoie un email via le Worker Cloudflare (worker.js, /api/signalement) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
-const APP_VER = '1.0';
+const APP_VER = '1.0.1';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {

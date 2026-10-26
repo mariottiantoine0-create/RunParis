@@ -310,6 +310,8 @@ const Engine = (() => {
     // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
     out = out.filter(b => b.out || Math.abs(b.a) <= 150);
     const ex = out.find(b => b.out); if (!ex) return null;
+    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (retour testeur 26/10)
+    if (ex.name) out = out.filter(b => b.out || b.name !== ex.name || Math.abs(b.a - ex.a) >= 40);
     // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
     const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
     const fwd = out.filter(b => Math.abs(b.a) < 165);
