@@ -126,7 +126,9 @@ async function boot() {
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
     // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (retour du 26/10)
-    TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; }); $('#ly-track').disabled = !TRACKS.length;
+    TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; })
+      .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (retour du 26/10)
+    $('#ly-track').disabled = !TRACKS.length;
     if (gr) E.setGreen(b64(gr));
     if (pv || xc) { const a = pv ? b64(pv) : null, b = xc ? b64(xc) : null, m = new Uint8Array(Math.max(a ? a.length : 0, b ? b.length : 0)); for (let i = 0; i < m.length; i++) m[i] = (a && a[i] || 0) | (b && b[i] || 0); E.setPrivate(m); } // voies privées et impasses fermées (D-80) + passages couverts, galeries, intérieurs, centres commerciaux (D-91) : jamais empruntés
     if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
@@ -2436,7 +2438,7 @@ function mineDel(id) {
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 }
 // glisser une sortie vers la gauche : bouton « Supprimer » (app, retour du 26/10)
-const MINE_SW = 96;
+const MINE_SW = 104; // bouton 96 px + 8 px d'écart
 function mineSwipe(row, card, id) {
   let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
   const set = (v, anim) => { card.style.transition = anim ? 'transform .18s ease' : 'none'; card.style.transform = v ? `translateX(${v}px)` : ''; row.classList.toggle('open', v <= -MINE_SW / 2); };
