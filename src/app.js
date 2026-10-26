@@ -41,7 +41,7 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 
 const S = {
   mode: 'loop', start: null, end: null, // {lat,lon,name}
-  dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false,
+  dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false, showTrack: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
 // ---------- villes (D-97) : une carte et des données par ville ; Paris à la racine, les autres dans leur dossier ----------
@@ -109,7 +109,7 @@ function cityFirstRun() {
   else if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted') go(); }).catch(() => {});
 }
  // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
-let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [];
+let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [], TRACKS = [];
 
 // ---------- loading ----------
 async function boot() {
@@ -120,11 +120,13 @@ async function boot() {
     M = meta; G = E.init(meta, buf);
     // optional layers: green score per street, official race routes, famous places
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null)]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'tracks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
+    // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (retour du 26/10)
+    TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; }); $('#ly-track').disabled = !TRACKS.length;
     if (gr) E.setGreen(b64(gr));
     if (pv || xc) { const a = pv ? b64(pv) : null, b = xc ? b64(xc) : null, m = new Uint8Array(Math.max(a ? a.length : 0, b ? b.length : 0)); for (let i = 0; i < m.length; i++) m[i] = (a && a[i] || 0) | (b && b[i] || 0); E.setPrivate(m); } // voies privées et impasses fermées (D-80) + passages couverts, galeries, intérieurs, centres commerciaux (D-91) : jamais empruntés
     if (dk) E.setDark(b64(dk)); else $('#k-green').disabled = true;
@@ -592,7 +594,7 @@ const PINS = []; let PIN_HOVER = '';
 let raf = 0; function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function render() {
   if (!G || !paths.minor) return;
-  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), poi: css('--poi'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem'), pinB: css('--pin-b'), accentInk: css('--accent-ink') };
+  colors = { street: css('--street'), major: css('--street-major'), path: css('--street-path'), quart: css('--quart'), route: css('--route'), route2: css('--route-2'), font: css('--font'), track: css('--track'), tree: css('--tree'), metroBg: css('--metro-bg'), metroInk: css('--metro-ink'), casing: css('--route-casing'), avoid: css('--avoid'), avoidFill: css('--avoid-fill'), sig: css('--sig'), bg: css('--map-bg'), ink: css('--ink'), muted: css('--muted'), good: css('--good'), poi: css('--poi'), panel: css('--panel'), station: css('--station'), stationFill: css('--station-fill'), label: css('--label'), water: css('--water'), green: css('--green'), cem: css('--cem'), pinB: css('--pin-b'), accentInk: css('--accent-ink') };
   if (!colors.hatch || colors.hatchKey !== colors.avoid) { const pc = document.createElement('canvas'); pc.width = pc.height = 8; const g = pc.getContext('2d'); g.strokeStyle = colors.avoid; g.globalAlpha = 0.55; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke(); colors.hatch = ctx.createPattern(pc, 'repeat'); colors.hatchKey = colors.avoid; }
   if (colors.hatch && colors.hatch.setTransform) colors.hatch.setTransform(new DOMMatrix().scale(1 / (V.s || 1)));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
@@ -628,10 +630,19 @@ function render() {
     for (let i = 0; i < TREES.length; i += 2) { const x = TREES[i], y = TREES[i + 1]; if (x < x0 || x > x1 || y < y0 || y > y1) continue; ctx.rect(x - r, y - r, 2 * r, 2 * r); }
     ctx.fill(); ctx.restore();
   }
+  if (S.showTrack && TRACKS.length) { // pistes d'athlé : l'anneau de près, un repère de loin
+    const x0 = -V.tx / V.s - 300, y0 = -V.ty / V.s - 300, x1 = (W - V.tx) / V.s + 300, y1 = (H - V.ty) / V.s + 300;
+    ctx.save();
+    for (const t of TRACKS) { if (t.x < x0 || t.x > x1 || t.y < y0 || t.y > y1) continue;
+      if (V.s >= 0.25) { ctx.beginPath(); t.ring.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.globalAlpha = 0.22; ctx.fillStyle = colors.track; ctx.fill(); ctx.globalAlpha = 0.95; ctx.lineWidth = px(2.5); ctx.strokeStyle = colors.track; ctx.stroke(); ctx.globalAlpha = 1; } }
+    ctx.restore();
+  }
   ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawLabels(); ctx.restore();
   ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawMetro(false);
   if (S.showFont && V.s >= 0.03) { const r = V.s > 0.2 ? 6.5 : V.s > 0.08 ? 4.5 : 2.5; for (const f of FONT) { const sx = f.x * V.s + V.tx, sy = f.y * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
     if (r < 3) { ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.font; ctx.fill(); } else drawDrop(sx, sy, r, false); } }
+  if (S.showTrack && V.s < 0.25) for (const t of TRACKS) { const sx = t.x * V.s + V.tx, sy = t.y * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
+    const rw = V.s > 0.08 ? 8 : 5.5; ctx.beginPath(); ctx.ellipse(sx, sy, rw, rw * 0.6, 0, 0, 7); ctx.lineWidth = V.s > 0.08 ? 3 : 2.2; ctx.strokeStyle = colors.track; ctx.stroke(); }
   ctx.restore();
   // route
   const R = NAV.on && NAV.r ? NAV.r : S.route;
@@ -823,6 +834,7 @@ function click(sx, sy) {
   const x = (sx - V.tx) / V.s, y = (sy - V.ty) / V.s; const [lat, lon] = E.toLL(x, y);
   const q = M.quartiers.find(q => q.rings.some(r => pip([lat, lon], r)));
   const t = S.tool;
+  if (!t && S.showTrack && !NAV.on) { const k = trackAt(sx, sy); if (k) return trackCard(k); }
   if (t === 'start' || t === 'end') {
     if (!q) return toast(`Choisis un point sur la carte (${C0.name} et communes voisines).`);
     setPoint(t, { lat, lon, name: `Point sur la carte · ${q.name}` }); setTool(null); generate(); return;
@@ -897,7 +909,7 @@ function setArrival(k) {
   S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
   $('#end-fixed').hidden = k !== 'place'; $('#end-free-hint').hidden = k !== 'free'; $('#end-metro-row').hidden = k !== 'free' || !METRO.st.length;
   if (k === 'place' && !S.end) { const p = M.poi.find(p => p[0] === C0.end[0]) || [C0.end[0], 'park', C0.end[1], C0.end[2]]; setPoint('end', { lat: p[2], lon: p[3], name: p[0] }); }
-  applyModeLabels(); draw();
+  applyModeLabels(); if (typeof TRACKS !== 'undefined') $('#via-track').hidden = !TRACKS.length || S.mode !== 'loop' || S.vias.some(v => v.track); draw();
 }
 ['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
 // Rues très fréquentées (D-109) : pénalité pleine de 10 h à 20 h, moitié de 8 h à 10 h et de 20 h à 23 h, presque rien la nuit
@@ -945,7 +957,7 @@ seg(['d-flat', 'd-any', 'd-target'], id => { S.dmode = id.slice(2); $('#dplus-ro
 const PRIO = {
   few: { sig: 2, w: { sig: 450, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 1.5, txt: 'moins de feux', hint: 'Moins de feux : des petites rues, donc plus de virages. Une des propositions sera la plus simple.' },
   eq: { sig: 1, w: { sig: 250, turn: 150, turnRun: 100, turnFar: 0.3 }, score: 0.5, txt: 'équilibré', hint: 'Équilibré : peu de feux, sans tourner sans arrêt. Une des propositions sera la plus simple.' },
-  turn: { sig: 1, w: { sig: 220, turn: 450, turnRun: 250, turnFar: 0.5 }, score: 0.4, txt: 'lignes droites', hint: 'Lignes droites : moins de virages, mais plus de feux dans le centre de Paris. Une des propositions aura le moins de feux.' }
+  turn: { sig: 1, w: { sig: 120, turn: 2500, turnRun: 800, turnFar: 0.7, road: [0.8, 0.4, 0, 0] }, score: 0.15, simple: true, txt: 'lignes droites', hint: 'Lignes droites : de grands axes et peu de virages, un tour facile à retenir. Plus de feux. Une des propositions aura le moins de feux.' }
 };
 function setPrio(k, save) { if (!PRIO[k]) k = 'eq'; S.prio = k; S.sig = PRIO[k].sig; ['few', 'eq', 'turn'].forEach(j => $('#p-' + j).setAttribute('aria-pressed', j === k)); $('#prio-hint').textContent = PRIO[k].hint; if (save) try { localStorage.setItem('runparis-prio', k); } catch (e) {} }
 ['few', 'eq', 'turn'].forEach(k => $('#p-' + k).onclick = () => setPrio(k, true));
@@ -962,6 +974,17 @@ setTimeout(lyCount, 0);
 $('#show-sig').onclick = e => { S.showSig = !S.showSig; e.currentTarget.setAttribute('aria-pressed', S.showSig); draw(); };
 $('#ly-metro').onclick = e => { S.showMetro = !S.showMetro; e.currentTarget.setAttribute('aria-pressed', S.showMetro); draw(); };
 $('#ly-font').onclick = e => { S.showFont = !S.showFont; e.currentTarget.setAttribute('aria-pressed', S.showFont); draw(); };
+$('#ly-track').onclick = e => { S.showTrack = !S.showTrack; e.currentTarget.setAttribute('aria-pressed', S.showTrack); draw(); if (S.showTrack) track('calque-pistes', 'Calque pistes d’athlé'); };
+// toucher une piste : son nom, et « Y passer » l'ajoute aux lieux par où passer (parcours échauffement → piste → retour)
+function trackAt(sx, sy) { const mx = (sx - V.tx) / V.s, my = (sy - V.ty) / V.s; let best = null, bd = 26;
+  for (const t of TRACKS) { const d = Math.hypot(t.x * V.s + V.tx - sx, t.y * V.s + V.ty - sy); if (d < bd) { bd = d; best = t; } }
+  if (!best && V.s >= 0.25) best = TRACKS.find(t => Math.abs(t.x - mx) < 400 && Math.abs(t.y - my) < 400 && pip([my, mx], t.ring.map(([x, y]) => [y, x]))) || null; return best; }
+function trackCard(t) {
+  const [lat, lon] = E.toLL(t.x, t.y), name = t.n || 'Piste d’athlétisme', toastEl = $('#toast'); toastEl.innerHTML = '';
+  toastEl.append(`${name} · piste d’environ ${t.lap} m`); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Y passer';
+  u.onclick = () => { toastEl.hidden = true; if (S.vias.some(v => v.track === t)) return; if (S.mode !== 'loop') toast('Les pistes s’ajoutent aux boucles : choisis « En boucle ».'); addVia({ lat, lon, name: 'Piste · ' + name, track: t }); track('piste', 'Piste ajoutée'); if (S.mode === 'loop') toast('Piste ajoutée aux lieux où passer : choisis ta distance et lance la boucle.', 4000); };
+  toastEl.appendChild(u); toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(() => toastEl.hidden = true, 6000);
+}
 $('#ly-trees').onclick = e => { S.showTrees = !S.showTrees; e.currentTarget.setAttribute('aria-pressed', S.showTrees); if (S.showTrees && !TREES) toast('Arbres en cours de chargement…'); draw(); };
 $('#end-metro').onchange = () => markStale();
 S.depNow = true;
@@ -1046,7 +1069,18 @@ function renderVias() {
   add.textContent = open ? 'Fermer' : '+ Passer par un lieu';
   add.onclick = () => { $('#via-box').hidden = !$('#via-box').hidden; renderVias(); if (!$('#via-box').hidden) $('#via-q').focus(); };
   box.appendChild(add); msync();
+  $('#via-track').hidden = !TRACKS.length || S.mode !== 'loop' || S.vias.some(v => v.track);
 }
+// « Passer par » : la piste d'athlé la plus proche du départ, sans la chercher sur la carte (retour du 26/10)
+$('#via-track').onclick = () => {
+  if (!S.start) return toast('Choisis d’abord ton départ.');
+  const [sx, sy] = E.toXY(S.start.lat, S.start.lon); let best = null, bd = 1e9;
+  for (const t of TRACKS) { const d = Math.hypot(t.x - sx, t.y - sy); if (d < bd) { bd = d; best = t; } }
+  if (!best || bd > 6000) return toast('Pas de piste d’athlé à moins de 6 km du départ.');
+  const [lat, lon] = E.toLL(best.x, best.y), name = best.n || 'Piste d’athlétisme';
+  addVia({ lat, lon, name: 'Piste · ' + name, track: best }); track('piste', 'Piste la plus proche');
+  toast(`${name} · piste d’environ ${best.lap} m, à ${bd < 1000 ? Math.round(bd / 50) * 50 + ' m' : fmt(bd / 1000, 1) + ' km'} du départ.`, 4000);
+};
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- official races ----------
 function setTab(t) {
@@ -1290,8 +1324,8 @@ async function generate(isAgain) {
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
     const green = S.kind === 'green';
-    E.setWeights({ climb, ...PRIO[S.prio || 'eq'].w, path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0, crowd: $('#avoid-crowd').checked ? crowdAt(dep) : 0 });
-    const opt = { seed: S.seed * 7919 + 13, sigScore: PRIO[S.prio || 'eq'].score, dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green };
+    E.setWeights({ climb, ...PRIO[S.prio || 'eq'].w, path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : S.prio === 'turn' ? PRIO.turn.w.road : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0, crowd: $('#avoid-crowd').checked ? crowdAt(dep) : 0 });
+    const opt = { seed: S.seed * 7919 + 13, sigScore: PRIO[S.prio || 'eq'].score, dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green, simple: S.prio === 'turn' };
     opt.night = S.lastDep.night; S.lastOpt = opt;
     if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
@@ -1349,9 +1383,9 @@ async function generate(isAgain) {
       if (r && r.alts && !r.shortest && !S.vias.length && S.kind !== 'discover') {
         const side = S.prio === 'turn' ? 'few' : 'simple', other = side === 'few' ? PRIO.few : PRIO.turn;
         const per = a => side === 'few' ? a.feux / (a.len / 1000) : E.turnStats(a.edges).turns / (a.len / 1000), fk = a => a.feux / (a.len / 1000);
-        E.setWeights(other.w); const o2 = Object.assign({}, opt, { sigScore: other.score, seed: opt.seed + 977 }); let r2 = null;
+        E.setWeights(other.w); const o2 = Object.assign({}, opt, { sigScore: other.score, seed: opt.seed + 977, simple: !!other.simple }); let r2 = null;
         try { r2 = !ab ? await E.loop(s, target, o2, () => {}) : S.endFree ? await E.oneWay(s, target, o2, () => {}) : await E.aToB(s, endN, target, o2, () => {}); } catch (e) { r2 = null; }
-        E.setWeights(PRIO[S.prio || 'eq'].w);
+        E.setWeights(Object.assign({ road: S.prio === 'turn' ? PRIO.turn.w.road : [0, 0.15, 0.35, 0.6] }, PRIO[S.prio || 'eq'].w));
         if (r2) { const best = Math.min(...r.alts.map(per)), fmin = Math.min(...r.alts.map(fk)), c = (r2.alts || [r2]).filter(a => Math.abs(a.len - target) / target <= 0.05 && r.alts.every(b => E.similarity(a, b) < 0.5) && (side === 'few' || fk(a) <= fmin * 1.8 + 0.5)).sort((a, b) => per(a) - per(b))[0]; // « Le plus simple » : pas plus de ~1,8 fois les feux
           if (c && per(c) <= best * 0.75) { c._side = side; if (r.alts.length >= 3) r.alts[2] = c; else r.alts.push(c); } }
       }
@@ -1670,6 +1704,8 @@ async function shShare() {
   if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec Perfect Run · perfectrun.fr' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
+// retour dans l'app après un partage vers une autre app : la feuille de partage a été fermée côté iOS (SceneDelegate)
+window.prShared = () => toast('Image partagée', 2500);
 async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
 $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
@@ -2359,8 +2395,11 @@ function renderMine() {
     b.querySelector('.t').textContent = e.t || mineTitle(e);
     b.querySelector('.s').textContent = [e.secs ? fmtClock(e.secs) : '', e.secs && e.km ? fmtClock(e.secs / e.km) + ' /km' : '', e.up != null ? e.up + ' m D+' : ''].filter(Boolean).join(' · ');
     b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
-    b.onclick = () => mineOpen(i);
-    items.appendChild(b);
+    b.onclick = () => { if (b.dataset.sw) return; const r = b.parentNode; if (r.classList.contains('open')) { r.classList.remove('open'); b.style.transition = 'transform .18s ease'; b.style.transform = ''; return; } mineOpen(i); };
+    const row = document.createElement('div'); row.className = 'mine-row';
+    row.innerHTML = '<button type="button" class="mine-del" tabindex="-1">Supprimer</button>'; row.prepend(b);
+    mineSwipe(row, b, e.id || e.d);
+    items.appendChild(row);
   });
 }
 function mineOpen(i) {
@@ -2387,13 +2426,28 @@ $('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.g, e.
 $('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.g); if (!st) return;
   const P = st.geom; SH.data = { pts: P, km: e.km, up: e.up || Math.round(st.up), loop: !!e.loop, dep: e.dep || '', arr: e.arr || '', race: !!e.race, date: new Date(e.d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) };
   SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; SH.extra = null; $('#shx-time').value = fmtClock(e.secs || e.km * pace()); $('#shx').hidden = false; shOut(); };
-$('#md-del').onclick = () => {
-  const L = mineLoad(), i = L.findIndex(x => (x.id || x.d) === S.mineCur); if (i < 0) return; const [gone] = L.splice(i, 1); mineSave(L);
-  renderMine(); S.route = null; S.alts = []; draw();
-  const t = $('#toast'); t.innerHTML = ''; t.append('Sortie retirée'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+$('#md-del').onclick = () => mineDel(S.mineCur);
+// supprimer une sortie (depuis son détail ou en la glissant dans la liste), avec « Annuler » pendant 5 s
+function mineDel(id) {
+  const L = mineLoad(), i = L.findIndex(x => (x.id || x.d) === id); if (i < 0) return; const [gone] = L.splice(i, 1); mineSave(L);
+  renderMine(); S.route = null; S.alts = []; draw(); track('supprimer', 'Sortie supprimée');
+  const t = $('#toast'); t.innerHTML = ''; t.append('Sortie supprimée'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { const M2 = mineLoad(); M2.splice(Math.min(i, M2.length), 0, gone); mineSave(M2); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
-};
+}
+// glisser une sortie vers la gauche : bouton « Supprimer » (app, retour du 26/10)
+const MINE_SW = 96;
+function mineSwipe(row, card, id) {
+  let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
+  const set = (v, anim) => { card.style.transition = anim ? 'transform .18s ease' : 'none'; card.style.transform = v ? `translateX(${v}px)` : ''; row.classList.toggle('open', v <= -MINE_SW / 2); };
+  card.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = row.classList.contains('open') ? -MINE_SW : 0; on = true; lock = 0;
+    document.querySelectorAll('.mine-row.open').forEach(r => { if (r !== row) { r.classList.remove('open'); r.firstChild.style.transform = ''; } }); }, { passive: true });
+  card.addEventListener('touchmove', e => { if (!on) return; const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
+    if (!lock) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; lock = Math.abs(mx) > Math.abs(my) ? 1 : 2; }
+    if (lock !== 1) return; e.preventDefault(); const base = row.classList.contains('open') ? -MINE_SW : 0; dx = Math.max(-MINE_SW * 1.4, Math.min(0, base + mx)); set(dx); }, { passive: false });
+  card.addEventListener('touchend', () => { if (!on) return; on = false; if (lock === 1) { set(dx < -MINE_SW / 2 ? -MINE_SW : 0, true); card.dataset.sw = '1'; setTimeout(() => delete card.dataset.sw, 60); } });
+  row.querySelector('.mine-del').onclick = () => mineDel(id);
+}
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
 // ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)

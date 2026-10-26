@@ -15,7 +15,7 @@ meta = ('<!doctype html>\n<html lang="fr">\n<meta charset="utf-8">\n'
 app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engine.js'))
 # version des données : change dès qu'un fichier de données change, pour que le navigateur recharge la nouvelle version
 h = hashlib.sha1()
-DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt', 'crowd.txt']
+DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt', 'crowd.txt', 'tracks.json']
 CITY_DIRS = ['', 'lyon/', 'bordeaux/', 'nantes/']  # Paris à la racine, puis une ville par dossier (D-97)
 for d in CITY_DIRS:
     for f in DATA:

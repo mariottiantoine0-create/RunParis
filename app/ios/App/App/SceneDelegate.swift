@@ -25,6 +25,27 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
+    // Perfect Run (retour du 26/10) : la feuille de partage reste ouverte quand on part dans Instagram, WhatsApp…
+    // Si on a quitté l'app pendant qu'elle était affichée, on la ferme au retour et on prévient la page.
+    private var sharedAway = false
+    private func topController() -> UIViewController? {
+        var c = window?.rootViewController
+        while let p = c?.presentedViewController { c = p }
+        return c
+    }
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        sharedAway = topController() is UIActivityViewController
+    }
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        guard sharedAway else { return }
+        sharedAway = false
+        if let sheet = topController() as? UIActivityViewController {
+            sheet.dismiss(animated: true) {
+                (self.window?.rootViewController as? CAPBridgeViewController)?.webView?.evaluateJavaScript("window.prShared && window.prShared()", completionHandler: nil)
+            }
+        }
+    }
+
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)
     }

@@ -343,7 +343,7 @@ const Engine = (() => {
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
     if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
-    if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * 0.05; } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
+    if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * (opt.simple ? 2.5 : 0.05); } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
   }
@@ -414,8 +414,42 @@ const Engine = (() => {
     return best;
   }
 
+  // « Lignes droites » (retour du 26/10, boucles façon Strava) : des blocs de 3 ou 4 grands côtés.
+  // Les coins sont des carrefours de grands axes (deux rues nommées de classe ≥ 2 qui se croisent).
+  let MAJ = null;
+  function majors() {
+    if (MAJ) return MAJ;
+    for (const minC of [2, 1]) { MAJ = [];
+      for (let v = 0; v < G.NX.length; v++) { const nm = new Set(); for (let k = G.deg[v]; k < G.deg[v + 1]; k++) { const e = G.adjE[k]; if (G.C[e] >= minC && G.en[e] && !G.P[e]) nm.add(G.en[e]); } if (nm.size >= 2) MAJ.push(v); }
+      if (MAJ.length >= 80) break; }
+    return MAJ;
+  }
+  function nearMajor(x, y) {
+    let b = -1, bd = 1e18;
+    for (const v of majors()) { const d = (G.NX[v] - x) ** 2 + (G.NY[v] - y) ** 2; if (d >= bd) continue; let ok = false; for (let k = G.deg[v]; k < G.deg[v + 1]; k++) if (!G.blocked[G.adjE[k]]) { ok = true; break; } if (ok) { bd = d; b = v; } }
+    return b >= 0 && bd < 600 * 600 ? b : nearest(x, y);
+  }
+  function candidateBlock(start, target, opt, theta, tri) {
+    const sx = G.NX[start], sy = G.NY[start], ux = Math.cos(theta), uy = Math.sin(theta), vx = -uy, vy = ux;
+    let S = target / 4 / 1.15, cb = null;
+    for (let it = 0; it < 4; it++) {
+      const P = (tri ? [[ux * 1.33, uy * 1.33], [(ux * 0.66 + vx * 1.15) * 1.33, (uy * 0.66 + vy * 1.15) * 1.33]] : [[ux, uy], [ux + vx, uy + vy], [vx, vy]]).map(([a, b]) => nearMajor(sx + a * S, sy + b * S));
+      if (P.some(p => p < 0 || p === start)) break;
+      const r = routeThrough([start, ...P, start]); if (!r) break;
+      const st = stats(r, start); st.kind = 'boucle';
+      if (!cb || Math.abs(st.len - target) < Math.abs(cb.len - target)) cb = st;
+      if (Math.abs(st.len / target - 1) < 0.03) break;
+      S *= Math.pow(target / st.len, 0.9);
+    }
+    return cb;
+  }
   async function loop(start, target, opt, onProgress) {
     const rng = mulberry(opt.seed || 1);
+    if (opt.simple && !opt.water && !opt.green) {
+      const cands = [], off = rng() * Math.PI / 4;
+      for (let c = 0; c < 16; c++) { const st = candidateBlock(start, target, opt, off + (c % 8) * Math.PI / 4, c >= 8); if (st) { st.score = score(st, target, opt); cands.push(st); } if (onProgress) onProgress((c + 1) / 16); await tick(); }
+      const best = pickAlts(cands, target); if (best) return best;
+    }
     const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
     const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
     for (let c = 0; c < NC + NB; c++) {
