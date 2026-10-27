@@ -1,0 +1,46 @@
+{
+ "city": "toulouse",
+ "name": "Toulouse",
+ "pbf": "/mnt/user-data/uploads/Downloads/midi-pyrenees-261025.osm.pbf",
+ "bbox": [
+  43.5,
+  43.715,
+  1.275,
+  1.578
+ ],
+ "dem": {
+  "file": "/mnt/user-data/uploads/Downloads/PerfectRun-toulouse/toulouse_dem_4400x4000.f32",
+  "bbox": [
+   43.5,
+   43.715,
+   1.275,
+   1.578
+  ],
+  "W": 4400,
+  "H": 4000
+ },
+ "center_insee": "31555",
+ "communes": [
+  "31555",
+  "31056",
+  "31561",
+  "31182",
+  "31069",
+  "31149",
+  "31157",
+  "31433",
+  "31575",
+  "31411",
+  "31446",
+  "31254",
+  "31506",
+  "31445",
+  "31044",
+  "31282",
+  "31557",
+  "31022"
+ ],
+ "arr_insee": [],
+ "transit_network": "Tisséo",
+ "quartiers": true
+}

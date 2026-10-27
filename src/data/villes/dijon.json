@@ -1,0 +1,44 @@
+{
+ "city": "dijon",
+ "name": "Dijon",
+ "pbf": "/mnt/user-data/uploads/Downloads/bourgogne-261025.osm.pbf",
+ "bbox": [
+  47.25,
+  47.41,
+  4.89,
+  5.18
+ ],
+ "dem": {
+  "file": "/mnt/user-data/uploads/Downloads/PerfectRun-dijon/dijon_dem_4400x3200.f32",
+  "bbox": [
+   47.25,
+   47.41,
+   4.89,
+   5.18
+  ],
+  "W": 4400,
+  "H": 3200
+ },
+ "center_insee": "21231",
+ "communes": [
+  "21231",
+  "21003",
+  "21059",
+  "21605",
+  "21171",
+  "21452",
+  "21192",
+  "21535",
+  "21166",
+  "21540",
+  "21355",
+  "21485",
+  "21515",
+  "21617",
+  "21027",
+  "21278"
+ ],
+ "arr_insee": [],
+ "transit_network": "Divia",
+ "quartiers": true
+}
