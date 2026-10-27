@@ -55,9 +55,9 @@ const CITIES = {
   nantes: { name: 'Nantes', dir: 'nantes/', sub: 'et 13 communes voisines', ll: [47.2129, -1.5598], bb: [47.105, 47.37, -1.855, -1.39], end: ['Jardin des Plantes', 47.2197, -1.5433],
     hill: 'Nantes va de 5 m (Loire) à 45 m ; Orvault et Saint-Herblain montent à 65 m.', zones: '11 quartiers et 13 communes', avoidEx: 'Un lieu : château des ducs, Commerce, un marché…', races: 'Les grands parcours de course de Nantes, pour s’entraîner dessus en entier ou en partie.', od: '' },
   toulouse: { name: 'Toulouse', dir: 'toulouse/', sub: 'et 17 communes voisines', ll: [43.6045, 1.444], bb: [43.5, 43.715, 1.275, 1.578], end: ['Jardin des Plantes', 43.5937, 1.4521],
-    hill: 'Toulouse va de 130 m (Garonne) à 200 m ; les coteaux de Pech-David et de Vieille-Toulouse montent à 280 m.', zones: '20 quartiers et 17 communes', avoidEx: 'Un lieu : Capitole, Saint-Cyprien, un marché…', races: 'Les grands parcours de course de Toulouse arrivent bientôt.', od: '' },
+    hill: 'Toulouse va de 130 m (Garonne) à 200 m ; les coteaux de Pech-David et de Vieille-Toulouse montent à 280 m.', zones: '20 quartiers et 17 communes', avoidEx: 'Un lieu : Capitole, Saint-Cyprien, un marché…', races: 'Les grands parcours de course de Toulouse, pour s’entraîner dessus en entier ou en partie.', od: '' },
   dijon: { name: 'Dijon', dir: 'dijon/', sub: 'et 15 communes voisines', ll: [47.322, 5.0415], bb: [47.25, 47.41, 4.89, 5.18], end: ['Parc de la Colombière', 47.3045, 5.0485],
-    hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Les grands parcours de course de Dijon arrivent bientôt.', od: '' }
+    hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Le grand parcours de course de Dijon, pour s’entraîner dessus en entier ou en partie.', od: '' }
 };
 const CITY_SOON = ['Lille'];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
