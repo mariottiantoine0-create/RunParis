@@ -471,6 +471,64 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* onboarding (application) : plein écran, tokens v2.22 ; titres title-xl, boutons 48 px, cartes 8 px, sélection accent-fill + 2 px accent */
+.onb{position:fixed;inset:0;z-index:1100;background:var(--panel);color:var(--ink);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.onb[hidden]{display:none}
+.onb-s{min-height:100%;display:flex;flex-direction:column}
+.onb-s[hidden]{display:none}
+.onb-map{height:min(36vh,300px);flex:none;background:var(--map-bg)}
+.onb-map svg{display:block}
+.onb-in{flex:1;padding:max(12px,env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:16px}
+.onb-map+.onb-in{padding-top:12px}
+.onb-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
+.onb-dots{display:flex;gap:6px;align-items:center}
+.onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
+.onb-dots span.past{background:var(--accent)}
+.onb-dots span.on{width:24px;background:var(--accent)}
+.onb .logo{font-size:22px}
+.onb-h{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;margin:0}
+.onb-p{font-size:15px;line-height:1.45;color:var(--muted);margin:0}
+.onb .onb-oldt,.onb.old .onb-new{display:none}
+.onb.old .onb-oldt{display:inline}
+.onb-pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.onb-pts li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-pts .ico{width:20px;height:20px;flex:none;margin-top:1px}
+.onb-cities{display:flex;flex-direction:column;gap:8px}
+.onb-city{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-sizing:border-box;cursor:pointer}
+.onb-city.on{border:2px solid var(--accent);background:var(--accent-fill);padding:7px 11px}
+.onb-city input{position:absolute;opacity:0;width:1px;height:1px}
+.onb-city input:focus-visible+.onb-box{outline:2px solid var(--accent);outline-offset:2px}
+.onb-box{width:24px;height:24px;flex:none;border-radius:4px;border:2px solid var(--ink);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent}
+.onb-city.on .onb-box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.onb-ct{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.onb-ct b{font-size:16px;font-weight:600}
+.onb-ct span{font-size:13px;color:var(--muted)}
+.onb-tag{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-fill);padding:3px 6px;border-radius:4px;white-space:nowrap}
+.onb-city.off{background:var(--disabled-bg);border-color:var(--disabled-bg);cursor:default;min-height:48px}
+.onb-city.off .onb-box{border-color:var(--disabled-ink)}
+.onb-city.off b{color:var(--disabled-ink)}
+.onb-soon{font-size:13px;color:var(--muted)}
+.onb-f{position:sticky;bottom:0;background:var(--panel);padding:12px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.onb-s[data-step="1"] .onb-f,.onb-s[data-step="3"] .onb-f,.onb-s[data-step="4"] .onb-f{border-top:0}
+.onb-f .btn{width:100%}
+.onb-f .textbtn{min-height:44px;width:100%}
+.onb-note{font-size:13px;color:var(--muted);text-align:center;margin:4px 0 0}
+.onb-progs{display:flex;flex-direction:column;gap:8px}
+.onb-progs:empty{display:none}
+.onb-prog{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.onb-pr{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.onb-pr b{font-weight:600}
+.onb-pr span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.onb-pr .ok{color:var(--ok);font-weight:700}
+.onb-bar{display:block;height:6px;border-radius:999px;background:var(--field)}
+.onb-bar i{display:block;height:6px;border-radius:999px;background:var(--accent);transition:width .2s}
+.onb-why{margin:0;padding:0;list-style:none;counter-reset:w;display:flex;flex-direction:column;gap:14px}
+.onb-why li{counter-increment:w;display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-why li::before{content:counter(w);width:28px;height:28px;flex:none;border-radius:999px;background:var(--info-bg);color:var(--accent);font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:-3px}
+.onb-neterr .textbtn{display:inline;min-height:0;padding:0;margin-left:4px}
+.onb .btn.primary:disabled{background:var(--disabled-bg);color:var(--disabled-ink)}
+@media (min-width:861px){.onb-s{max-width:480px;margin:0 auto}}
 /* téléchargement d'une ville (application) : plein écran pendant le téléchargement, et message bloquant s'il échoue */
 .loading.dl-full{position:fixed;inset:0;z-index:1000}
 .dl-err{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;max-width:320px;padding:0 16px;color:var(--ink);font-size:15px;line-height:1.45}
@@ -1153,6 +1211,52 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   </div>
 
   <!-- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) -->
+  <!-- onboarding (application) : 4 écrans au premier lancement, et une fois à la mise à jour (« Choisis tes villes ») -->
+  <div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Bienvenue sur Perfect Run">
+    <section data-step="1" class="onb-s">
+      <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
+        <h2 class="onb-h">Des parcours<br>sur mesure</h2>
+        <ul class="onb-pts">
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>En boucle, jusqu’à un lieu ou n’importe où, à la distance que tu veux.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Plat ou vallonné, moins de feux, et les zones que tu veux éviter.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage à la voix, téléphone en poche.</li>
+        </ul>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-start">Commencer</button></div>
+    </section>
+    <section data-step="2" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div></div>
+        <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
+        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras en ajouter plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
+        <div class="onb-cities" id="onb-cities"></div>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-dl" disabled>Choisis au moins une ville</button><p class="onb-note" id="onb-dl-note"></p></div>
+    </section>
+    <section data-step="3" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-progs"></div>
+        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
+        <h2 class="onb-h">Ta position</h2>
+        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone.</li></ol>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
+    </section>
+    <section data-step="4" class="onb-s" hidden>
+      <div class="onb-map" aria-hidden="true"></div>
+      <div class="onb-in">
+        <h2 class="onb-h">C’est prêt</h2>
+        <div class="onb-progs"></div>
+        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
+        <p class="onb-p">Il ne te reste qu’à créer ton premier parcours !</p>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-go" disabled>Téléchargement…</button></div>
+    </section>
+  </div>
   <div class="shx" id="about" hidden>
     <div class="shx-back" id="about-back"></div>
     <section class="shx-bravo about" role="dialog" aria-modal="true" aria-labelledby="about-t">
@@ -2133,7 +2237,7 @@ $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-10
 
 // ---------- villes à télécharger (application, onboarding) : rien n'est embarqué, chaque ville vient du site puis reste sur le téléphone ----------
 // Sur le site, rien ne change : la page lit les fichiers de la ville à côté d'elle (CD + fichier + version).
-const DL_BASE = (window.PR_DL_BASE || 'https://perfectrun.fr/').replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
+const DL_BASE = (window.PR_DL_BASE || (NATIVE ? 'https://perfectrun.fr/' : new URL('./', location.href).href)).replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
 const DL_K = 'runparis-villes'; // { ville: { h: empreinte, bytes, at } } : villes complètes sur le téléphone
 const dlState = () => { try { return JSON.parse(localStorage.getItem(DL_K) || '{}') || {}; } catch (e) { return {}; } };
 const dlSave = s => { try { localStorage.setItem(DL_K, JSON.stringify(s)); } catch (e) {} };
@@ -2154,8 +2258,9 @@ async function cityDownload(id, onp, idx) {
   track('ville-telechargee-' + id, 'Ville téléchargée ' + c.name);
 }
 // au lancement : dossier local, puis la ville choisie si elle n'est pas encore sur le téléphone (en attendant l'onboarding, téléchargée d'office)
+async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); } }
 async function dlReady() {
-  if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); }
+  await dlRoot();
   if (dlState()[CITY]) return true;
   const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
@@ -2199,7 +2304,7 @@ function cityHint(la, lo) {
 }
 // première ouverture : si la position est déjà autorisée, on ouvre directement la ville où l'on est
 function cityFirstRun() {
-  if (CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
+  if (S.onbJust || CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
   const go = () => navigator.geolocation.getCurrentPosition(p => { const k = cityAt(p.coords.latitude, p.coords.longitude); if (k && k !== CITY) setCity(k); }, () => {}, { maximumAge: 600000, timeout: 8000 });
   if (NATIVE && NP.geo && NP.geo.checkPermissions) NP.geo.checkPermissions().then(r => { if (r && r.location === 'granted') go(); }).catch(() => {});
   else if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted') go(); }).catch(() => {});
@@ -2209,7 +2314,7 @@ let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {},
 
 // ---------- chargement ----------
 async function boot() {
-  if (NATIVE && !(await dlReady())) return;
+  if (!(await onbGate())) return;
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
     const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(dataURL('graph.gz')); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(dataURL('graph.bin')).then(r => r.arrayBuffer()); };
@@ -4822,6 +4927,101 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClo
 const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); const sec = APPF && MOB.matches; /* « Suivre le parcours » est le principal seulement dans l'application */ $('#gpx').classList.toggle('primary', !sec); $('#gpx').classList.toggle('ghost', sec); };
 MOB.addEventListener('change', mApply);
 
+// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, C'est prêt ----------
+// Montré une seule fois (runparis-onb), aussi aux utilisateurs déjà installés à la mise à jour (« Choisis tes villes »).
+// Les villes choisies se téléchargent dès l'écran 2 et pendant l'écran 3. Sur le site : seulement avec ?onb=1, pour la recette (téléchargement simulé).
+const ONB_K = 'runparis-onb';
+const ONB_DEMO = !NATIVE && APPF && /[?&]onb=1\b/.test(location.search);
+const onbDone = () => { try { return localStorage.getItem(ONB_K) === '1'; } catch (e) { return false; } };
+// utilisateur déjà installé : il a des sorties, des réglages gardés ou une ville choisie avant cette version
+const ONB_OLD = (() => { try { return !!(localStorage.getItem('runparis-done') || localStorage.getItem('runparis-last') || CITY_STORED); } catch (e) { return false; } })();
+const ONB = { step: 1, pick: new Set(), idx: null, prog: {}, err: new Set(), done: new Set(), queue: null, resolve: null };
+const onbCities = () => Object.keys(CITIES);
+const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + ' Mo' : Math.max(1, Math.round(b / 1e3)) + ' Ko';
+function onbShow(n) {
+  ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
+  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
+  if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
+  if (n === 2) onbCityList(); if (n >= 3) onbProgress();
+}
+// écran 2 : la liste des villes, avec leur poids
+function onbCityList() {
+  const box = $('#onb-cities'); box.innerHTML = '';
+  for (const k of onbCities()) {
+    const c = CITIES[k], on = ONB.pick.has(k), b = ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0;
+    const l = document.createElement('label'); l.className = 'onb-city' + (on ? ' on' : '');
+    l.innerHTML = `<input type="checkbox"${on ? ' checked' : ''}><span class="onb-box" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="onb-ct"><b></b><span></span></span>${ONB.near === k ? '<span class="onb-tag">Près de toi</span>' : ''}`;
+    l.querySelector('b').textContent = c.name; l.querySelector('.onb-ct span').textContent = c.sub + (b ? ' · ' + mo(b) : '');
+    l.querySelector('input').onchange = e => { e.target.checked ? ONB.pick.add(k) : ONB.pick.delete(k); onbCityList(); };
+    box.appendChild(l);
+  }
+  for (const n of CITY_SOON) { const d = document.createElement('div'); d.className = 'onb-city off'; d.innerHTML = '<span class="onb-box" aria-hidden="true"></span><span class="onb-ct"><b></b></span><span class="onb-soon">Bientôt</span>'; d.querySelector('b').textContent = n; box.appendChild(d); }
+  const n = ONB.pick.size, tot = [...ONB.pick].reduce((t, k) => t + (ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0), 0);
+  $('#onb-dl').disabled = !n; $('#onb-dl').textContent = n ? `Télécharger ${n} ville${n > 1 ? 's' : ''}` : 'Choisis au moins une ville';
+  $('#onb-dl-note').textContent = (tot ? mo(tot) + ' · ' : '') + 'Menu › Mes villes pour en ajouter plus tard';
+}
+// téléchargement des villes choisies, l'une après l'autre (la ville affichée d'abord)
+// une ville ratée n'arrête pas les autres ; elle pourra être reprise (Réessayer, ou plus tard à l'ouverture de la ville)
+const onbList = () => [...ONB.pick].sort((a, b) => (b === CITY) - (a === CITY));
+async function onbDownload() {
+  if (ONB.busy) return; ONB.busy = true; ONB.err.clear(); onbProgress();
+  for (const k of onbList()) {
+    if (ONB.done.has(k)) continue;
+    try {
+      if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { ONB.prog[k] = p; onbProgress(); await new Promise(r => setTimeout(r, 120)); } }
+      else await cityDownload(k, p => { ONB.prog[k] = p; onbProgress(); }, ONB.idx);
+      ONB.done.add(k); ONB.prog[k] = 1;
+    } catch (e) { ONB.err.add(k); track('ville-echec', 'Téléchargement de ville raté'); }
+    onbProgress();
+  }
+  ONB.busy = false; onbProgress();
+}
+function onbProgress() {
+  const list = onbList(), html = list.map(k => {
+    const ok = ONB.done.has(k), p = Math.round((ONB.prog[k] || 0) * 100), err = ONB.err.has(k);
+    return `<div class="onb-prog${err ? ' err' : ''}"><div class="onb-pr"><b>${CITIES[k].name}</b>${ok ? '<span class="ok">Prête</span>' : err ? '<span>Interrompu</span>' : `<span>${p} %</span>`}</div>${ok ? '' : `<span class="onb-bar" role="progressbar" aria-label="Téléchargement de ${CITIES[k].name}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><i style="width:${p}%"></i></span>`}</div>`; }).join('');
+  document.querySelectorAll('#onb .onb-progs').forEach(b => b.innerHTML = html);
+  // on peut partir dès que la première ville est prête ; les autres finissent derrière
+  const first = list.find(k => ONB.done.has(k)), ready = !!first && (ONB.done.has(list[0]) || !ONB.busy);
+  document.querySelectorAll('#onb .onb-neterr').forEach(e => e.hidden = !ONB.err.size || ONB.busy);
+  const go = $('#onb-go'); if (go) { go.disabled = !ready; go.textContent = ready ? 'Créer mon premier parcours' : 'Téléchargement…'; }
+}
+// à la fin : la ville affichée doit être sur le téléphone, sinon on passe sur la première ville choisie
+function onbFinish() {
+  try { localStorage.setItem(ONB_K, '1'); } catch (e) {}
+  S.onbJust = true; track('onb-fin', 'Onboarding terminé');
+  const keep = ONB.done.has(CITY) ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
+  if (keep !== CITY) { setCity(keep); return; }
+  $('#onb').hidden = true; sbSync(); ONB.resolve && ONB.resolve(true);
+}
+async function onboarding() {
+  const o = $('#onb'); o.hidden = false; splashDone();
+  o.classList.toggle('old', ONB_OLD);
+  // villes pré-cochées : celle où l'on est si la position est déjà autorisée ; un ancien utilisateur garde sa ville et celles de ses sorties
+  if (ONB_OLD) { ONB.pick.add(CITY); for (const e of mineLoad()) if (e.city && CITIES[e.city]) ONB.pick.add(e.city); }
+  const near = await new Promise(res => {
+    const go = () => navigator.geolocation.getCurrentPosition(p => res(cityAt(p.coords.latitude, p.coords.longitude)), () => res(null), { maximumAge: 600000, timeout: 4000 });
+    if (NATIVE) NP.geo.checkPermissions().then(r => r && r.location === 'granted' ? go() : res(null)).catch(() => res(null)); else res(null);
+  });
+  if (near) { ONB.near = near; if (!ONB_OLD) ONB.pick.add(near); }
+  ONB.posOk = !!near;
+  dlIndex().then(i => { ONB.idx = i; if (ONB.step === 2) onbCityList(); }).catch(() => {});
+  onbShow(ONB_OLD ? 2 : 1);
+  return new Promise(r => { ONB.resolve = r; });
+}
+$('#onb-start').onclick = () => onbShow(2);
+document.querySelectorAll('#onb .onb-skip').forEach(b => b.onclick = () => { track('onb-passer', 'Onboarding · Passer'); onbShow(ONB.step === 1 ? 2 : 4); });
+$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
+$('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
+$('#onb-later').onclick = () => onbShow(4);
+document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
+$('#onb-go').onclick = onbFinish;
+// au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone
+async function onbGate() {
+  if ((NATIVE || ONB_DEMO) && (!onbDone() || ONB_DEMO)) { if (NATIVE) await dlRoot(); await onboarding(); }
+  return NATIVE ? dlReady() : true;
+}
 boot();
 })();
 </script>

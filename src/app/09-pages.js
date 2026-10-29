@@ -146,6 +146,3 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClo
 const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); const sec = APPF && MOB.matches; /* « Suivre le parcours » est le principal seulement dans l'application */ $('#gpx').classList.toggle('primary', !sec); $('#gpx').classList.toggle('ghost', sec); };
 MOB.addEventListener('change', mApply);
 
-boot();
-})();
-</script>

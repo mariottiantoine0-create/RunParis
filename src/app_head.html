@@ -464,6 +464,64 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* onboarding (application) : plein écran, tokens v2.22 ; titres title-xl, boutons 48 px, cartes 8 px, sélection accent-fill + 2 px accent */
+.onb{position:fixed;inset:0;z-index:1100;background:var(--panel);color:var(--ink);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.onb[hidden]{display:none}
+.onb-s{min-height:100%;display:flex;flex-direction:column}
+.onb-s[hidden]{display:none}
+.onb-map{height:min(36vh,300px);flex:none;background:var(--map-bg)}
+.onb-map svg{display:block}
+.onb-in{flex:1;padding:max(12px,env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:16px}
+.onb-map+.onb-in{padding-top:12px}
+.onb-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
+.onb-dots{display:flex;gap:6px;align-items:center}
+.onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
+.onb-dots span.past{background:var(--accent)}
+.onb-dots span.on{width:24px;background:var(--accent)}
+.onb .logo{font-size:22px}
+.onb-h{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;margin:0}
+.onb-p{font-size:15px;line-height:1.45;color:var(--muted);margin:0}
+.onb .onb-oldt,.onb.old .onb-new{display:none}
+.onb.old .onb-oldt{display:inline}
+.onb-pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.onb-pts li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-pts .ico{width:20px;height:20px;flex:none;margin-top:1px}
+.onb-cities{display:flex;flex-direction:column;gap:8px}
+.onb-city{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-sizing:border-box;cursor:pointer}
+.onb-city.on{border:2px solid var(--accent);background:var(--accent-fill);padding:7px 11px}
+.onb-city input{position:absolute;opacity:0;width:1px;height:1px}
+.onb-city input:focus-visible+.onb-box{outline:2px solid var(--accent);outline-offset:2px}
+.onb-box{width:24px;height:24px;flex:none;border-radius:4px;border:2px solid var(--ink);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent}
+.onb-city.on .onb-box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.onb-ct{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.onb-ct b{font-size:16px;font-weight:600}
+.onb-ct span{font-size:13px;color:var(--muted)}
+.onb-tag{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-fill);padding:3px 6px;border-radius:4px;white-space:nowrap}
+.onb-city.off{background:var(--disabled-bg);border-color:var(--disabled-bg);cursor:default;min-height:48px}
+.onb-city.off .onb-box{border-color:var(--disabled-ink)}
+.onb-city.off b{color:var(--disabled-ink)}
+.onb-soon{font-size:13px;color:var(--muted)}
+.onb-f{position:sticky;bottom:0;background:var(--panel);padding:12px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.onb-s[data-step="1"] .onb-f,.onb-s[data-step="3"] .onb-f,.onb-s[data-step="4"] .onb-f{border-top:0}
+.onb-f .btn{width:100%}
+.onb-f .textbtn{min-height:44px;width:100%}
+.onb-note{font-size:13px;color:var(--muted);text-align:center;margin:4px 0 0}
+.onb-progs{display:flex;flex-direction:column;gap:8px}
+.onb-progs:empty{display:none}
+.onb-prog{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.onb-pr{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.onb-pr b{font-weight:600}
+.onb-pr span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.onb-pr .ok{color:var(--ok);font-weight:700}
+.onb-bar{display:block;height:6px;border-radius:999px;background:var(--field)}
+.onb-bar i{display:block;height:6px;border-radius:999px;background:var(--accent);transition:width .2s}
+.onb-why{margin:0;padding:0;list-style:none;counter-reset:w;display:flex;flex-direction:column;gap:14px}
+.onb-why li{counter-increment:w;display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-why li::before{content:counter(w);width:28px;height:28px;flex:none;border-radius:999px;background:var(--info-bg);color:var(--accent);font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:-3px}
+.onb-neterr .textbtn{display:inline;min-height:0;padding:0;margin-left:4px}
+.onb .btn.primary:disabled{background:var(--disabled-bg);color:var(--disabled-ink)}
+@media (min-width:861px){.onb-s{max-width:480px;margin:0 auto}}
 /* téléchargement d'une ville (application) : plein écran pendant le téléchargement, et message bloquant s'il échoue */
 .loading.dl-full{position:fixed;inset:0;z-index:1000}
 .dl-err{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;max-width:320px;padding:0 16px;color:var(--ink);font-size:15px;line-height:1.45}
@@ -1146,6 +1204,52 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   </div>
 
   <!-- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) -->
+  <!-- onboarding (application) : 4 écrans au premier lancement, et une fois à la mise à jour (« Choisis tes villes ») -->
+  <div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Bienvenue sur Perfect Run">
+    <section data-step="1" class="onb-s">
+      <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="logo" aria-label="Perfect Run">PERFECT<span>RUN</span></div>
+        <h2 class="onb-h">Des parcours<br>sur mesure</h2>
+        <ul class="onb-pts">
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>En boucle, jusqu’à un lieu ou n’importe où, à la distance que tu veux.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Plat ou vallonné, moins de feux, et les zones que tu veux éviter.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage à la voix, téléphone en poche.</li>
+        </ul>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-start">Commencer</button></div>
+    </section>
+    <section data-step="2" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div></div>
+        <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
+        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras en ajouter plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
+        <div class="onb-cities" id="onb-cities"></div>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-dl" disabled>Choisis au moins une ville</button><p class="onb-note" id="onb-dl-note"></p></div>
+    </section>
+    <section data-step="3" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-progs"></div>
+        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
+        <h2 class="onb-h">Ta position</h2>
+        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone.</li></ol>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
+    </section>
+    <section data-step="4" class="onb-s" hidden>
+      <div class="onb-map" aria-hidden="true"></div>
+      <div class="onb-in">
+        <h2 class="onb-h">C’est prêt</h2>
+        <div class="onb-progs"></div>
+        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
+        <p class="onb-p">Il ne te reste qu’à créer ton premier parcours !</p>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-go" disabled>Téléchargement…</button></div>
+    </section>
+  </div>
   <div class="shx" id="about" hidden>
     <div class="shx-back" id="about-back"></div>
     <section class="shx-bravo about" role="dialog" aria-modal="true" aria-labelledby="about-t">

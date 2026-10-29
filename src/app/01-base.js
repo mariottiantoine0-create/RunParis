@@ -78,7 +78,7 @@ $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-10
 
 // ---------- villes à télécharger (application, onboarding) : rien n'est embarqué, chaque ville vient du site puis reste sur le téléphone ----------
 // Sur le site, rien ne change : la page lit les fichiers de la ville à côté d'elle (CD + fichier + version).
-const DL_BASE = (window.PR_DL_BASE || 'https://perfectrun.fr/').replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
+const DL_BASE = (window.PR_DL_BASE || (NATIVE ? 'https://perfectrun.fr/' : new URL('./', location.href).href)).replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
 const DL_K = 'runparis-villes'; // { ville: { h: empreinte, bytes, at } } : villes complètes sur le téléphone
 const dlState = () => { try { return JSON.parse(localStorage.getItem(DL_K) || '{}') || {}; } catch (e) { return {}; } };
 const dlSave = s => { try { localStorage.setItem(DL_K, JSON.stringify(s)); } catch (e) {} };
@@ -99,8 +99,9 @@ async function cityDownload(id, onp, idx) {
   track('ville-telechargee-' + id, 'Ville téléchargée ' + c.name);
 }
 // au lancement : dossier local, puis la ville choisie si elle n'est pas encore sur le téléphone (en attendant l'onboarding, téléchargée d'office)
+async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); } }
 async function dlReady() {
-  if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); }
+  await dlRoot();
   if (dlState()[CITY]) return true;
   const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
@@ -144,7 +145,7 @@ function cityHint(la, lo) {
 }
 // première ouverture : si la position est déjà autorisée, on ouvre directement la ville où l'on est
 function cityFirstRun() {
-  if (CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
+  if (S.onbJust || CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
   const go = () => navigator.geolocation.getCurrentPosition(p => { const k = cityAt(p.coords.latitude, p.coords.longitude); if (k && k !== CITY) setCity(k); }, () => {}, { maximumAge: 600000, timeout: 8000 });
   if (NATIVE && NP.geo && NP.geo.checkPermissions) NP.geo.checkPermissions().then(r => { if (r && r.location === 'granted') go(); }).catch(() => {});
   else if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted') go(); }).catch(() => {});
