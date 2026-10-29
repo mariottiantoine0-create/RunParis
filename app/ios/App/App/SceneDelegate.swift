@@ -22,6 +22,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             webView.scrollView.backgroundColor = mapBg
         }
 
+        // Perfect Run (retour du 29/10) : capture d'écran pendant qu'une sortie est affichée, la page propose l'image à partager
+        NotificationCenter.default.addObserver(forName: UIApplication.userDidTakeScreenshotNotification, object: nil, queue: .main) { [weak self] _ in
+            (self?.window?.rootViewController as? CAPBridgeViewController)?.webView?.evaluateJavaScript("window.prShot && window.prShot()", completionHandler: nil)
+        }
+
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 

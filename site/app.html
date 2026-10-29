@@ -727,6 +727,8 @@ button,a,label{-webkit-tap-highlight-color:transparent}
 /* badges (RP-85) : écussons, application seulement */
 .mine-seg{margin:0 0 16px}
 .mine-seg[hidden]{display:none}
+.bdg-back{margin:0 0 12px;padding:0}
+.bdg-back[hidden]{display:none}
 .bdg-count{display:flex;align-items:baseline;gap:8px;margin:0 0 16px}
 .bdg-count b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
 .bdg-count span{font-size:15px;color:var(--muted)}
@@ -965,8 +967,9 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="pbody" id="view-mine" hidden>
       <div class="seg mine-seg" id="mine-seg" role="group" aria-label="Afficher"><button type="button" data-mv="runs" aria-pressed="true">Sorties</button><button type="button" data-mv="badges" aria-pressed="false">Trophées</button></div>
       <div id="mine-badges" hidden>
+        <button type="button" class="textbtn mine-back bdg-back" id="bdg-back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Revenir à ma sortie</button>
         <div class="bdg-count"><b id="bdg-n">0</b><span id="bdg-of">trophée sur 24</span></div>
-        <div id="bdg-near-w"><div class="lbl">Les plus proches</div><div id="bdg-near"></div></div>
+        <div id="bdg-near-w"><div class="lbl">Prochains trophées</div><div id="bdg-near"></div></div>
         <div id="bdg-got-w" hidden><div class="lbl bdg-h">Obtenus</div><div class="bdg-grid" id="bdg-got"></div></div>
         <div id="bdg-off-w"><div class="lbl bdg-h">À débloquer</div><div class="bdg-grid" id="bdg-off"></div></div>
         <p class="bdg-foot">Tes trophées restent sur cet appareil, comme tes sorties.</p>
@@ -3321,7 +3324,7 @@ $('#via-track').onclick = () => {
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- parcours mythiques ----------
 function setTab(t) {
-  const prev = S.tab;
+  const prev = S.tab; if (t !== 'mine') S.badgeBack = false;
   S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
   const tools = document.querySelector('.tools'); tools.hidden = t !== 'gen';
   $('#view-mine').hidden = t !== 'mine';
@@ -3859,7 +3862,6 @@ function shClose() {
 function shOut() {
   SH.secs = parseClock($('#shx-time').value) || SH.data.km * pace();
   $('#shx-bravo').hidden = true; $('#shx-out').hidden = false;
-  document.querySelector('#shx-out [data-bg="photo"]').disabled = !SH.photo;
   shSync(); shDraw();
 }
 function shSync() { document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.setAttribute('aria-pressed', b.dataset.bg === SH.bg)); document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ly === SH.ly)); }
@@ -3944,6 +3946,14 @@ async function shShare() {
 }
 // retour dans l'app après un partage vers une autre app : la feuille de partage a été fermée côté iOS (SceneDelegate)
 window.prShared = () => toast('Image partagée', 2500);
+// capture d'écran d'une sortie (prévenu par iOS, SceneDelegate) : on propose l'image à partager, faite pour ça
+window.prShot = () => {
+  const out = !$('#shx').hidden && !$('#shx-out').hidden, bravo = !$('#shx').hidden && !$('#shx-bravo').hidden, det = S.tab === 'mine' && !$('#mine-detail').hidden && !$('#md-row').hidden;
+  if (!out && !bravo && !det) return; track('capture', 'Capture d’écran d’une sortie');
+  const t = $('#toast'); t.innerHTML = ''; t.append('Partager ta sortie ?'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Partager';
+  u.onclick = () => { t.hidden = true; if (out) shShare(); else if (bravo) shOut(); else $('#md-img').click(); };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 6000);
+};
 async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
 $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
@@ -3951,7 +3961,8 @@ $('#shx-x1').onclick = shClose; $('#shx-x2').onclick = shClose; $('#shx-back').o
 $('#shx-cam').onchange = e => shPhoto(e.target.files[0]); $('#shx-gal').onchange = e => shPhoto(e.target.files[0]);
 $('#shx-time').addEventListener('change', () => { const v = parseClock($('#shx-time').value); if (v && SH.entryId) minePatch(SH.entryId, { secs: Math.round(v) }); });
 $('#shx-nophoto').onclick = () => { SH.photo = null; SH.bg = 'map'; shOut(); };
-document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.disabled) return; SH.bg = b.dataset.bg; shSync(); shDraw(); });
+// « Photo » sans photo choisie : on ouvre la galerie (ajouter une photo après coup, depuis « Mes parcours » aussi)
+document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.dataset.bg === 'photo' && !SH.photo) return $('#shx-gal').click(); SH.bg = b.dataset.bg; shSync(); shDraw(); });
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
 $('#shx-share').onclick = shShare; $('#shx-save').onclick = () => shSave();
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#shx').hidden) shClose(); });
@@ -4703,15 +4714,14 @@ const B_ICO = {
   longue: '<path d="M5 21V4h12l-2.5 4L17 12H5"/>',
 };
 const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
-const B_TIER = { depart: 'Départ', bronze: 'Bronze', argent: 'Argent', or: 'Or', special: 'Spécial' };
 // fam, icône, valeur et unité écrites dans l'écusson (null : icône seule ou nom de ville), palier, nom, compteur, objectif
 const BADGES = (() => {
   const L = [], add = (id, fam, ico, val, unit, tier, name, key, goal) => L.push({ id, fam, ico, val, unit, tier, name, key, goal });
-  [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km', 'km', n));
+  [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km au total', 'km', n));
   // sorties longues : la plus longue sortie d'un coup (demande d'Antoine le 29/10)
   [[5, '5', 'depart', '5 km d’un coup'], [10, '10', 'bronze', '10 km d’un coup'], [21.1, '21,1', 'argent', 'Semi-marathon'], [42.2, '42,2', 'or', 'Marathon']].forEach(([n, v, t, nm]) => add('long' + Math.round(n), 'long', 'longue', v, 'km', t, nm, 'best', n));
   [[1, 'depart'], [10, 'bronze'], [25, 'argent'], [50, 'or']].forEach(([n, t]) => add('n' + n, 'n', 'sorties', n === 1 ? '1re' : String(n), n === 1 ? 'sortie' : 'sorties', t, n === 1 ? '1re sortie' : n + ' sorties', 'n', n));
-  [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines', 'streak', n));
+  [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines d’affilée', 'streak', n));
   [[5, 'bronze'], [10, 'argent'], [20, 'or']].forEach(([n, t]) => add('zone' + n, 'expl', 'exploration', String(n), 'quartiers', t, n + ' quartiers', 'zones', n)); // arrondissements à Paris et à Lyon, quartiers ailleurs : « quartiers » partout (choix d'Antoine)
   for (const k in CITIES) add('ville-' + k, 'ville', 'ville', null, null, 'ville', CITIES[k].name, 'city:' + k, 1);
   add('mythique', 'defi', 'mythique', null, null, 'special', 'Parcours mythique', 'myth', 1);
@@ -4766,23 +4776,21 @@ function badgeSync(quiet) {
 // taille de police qui fait tenir un texte dans la largeur utile de l'écusson
 const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
 function badgeHTML(b, size, got, note) {
-  const sh = Math.round(size * 1.12); let inner = '', name = b.tier === 'ville' ? '1re sortie' : b.fam === 'defi' ? b.name : B_TIER[b.tier], sub = note || '';
+  const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
   if (b.tier === 'ville') {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
     inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
-    if (fs < 11) name = b.name;
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
   else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
-  if (b.fam === 'defi' && b.val != null) { name = 'Dénivelé'; }
-  const label = `${b.fam === 'ville' ? 'Trophée ' + b.name : b.fam === 'defi' ? 'Défi ' + b.name : 'Trophée ' + b.name + ', palier ' + B_TIER[b.tier]}${got ? '' : ', à débloquer'}`;
+  const label = `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
   return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
-// après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long passe sous l'écusson
+// après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long est retiré de l'écusson (il est déjà dessous)
 function bFitDom(root) {
   root.querySelectorAll('.bdg-s .v, .bdg-s .u').forEach(el => {
     const max = el.parentNode.clientWidth * (el.classList.contains('nm') ? 0.68 : 0.64); if (!max) return; let fs = parseFloat(el.style.fontSize) || 12;
     while (el.getBoundingClientRect().width > max && fs > 11) { fs--; el.style.fontSize = fs + 'px'; }
-    if (el.getBoundingClientRect().width > max && el.classList.contains('nm')) { const c = el.closest('.bdg').querySelector('.bdg-c b'); if (c) c.textContent = el.textContent; el.remove(); }
+    if (el.getBoundingClientRect().width > max && el.classList.contains('nm')) el.remove();
   });
 }
 // prochain palier non obtenu de la même famille (pas pour les villes ni les défis à une étape)
@@ -4794,14 +4802,15 @@ function renderBadges() {
   $('#bdg-n').textContent = got.length; $('#bdg-of').textContent = `trophée${got.length > 1 ? 's' : ''} sur ${BADGES.length}`;
   const near = off.filter(b => b.goal > 1).map(b => ({ b, v: bVal(b, st) })).sort((x, y) => y.v / y.b.goal - x.v / x.b.goal).slice(0, 3);
   $('#bdg-near-w').hidden = !near.length;
-  $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.fam === 'n' || b.fam === 'reg' ? b.name : b.fam === 'expl' ? b.goal + ' quartiers' : b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
+  $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
   $('#bdg-got-w').hidden = !got.length; $('#bdg-got').innerHTML = got.map(b => badgeHTML(b, 72, true)).join('');
-  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') : '')).join('');
+  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') + (b.key === 'km' || b.key === 'best' ? ' km' : b.key === 'up' ? ' m' : '') : '')).join('');
   $('#bdg-off-w').hidden = !off.length; bFitDom($('#mine-badges'));
 }
 function mineView(v, silent) {
   S.mineView = v; document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.setAttribute('aria-pressed', x.dataset.mv === v));
   $('#mine-list').hidden = v !== 'runs'; $('#mine-badges').hidden = v !== 'badges';
+  if (v !== 'badges') S.badgeBack = false; $('#bdg-back').hidden = !S.badgeBack;
   if (v === 'badges') { renderBadges(); if (!silent) track('badges-vue', 'Trophées ouverts'); }
 }
 document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.onclick = () => mineView(x.dataset.mv));
@@ -4814,7 +4823,9 @@ function badgeAnnounce(fresh) {
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
   $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : fresh.map(b => b.name).join(' · ');
 }
-$('#shx-badge-go').onclick = () => { S.mineView = 'badges'; SH.fresh = false; shClose(); setTab('mine'); };
+// « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite
+$('#shx-badge-go').onclick = () => { S.mineView = 'badges'; S.badgeBack = true; $('#shx').hidden = true; sbSync(); setTab('mine'); };
+$('#bdg-back').onclick = () => { S.badgeBack = false; $('#bdg-back').hidden = true; $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync(); };
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
 // ---------- mesure d'audience (site en production seulement) : GoatCounter, anonyme, sans cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)

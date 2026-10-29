@@ -228,7 +228,7 @@ $('#via-track').onclick = () => {
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
 // ---------- parcours mythiques ----------
 function setTab(t) {
-  const prev = S.tab;
+  const prev = S.tab; if (t !== 'mine') S.badgeBack = false;
   S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
   const tools = document.querySelector('.tools'); tools.hidden = t !== 'gen';
   $('#view-mine').hidden = t !== 'mine';

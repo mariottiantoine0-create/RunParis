@@ -138,15 +138,14 @@ const B_ICO = {
   longue: '<path d="M5 21V4h12l-2.5 4L17 12H5"/>',
 };
 const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
-const B_TIER = { depart: 'Départ', bronze: 'Bronze', argent: 'Argent', or: 'Or', special: 'Spécial' };
 // fam, icône, valeur et unité écrites dans l'écusson (null : icône seule ou nom de ville), palier, nom, compteur, objectif
 const BADGES = (() => {
   const L = [], add = (id, fam, ico, val, unit, tier, name, key, goal) => L.push({ id, fam, ico, val, unit, tier, name, key, goal });
-  [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km', 'km', n));
+  [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km au total', 'km', n));
   // sorties longues : la plus longue sortie d'un coup (demande d'Antoine le 29/10)
   [[5, '5', 'depart', '5 km d’un coup'], [10, '10', 'bronze', '10 km d’un coup'], [21.1, '21,1', 'argent', 'Semi-marathon'], [42.2, '42,2', 'or', 'Marathon']].forEach(([n, v, t, nm]) => add('long' + Math.round(n), 'long', 'longue', v, 'km', t, nm, 'best', n));
   [[1, 'depart'], [10, 'bronze'], [25, 'argent'], [50, 'or']].forEach(([n, t]) => add('n' + n, 'n', 'sorties', n === 1 ? '1re' : String(n), n === 1 ? 'sortie' : 'sorties', t, n === 1 ? '1re sortie' : n + ' sorties', 'n', n));
-  [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines', 'streak', n));
+  [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines d’affilée', 'streak', n));
   [[5, 'bronze'], [10, 'argent'], [20, 'or']].forEach(([n, t]) => add('zone' + n, 'expl', 'exploration', String(n), 'quartiers', t, n + ' quartiers', 'zones', n)); // arrondissements à Paris et à Lyon, quartiers ailleurs : « quartiers » partout (choix d'Antoine)
   for (const k in CITIES) add('ville-' + k, 'ville', 'ville', null, null, 'ville', CITIES[k].name, 'city:' + k, 1);
   add('mythique', 'defi', 'mythique', null, null, 'special', 'Parcours mythique', 'myth', 1);
@@ -201,23 +200,21 @@ function badgeSync(quiet) {
 // taille de police qui fait tenir un texte dans la largeur utile de l'écusson
 const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
 function badgeHTML(b, size, got, note) {
-  const sh = Math.round(size * 1.12); let inner = '', name = b.tier === 'ville' ? '1re sortie' : b.fam === 'defi' ? b.name : B_TIER[b.tier], sub = note || '';
+  const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
   if (b.tier === 'ville') {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
     inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
-    if (fs < 11) name = b.name;
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
   else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
-  if (b.fam === 'defi' && b.val != null) { name = 'Dénivelé'; }
-  const label = `${b.fam === 'ville' ? 'Trophée ' + b.name : b.fam === 'defi' ? 'Défi ' + b.name : 'Trophée ' + b.name + ', palier ' + B_TIER[b.tier]}${got ? '' : ', à débloquer'}`;
+  const label = `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
   return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
-// après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long passe sous l'écusson
+// après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long est retiré de l'écusson (il est déjà dessous)
 function bFitDom(root) {
   root.querySelectorAll('.bdg-s .v, .bdg-s .u').forEach(el => {
     const max = el.parentNode.clientWidth * (el.classList.contains('nm') ? 0.68 : 0.64); if (!max) return; let fs = parseFloat(el.style.fontSize) || 12;
     while (el.getBoundingClientRect().width > max && fs > 11) { fs--; el.style.fontSize = fs + 'px'; }
-    if (el.getBoundingClientRect().width > max && el.classList.contains('nm')) { const c = el.closest('.bdg').querySelector('.bdg-c b'); if (c) c.textContent = el.textContent; el.remove(); }
+    if (el.getBoundingClientRect().width > max && el.classList.contains('nm')) el.remove();
   });
 }
 // prochain palier non obtenu de la même famille (pas pour les villes ni les défis à une étape)
@@ -229,14 +226,15 @@ function renderBadges() {
   $('#bdg-n').textContent = got.length; $('#bdg-of').textContent = `trophée${got.length > 1 ? 's' : ''} sur ${BADGES.length}`;
   const near = off.filter(b => b.goal > 1).map(b => ({ b, v: bVal(b, st) })).sort((x, y) => y.v / y.b.goal - x.v / x.b.goal).slice(0, 3);
   $('#bdg-near-w').hidden = !near.length;
-  $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.fam === 'n' || b.fam === 'reg' ? b.name : b.fam === 'expl' ? b.goal + ' quartiers' : b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
+  $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
   $('#bdg-got-w').hidden = !got.length; $('#bdg-got').innerHTML = got.map(b => badgeHTML(b, 72, true)).join('');
-  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') : '')).join('');
+  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') + (b.key === 'km' || b.key === 'best' ? ' km' : b.key === 'up' ? ' m' : '') : '')).join('');
   $('#bdg-off-w').hidden = !off.length; bFitDom($('#mine-badges'));
 }
 function mineView(v, silent) {
   S.mineView = v; document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.setAttribute('aria-pressed', x.dataset.mv === v));
   $('#mine-list').hidden = v !== 'runs'; $('#mine-badges').hidden = v !== 'badges';
+  if (v !== 'badges') S.badgeBack = false; $('#bdg-back').hidden = !S.badgeBack;
   if (v === 'badges') { renderBadges(); if (!silent) track('badges-vue', 'Trophées ouverts'); }
 }
 document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.onclick = () => mineView(x.dataset.mv));
@@ -249,5 +247,7 @@ function badgeAnnounce(fresh) {
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
   $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : fresh.map(b => b.name).join(' · ');
 }
-$('#shx-badge-go').onclick = () => { S.mineView = 'badges'; SH.fresh = false; shClose(); setTab('mine'); };
+// « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite
+$('#shx-badge-go').onclick = () => { S.mineView = 'badges'; S.badgeBack = true; $('#shx').hidden = true; sbSync(); setTab('mine'); };
+$('#bdg-back').onclick = () => { S.badgeBack = false; $('#bdg-back').hidden = true; $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync(); };
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };

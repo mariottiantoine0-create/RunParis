@@ -38,7 +38,6 @@ function shClose() {
 function shOut() {
   SH.secs = parseClock($('#shx-time').value) || SH.data.km * pace();
   $('#shx-bravo').hidden = true; $('#shx-out').hidden = false;
-  document.querySelector('#shx-out [data-bg="photo"]').disabled = !SH.photo;
   shSync(); shDraw();
 }
 function shSync() { document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.setAttribute('aria-pressed', b.dataset.bg === SH.bg)); document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ly === SH.ly)); }
@@ -123,6 +122,14 @@ async function shShare() {
 }
 // retour dans l'app après un partage vers une autre app : la feuille de partage a été fermée côté iOS (SceneDelegate)
 window.prShared = () => toast('Image partagée', 2500);
+// capture d'écran d'une sortie (prévenu par iOS, SceneDelegate) : on propose l'image à partager, faite pour ça
+window.prShot = () => {
+  const out = !$('#shx').hidden && !$('#shx-out').hidden, bravo = !$('#shx').hidden && !$('#shx-bravo').hidden, det = S.tab === 'mine' && !$('#mine-detail').hidden && !$('#md-row').hidden;
+  if (!out && !bravo && !det) return; track('capture', 'Capture d’écran d’une sortie');
+  const t = $('#toast'); t.innerHTML = ''; t.append('Partager ta sortie ?'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Partager';
+  u.onclick = () => { t.hidden = true; if (out) shShare(); else if (bravo) shOut(); else $('#md-img').click(); };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 6000);
+};
 async function shSave(b) { b = b || await shBlob(); if (NATIVE) { await nativeShareFile(`runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, b); track('image', 'Image enregistrée'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); track('image', 'Image enregistrée'); }
 $('#done').onclick = shOpen;
 $('#copy-m').onclick = () => $('#copy').click();
@@ -130,7 +137,8 @@ $('#shx-x1').onclick = shClose; $('#shx-x2').onclick = shClose; $('#shx-back').o
 $('#shx-cam').onchange = e => shPhoto(e.target.files[0]); $('#shx-gal').onchange = e => shPhoto(e.target.files[0]);
 $('#shx-time').addEventListener('change', () => { const v = parseClock($('#shx-time').value); if (v && SH.entryId) minePatch(SH.entryId, { secs: Math.round(v) }); });
 $('#shx-nophoto').onclick = () => { SH.photo = null; SH.bg = 'map'; shOut(); };
-document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.disabled) return; SH.bg = b.dataset.bg; shSync(); shDraw(); });
+// « Photo » sans photo choisie : on ouvre la galerie (ajouter une photo après coup, depuis « Mes parcours » aussi)
+document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => { if (b.dataset.bg === 'photo' && !SH.photo) return $('#shx-gal').click(); SH.bg = b.dataset.bg; shSync(); shDraw(); });
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
 $('#shx-share').onclick = shShare; $('#shx-save').onclick = () => shSave();
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#shx').hidden) shClose(); });

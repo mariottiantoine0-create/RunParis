@@ -720,6 +720,8 @@ button,a,label{-webkit-tap-highlight-color:transparent}
 /* badges (RP-85) : écussons, application seulement */
 .mine-seg{margin:0 0 16px}
 .mine-seg[hidden]{display:none}
+.bdg-back{margin:0 0 12px;padding:0}
+.bdg-back[hidden]{display:none}
 .bdg-count{display:flex;align-items:baseline;gap:8px;margin:0 0 16px}
 .bdg-count b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
 .bdg-count span{font-size:15px;color:var(--muted)}
@@ -958,8 +960,9 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="pbody" id="view-mine" hidden>
       <div class="seg mine-seg" id="mine-seg" role="group" aria-label="Afficher"><button type="button" data-mv="runs" aria-pressed="true">Sorties</button><button type="button" data-mv="badges" aria-pressed="false">Trophées</button></div>
       <div id="mine-badges" hidden>
+        <button type="button" class="textbtn mine-back bdg-back" id="bdg-back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Revenir à ma sortie</button>
         <div class="bdg-count"><b id="bdg-n">0</b><span id="bdg-of">trophée sur 24</span></div>
-        <div id="bdg-near-w"><div class="lbl">Les plus proches</div><div id="bdg-near"></div></div>
+        <div id="bdg-near-w"><div class="lbl">Prochains trophées</div><div id="bdg-near"></div></div>
         <div id="bdg-got-w" hidden><div class="lbl bdg-h">Obtenus</div><div class="bdg-grid" id="bdg-got"></div></div>
         <div id="bdg-off-w"><div class="lbl bdg-h">À débloquer</div><div class="bdg-grid" id="bdg-off"></div></div>
         <p class="bdg-foot">Tes trophées restent sur cet appareil, comme tes sorties.</p>
