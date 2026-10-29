@@ -18,7 +18,7 @@ app = meta + (rd('app_head.html') + app_js).replace('/*ENGINE*/', rd('engine.js'
 # version des données : change dès qu'un fichier de données change, pour que le navigateur recharge la nouvelle version
 h = hashlib.sha1()
 DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt', 'crowd.txt', 'tracks.json']
-CITY_DIRS = ['', 'lyon/', 'bordeaux/', 'nantes/', 'toulouse/', 'dijon/']  # Paris à la racine, puis une ville par dossier (D-97)
+CITY_DIRS = ['', 'lyon/', 'bordeaux/', 'nantes/', 'toulouse/', 'dijon/', 'lille/']  # Paris à la racine, puis une ville par dossier (D-97)
 for d in CITY_DIRS:
     for f in DATA:
         if (root / 'site' / d / f).exists(): h.update((root / 'site' / d / f).read_bytes())
@@ -55,8 +55,8 @@ def myth_cards(races):
 
 # --- villes et chiffres, calculés depuis les données : rien à réécrire à la main quand une ville arrive (D-97) ---
 import struct
-CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon'), ('bordeaux/', 'Bordeaux', 'bordeaux'), ('nantes/', 'Nantes', 'nantes'), ('toulouse/', 'Toulouse', 'toulouse'), ('dijon/', 'Dijon', 'dijon')]  # même ordre que CITY_DIRS
-CITY_SOON = ['Lille']
+CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon'), ('bordeaux/', 'Bordeaux', 'bordeaux'), ('nantes/', 'Nantes', 'nantes'), ('toulouse/', 'Toulouse', 'toulouse'), ('dijon/', 'Dijon', 'dijon'), ('lille/', 'Lille', 'lille')]  # même ordre que CITY_DIRS
+CITY_SOON = []
 # villes à télécharger dans l'application (onboarding) : fichiers, tailles et empreinte de chaque ville, lus par l'app (site/villes.json)
 VJ = {'v': 1, 'cities': {}}
 for d, name, cid in CITY_NAMES:

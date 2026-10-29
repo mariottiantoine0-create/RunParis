@@ -2243,9 +2243,11 @@ const CITIES = {
   toulouse: { name: 'Toulouse', dir: 'toulouse/', sub: 'et 17 communes voisines', ll: [43.6045, 1.444], bb: [43.5, 43.715, 1.275, 1.578], end: ['Jardin des Plantes', 43.5937, 1.4521],
     hill: 'Toulouse va de 130 m (Garonne) à 200 m ; les coteaux de Pech-David et de Vieille-Toulouse montent à 280 m.', zones: '20 quartiers et 17 communes', avoidEx: 'Un lieu : Capitole, Saint-Cyprien, un marché…', races: 'Les grands parcours de course de Toulouse, pour s’entraîner dessus en entier ou en partie.', od: '' },
   dijon: { name: 'Dijon', dir: 'dijon/', sub: 'et 15 communes voisines', ll: [47.322, 5.0415], bb: [47.25, 47.41, 4.89, 5.18], end: ['Parc de la Colombière', 47.3045, 5.0485],
-    hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Le grand parcours de course de Dijon, pour s’entraîner dessus en entier ou en partie.', od: '' }
+    hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Le grand parcours de course de Dijon, pour s’entraîner dessus en entier ou en partie.', od: '' },
+  lille: { name: 'Lille', dir: 'lille/', sub: 'et 18 communes voisines', ll: [50.6368, 3.0636], bb: [50.565, 50.715, 2.885, 3.215], end: ['Parc de la Citadelle', 50.6395, 3.047],
+    hill: 'Lille est très plate : de 15 m (Deûle) à 60 m au plus haut des communes voisines.', zones: '12 quartiers et 18 communes', avoidEx: 'Un lieu : Grand’Place, Wazemmes, un marché…', races: 'Les parcours mythiques de Lille (marathon, semi, 10 km) arrivent bientôt.', od: '' }
 };
-const CITY_SOON = ['Lille'];
+const CITY_SOON = [];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
 const CITY_K = 'runparis-city';
 const CITY_STORED = (() => { try { const v = localStorage.getItem(CITY_K); return CITIES[v] ? v : null; } catch (e) { return null; } })();
@@ -2257,7 +2259,7 @@ document.documentElement.dataset.city = CITY;
 function setCity(k, extra, force) { if (!CITIES[k]) return; if ((NATIVE || ONB_DEMO) && !force && !dlState()[k]) { cityAsk(k, extra); return; } try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
   const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
   if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
-const DV = '?v=8f4f41c1';
+const DV = '?v=5592d51a';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
 $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
