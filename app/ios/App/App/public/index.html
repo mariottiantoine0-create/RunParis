@@ -5090,7 +5090,7 @@ async function dlCheck() {
 }
 function mvRender() {
   const b = $('#mv'); if (!b) return; const st = dlState(), i = DLX.idx, have = Object.keys(CITIES).filter(k => st[k]), miss = Object.keys(CITIES).filter(k => !st[k]);
-  b.innerHTML = `<p class="mv-p">Les rues de ces villes sont sur ton téléphone : l’app marche sans réseau.${have.length > 1 ? ' Glisse une ville vers la gauche pour la supprimer.' : ''}</p><div class="mv-list" id="mv-have"></div>` +
+  b.innerHTML = `<p class="mv-p">Les rues de ces villes sont sur ton téléphone : l’app marche sans réseau.${have.length > 1 ? ' Glisse une ville vers la gauche pour la supprimer (pas celle qui est affichée).' : ''}</p><div class="mv-list" id="mv-have"></div>` +
     (miss.length || CITY_SOON.length ? '<div class="lbl mv-h">Ajouter une ville</div><div class="mv-list" id="mv-miss"></div>' : '');
   for (const k of have) {
     const up = i && i.cities[k] && i.cities[k].h !== st[k].h, busy = DLX.busy[k];
@@ -5102,7 +5102,7 @@ function mvRender() {
     if (busy != null) s.innerHTML = `<span class="mv-pc">${Math.round(busy * 100)} %</span>`;
     else if (up) { const u = document.createElement('button'); u.type = 'button'; u.className = 'btn ghost mv-up'; u.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Mettre à jour'; u.setAttribute('aria-label', 'Mettre à jour ' + CITIES[k].name); u.onclick = () => mvGet(k, true); s.appendChild(u); }
     else s.innerHTML = '<span class="mv-ok">À jour</span>';
-    if (have.length > 1) mineSwipe(row, row.firstChild, k, mvDel); else row.querySelector('.mine-del').remove();
+    if (have.length > 1 && k !== CITY) mineSwipe(row, row.firstChild, k, mvDel); else row.querySelector('.mine-del').remove();
     $('#mv-have').appendChild(row);
   }
   for (const k of miss) {
@@ -5127,16 +5127,18 @@ async function mvGet(k, update) {
     else toast(update ? `${CITIES[k].name} à jour.` : `${CITIES[k].name} est sur ton téléphone.`);
   } catch (e) { delete DLX.busy[k]; mvRender(); track('ville-echec', 'Téléchargement de ville raté'); toast('Téléchargement interrompu : vérifie ta connexion et réessaie.', 3500); }
 }
-// supprimer une ville : « Annuler » pendant 5 s, puis les fichiers sont effacés ; la dernière ville ne peut pas l'être
+// supprimer une ville : « Annuler » pendant 5 s, puis les fichiers sont effacés ; ni la dernière ville, ni la ville affichée (retour d'Antoine le 29/10)
+let mvT = null;
 function mvDel(k) {
-  const st = dlState(); if (Object.keys(st).length < 2) return toast('Garde au moins une ville.');
+  const st = dlState();
+  if (Object.keys(st).length < 2) { toast('Garde au moins une ville.'); mvRender(); return; }
+  if (k === CITY) { toast(`${CITIES[k].name} est affichée : passe sur une autre ville pour la supprimer.`, 3500); mvRender(); return; }
   const gone = st[k]; delete st[k]; dlSave(st); mvRender(); track('ville-supprimee-' + k, 'Ville supprimée ' + CITIES[k].name);
   const t = $('#toast'); t.innerHTML = ''; t.append(`${CITIES[k].name} supprimée`); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
-  let undone = false; u.onclick = () => { undone = true; const s = dlState(); s[k] = gone; dlSave(s); mvRender(); t.hidden = true; };
-  t.appendChild(u); t.hidden = false; clearTimeout(tt);
-  tt = setTimeout(() => { t.hidden = true; if (undone) return;
-    if (NATIVE) NP.fs.rmdir({ path: 'villes/' + k, directory: 'DATA', recursive: true }).catch(() => {});
-    if (k === CITY) setCity(Object.keys(dlState())[0], null, true); }, 5000);
+  let undone = false; u.onclick = () => { undone = true; clearTimeout(mvT); const s = dlState(); s[k] = gone; dlSave(s); mvRender(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
+  // minuterie à part : un autre message ne doit pas annuler l'effacement
+  clearTimeout(mvT); mvT = setTimeout(() => { if (!undone && NATIVE && !dlState()[k]) NP.fs.rmdir({ path: 'villes/' + k, directory: 'DATA', recursive: true }).catch(() => {}); }, 5000);
 }
 // passer sur une ville absente du téléphone : on propose de la télécharger d'abord
 async function cityAsk(k, extra) {
