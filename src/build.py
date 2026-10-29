@@ -82,13 +82,13 @@ t = rd('landing.html')
 rep = {'VB': '640 118 640 400', 'GREEN': h['green'], 'WATER': h['water'], 'MINOR': h['minor'], 'C1': h['c1'], 'C2': h['c2'], 'C3': h['c3'],
        'ROUTE': h['route'], 'RLEN': '1000', 'KM': '', 'SX': str(h['start'][0]), 'SY': str(h['start'][1]), 'REALM': str(round(h['len'])), 'MYTH': myth_cards(ALL_RACES), **STATS}
 for k, v in rep.items(): t = t.replace('{{%s}}' % k, v)
-t = t.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
+t = t.replace("// les bornes km apparaissent", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// les bornes km apparaissent")
 assert '{{' not in t
 (root / 'site' / 'index.html').write_text(t, encoding='utf-8')
-# ancienne accueil gardée comme page explicative (D-71)
+# ancien accueil gardé comme page explicative (D-71)
 a = rd('a-propos.html')
 for k, v in rep.items(): a = a.replace('{{%s}}' % k, v)
-a = a.replace("// km markers appear", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// km markers appear")
+a = a.replace("// les bornes km apparaissent", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// les bornes km apparaissent")
 assert '{{' not in a
 (root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
 import sys; sys.path.insert(0, str(root / 'src')); from pages import build_pages; build_pages(a, root)  # confidentialité et aide (D-112)

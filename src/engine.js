@@ -1,4 +1,4 @@
-// RunParis routing engine — works in browser and node
+// Moteur de parcours Perfect Run : tourne dans le navigateur et dans Node
 const Engine = (() => {
   let M, G = {};
   const DEG = Math.PI / 180;
@@ -25,13 +25,13 @@ const Engine = (() => {
     for (let i = 0; i < nG; i++) { GX[i] = (qlon(gx[i]) - lo0) * kx; GY[i] = (la1 - qlat(gy[i])) * ky; }
     const LEN = new Float32Array(nE), C = new Uint8Array(nE), P = new Uint8Array(nE), S = new Uint8Array(nE);
     for (let e = 0; e < nE; e++) { LEN[e] = el[e] / 2; C[e] = ef[e] & 3; P[e] = (ef[e] >> 2) & 3; S[e] = ef[e] >> 4; }
-    // CSR adjacency
+    // voisinage au format CSR
     const deg = new Uint32Array(nN + 1);
     for (let e = 0; e < nE; e++) { deg[ea[e] + 1]++; deg[eb[e] + 1]++; }
     for (let i = 0; i < nN; i++) deg[i + 1] += deg[i];
     const adjE = new Uint32Array(2 * nE), fill = deg.slice(0, nN);
     for (let e = 0; e < nE; e++) { adjE[fill[ea[e]]++] = e; adjE[fill[eb[e]]++] = e; }
-    // spatial grid (200 m)
+    // grille spatiale (200 m)
     const CELL = 200; let maxX = 0, maxY = 0;
     for (let i = 0; i < nN; i++) { if (NX[i] > maxX) maxX = NX[i]; if (NY[i] > maxY) maxY = NY[i]; }
     const GW = Math.ceil(maxX / CELL) + 1, GH = Math.ceil(maxY / CELL) + 1;
@@ -41,7 +41,7 @@ const Engine = (() => {
     for (let i = 0; i < GW * GH; i++) cellCount[i + 1] += cellCount[i];
     const cellNodes = new Uint32Array(nN), cf = cellCount.slice(0, GW * GH);
     for (let i = 0; i < nN; i++) cellNodes[cf[cellOf(i)]++] = i;
-    // signal cluster centroids
+    // centre de chaque carrefour à feux
     const sc = new Map();
     for (let i = 0; i < nN; i++) if (nc[i]) { const k = nc[i]; const a = sc.get(k) || [0, 0, 0]; a[0] += NX[i]; a[1] += NY[i]; a[2]++; sc.set(k, a); }
     const SIG = [...sc.entries()].map(([k, a]) => ({ id: k, x: a[0] / a[2], y: a[1] / a[2] }));
@@ -55,7 +55,7 @@ const Engine = (() => {
   const toXY = (lat, lon) => [(lon - G.lo0) * G.kx, (G.la1 - lat) * G.ky];
   const toLL = (x, y) => [G.la1 - y / G.ky, G.lo0 + x / G.kx];
 
-  // ---------- constraints ----------
+  // ---------- contraintes ----------
   function segDist(px, py, ax, ay, bx, by) {
     const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
     let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
@@ -72,7 +72,7 @@ const Engine = (() => {
     blocked.fill(0); nodeOk.fill(1);
     if (G.PRIV) for (let e = 0; e < nE; e++) if (G.PRIV[e]) blocked[e] = 1; // voies privées, impasses fermées par une barrière (OSM)
     if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
-    if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parks closed at the time of the run
+    if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parcs fermés à l'heure de la sortie
     for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
     for (let e = 0; e < nE; e++) {
       for (let k = 0; k < 4; k++) { const z = ez[4 * e + k]; if (z && exclQ.has(z)) { blocked[e] = 1; break; } }
@@ -91,12 +91,12 @@ const Engine = (() => {
       }
       for (let i = 0; i < nN; i++) if (Math.hypot(G.NX[i] - px, G.NY[i] - py) < r) nodeOk[i] = 0;
     }
-    // a node is usable only if it keeps an open edge
+    // un nœud n'est utilisable que s'il garde un tronçon ouvert
     for (let i = 0; i < nN; i++) if (nodeOk[i]) {
       let open = false; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) if (!blocked[G.adjE[k]]) { open = true; break; }
       if (!open) nodeOk[i] = 0;
     }
-    // drop small islands cut off by exclusions (e.g. a square whose exits are all in an avoided zone)
+    // retirer les petits îlots coupés par les exclusions (ex. une place dont toutes les sorties sont dans une zone évitée)
     const comp = new Int32Array(nN).fill(-1), stack = [];
     for (let i = 0; i < nN; i++) {
       if (!nodeOk[i] || comp[i] >= 0) continue;
@@ -141,9 +141,9 @@ const Engine = (() => {
 
   // ---------- A* ----------
   let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 250, reuse: 4, green: 0, turn: 150, turnRun: 100, turnFar: 0.3 }; // turn : coût d'un virage avec changement de rue (parcours plus simples, retours du 12/10)
-  // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  // part de vert par tronçon (0 à 1) : parcs + rues bordées d'arbres (OSM natural=tree)
   function setPrivate(bits) { G.PRIV = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.PRIV[e] = (bits[e >> 3] >> (e & 7)) & 1; }
-  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
+  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // tronçons non éclairés (OSM lit=no, chemins sans éclairage)
   function setCrowd(u8) { G.CR = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.CR[e] = (u8[e >> 2] >> (2 * (e & 3))) & 3; } // rues bondées, niveau 0 à 3 (D-109)
   const CROWD = [0, 0.25, 0.6, 1.2];
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
@@ -155,7 +155,7 @@ const Engine = (() => {
     let m = 1 + W.road[G.C[e]];
     const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
     if (W.green && G.GR) m -= W.green * G.GR[e];
-    if (W.dark && G.DK && G.DK[e]) m += W.dark; // at night, keep to lit streets
+    if (W.dark && G.DK && G.DK[e]) m += W.dark; // de nuit, rester sur les rues éclairées
     if (W.crowd && G.CR && G.CR[e]) m += W.crowd * CROWD[G.CR[e]]; // commerces, terrasses, sites touristiques, selon l'heure
     let cost = L * m;
     const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
@@ -168,7 +168,7 @@ const Engine = (() => {
     return cost;
   }
 
-  // binary heap
+  // tas binaire
   let hN = new Uint32Array(1 << 16), hK = new Float64Array(1 << 16), hS = 0;
   function hpush(n, k) {
     if (hS >= hN.length) { const a = new Uint32Array(hN.length * 2); a.set(hN); hN = a; const b = new Float64Array(hK.length * 2); b.set(hK); hK = b; }
@@ -183,7 +183,7 @@ const Engine = (() => {
   function astar(s, t) {
     const { dist, stamp, prev, done, NX, NY, deg, adjE, ea, eb } = G;
     const cur = ++G.cur; hS = 0;
-    const hk = 0.3; // admissible lower bound factor
+    const hk = 0.3; // facteur de la borne inférieure admissible
     const tx = NX[t], ty = NY[t];
     stamp[s] = cur; dist[s] = 0; prev[s] = -1; hpush(s, 0);
     while (hS) {
@@ -244,7 +244,7 @@ const Engine = (() => {
     return { green: len ? gl / len : 0, lit: G.DK && len ? 1 - dl / len : null, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
   }
 
-  // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
+  // D+ comme le donnerait une montre GPS : rééchantillonnage à 10 m, moyenne glissante sur 60 m, hystérésis de 1 m
   function smoothClimb(prof, win = 60, hyst = 1) {
     if (prof.length < 2) return 0;
     const L = prof[prof.length - 1][0], pts = []; let j = 0;
@@ -264,13 +264,13 @@ const Engine = (() => {
 
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-  // ---------- drinking water: longest stretch between street nodes that sit next to a fountain ----------
+  // ---------- points d'eau : plus long passage entre deux carrefours proches d'une fontaine ----------
   function waterGap(st, set) {
     let acc = 0, prev = 0, gap = 0;
     for (const [e, fromA] of st.edges) { acc += G.LEN[e]; const v = fromA ? G.eb[e] : G.ea[e]; if (set.has(v)) { gap = Math.max(gap, acc - prev); prev = acc; } }
     return Math.max(gap, acc - prev);
   }
-  function waterSnap(x, y, opt, R = 550) { // fountain node closest to a planned waypoint
+  function waterSnap(x, y, opt, R = 550) { // carrefour à fontaine le plus proche d'un point de passage prévu
     let b = -1, bd = R; for (const q of opt.water.pts) { const d = Math.abs(q.x - x) + Math.abs(q.y - y); if (d < bd * 1.4 && Math.hypot(q.x - x, q.y - y) < bd) { bd = Math.hypot(q.x - x, q.y - y); b = q.n; } }
     return b;
   }
@@ -310,7 +310,7 @@ const Engine = (() => {
     // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
     out = out.filter(b => b.out || Math.abs(b.a) <= 150);
     const ex = out.find(b => b.out); if (!ex) return null;
-    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (retour testeur 26/10)
+    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (D-114)
     if (ex.name) out = out.filter(b => b.out || b.name !== ex.name || Math.abs(b.a - ex.a) >= 40);
     // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
     const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
@@ -342,7 +342,7 @@ const Engine = (() => {
     s += st.overlap * (opt.allowRepeat ? 0 : 120);
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
-    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
+    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // de nuit, les passages sombres pèsent dans le choix
     if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * (opt.simple ? 2.5 : 0.05); } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
@@ -350,7 +350,7 @@ const Engine = (() => {
 
   const tick = () => new Promise(r => setTimeout(r, 0));
 
-  // ---------- alternatives: keep up to 3 good and clearly different routes ----------
+  // ---------- propositions : garder jusqu'à 3 bons parcours bien différents ----------
   function edgeSet(st) { const m = new Map(); for (const [e] of st.edges) m.set(e, G.LEN[e]); return m; }
   function similarity(a, b) {
     const A = a._set || (a._set = edgeSet(a)), B = b._set || (b._set = edgeSet(b));
@@ -387,7 +387,7 @@ const Engine = (() => {
     }
     return cb;
   }
-  // straight out to a point and back (only when repeating streets is allowed)
+  // aller tout droit jusqu'à un point et revenir (seulement si l'on accepte de repasser par les mêmes rues)
   function candidateOutBack(start, target, opt, theta) {
     const sx = G.NX[start], sy = G.NY[start];
     let D = target / 2 / 1.25, cb = null;
@@ -414,7 +414,7 @@ const Engine = (() => {
     return best;
   }
 
-  // « Lignes droites » (retour du 26/10, boucles façon Strava) : des blocs de 3 ou 4 grands côtés.
+  // « Lignes droites » (D-117, boucles façon Strava) : des blocs de 3 ou 4 grands côtés.
   // Les coins sont des carrefours de grands axes (deux rues nommées de classe ≥ 2 qui se croisent).
   let MAJ = null;
   function majors() {
@@ -453,10 +453,10 @@ const Engine = (() => {
     const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
     const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
     for (let c = 0; c < NC + NB; c++) {
-      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
+      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // directions réparties pour varier
       let st;
       if (c < NC) {
-        let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // more waypoints = more water stops
+        let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // plus de points de passage = plus de points d'eau
         if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
         st = candidateLoop(start, target, opt, rng, theta, nW);
       } else {
@@ -501,7 +501,7 @@ const Engine = (() => {
     return pickAlts(cands, target) || (bst.alts = [bst], bst);
   }
 
-  // A → free arrival: one-way routes of the requested length in different directions
+  // départ A, arrivée n'importe où : allers simples de la longueur demandée dans des directions différentes
   async function oneWay(A, target, opt, onProgress) {
     const rng = mulberry(opt.seed || 1);
     const NC = opt.candidates || (opt.endNodes ? 16 : 12), cands = [], endSet = opt.endNodes ? new Set(opt.endNodes.map(q => q.n)) : null;
@@ -510,7 +510,7 @@ const Engine = (() => {
       let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
       if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
       let D = target / 1.3, cb = null;
-      const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // Paris is ~12 km wide: long one-ways zigzag through waypoints
+      const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // une ville ne fait que quelques km de large (Paris ~12 km) : les longs allers simples zigzaguent entre des points de passage
       const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
       for (let it = 0; it < 4; it++) {
         const pts = [A]; let x = ax, y = ay, th = theta;
@@ -519,7 +519,7 @@ const Engine = (() => {
           x = Math.max(300, Math.min(G.maxX - 300, x + step * Math.cos(th))); y = Math.max(300, Math.min(G.maxY - 300, y + step * Math.sin(th)));
           let n = nearest(x, y, opt.hill && k === legs - 1 ? { hillRadius: 400 } : {});
           if (opt.water && (k < legs - 1 || !opt.endNodes)) { const ws = waterSnap(x, y, opt); if (ws >= 0) n = ws; }
-          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finish at a metro / RER station near the planned end
+          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finir à une station de métro ou de RER près de l'arrivée prévue
             let bd = 1e9, bn = -1; for (const q of opt.endNodes) { const dd = Math.hypot(q.x - x, q.y - y); if (dd < bd) { bd = dd; bn = q.n; } }
             if (bn >= 0 && bd < 1500) n = bn;
           }
@@ -542,9 +542,9 @@ const Engine = (() => {
   }
 
 
-  // ---------- through places (via points) ----------
+  // ---------- passer par des lieux ----------
   function orderVias(start, vias, end) {
-    // brute-force order (<= 6 vias) on straight-line distance
+    // ordre de passage cherché par force brute (6 lieux au plus), à vol d'oiseau
     if (vias.length < 2) return vias.slice();
     const d = (a, b) => Math.hypot(G.NX[a] - G.NX[b], G.NY[a] - G.NY[b]);
     let best = null, bl = Infinity;
@@ -552,7 +552,7 @@ const Engine = (() => {
       for (let i = l; i < arr.length; i++) { [arr[l], arr[i]] = [arr[i], arr[l]]; perm(arr, l + 1); [arr[l], arr[i]] = [arr[i], arr[l]]; } };
     perm(vias.slice(), 0); return best;
   }
-  // pts: ordered nodes; end: node or 'free'. Adds one detour point to reach the target length.
+  // pts : nœuds dans l'ordre ; end : nœud ou 'free'. Ajoute un point de détour pour atteindre la distance voulue.
   async function through(pts, end, target, opt, onProgress) {
     const rng = mulberry(opt.seed || 1);
     const free = end === 'free', full = free ? pts.slice() : pts.concat([end]);
@@ -563,7 +563,7 @@ const Engine = (() => {
     for (let c = 0; c < NC; c++) {
       let cb = null;
       if (free) {
-        // extend beyond the last place
+        // prolonger après le dernier lieu
         const last = pts[pts.length - 1], prev = pts.length > 1 ? pts[pts.length - 2] : last;
         let th = Math.atan2(G.NY[last] - G.NY[prev], G.NX[last] - G.NX[prev]); if (pts.length < 2) th = 0;
         th += (c - NC / 2) * 0.45 + (rng() - 0.5) * 0.2;
@@ -576,7 +576,7 @@ const Engine = (() => {
           if (Math.abs(st.len / target - 1) < 0.025) break; D *= Math.pow(target / st.len, 1.2);
         }
       } else {
-        // detour on one leg of the chain, alternating legs and sides
+        // détour sur un tronçon de la chaîne, en alternant tronçons et côtés
         const legs = full.length - 1, i = c % legs, side = (c >> 0) % 2 ? 1 : -1;
         const a = full[i], b = full[i + 1];
         const ax = G.NX[a], ay = G.NY[a], bx = G.NX[b], by = G.NY[b];
@@ -604,7 +604,7 @@ const Engine = (() => {
     const ord = orderVias(A, vias, end === 'free' ? null : end);
     return through([A, ...ord], end, target, opt, onProgress);
   }
-  // ---------- discovery: pass by famous places ----------
+  // ---------- découverte : passer par des lieux connus ----------
   function sightsOn(st, sights, R = 70) {
     const hit = [];
     const v0 = st.nodes[0];
@@ -637,7 +637,7 @@ const Engine = (() => {
       }
       if (!pick.length) { if (onProgress) onProgress((c + 1) / NC); continue; }
       let r = await viaRoute(A, pick, end, target, o2);
-      // too long: drop the farthest place until it fits
+      // trop long : retirer le lieu le plus éloigné jusqu'à ce que ça tienne
       while (r && r.len > target * 1.05 && pick.length > 1) { pick.pop(); r = await viaRoute(A, pick, end, target, o2); }
       if (r) for (const a of (r.alts || [r])) { sightsOn(a, ok); a.score = score(a, target, Object.assign({}, opt, { sights: true })); cands.push(a); }
       if (onProgress) onProgress((c + 1) / NC);

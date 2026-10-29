@@ -25,7 +25,7 @@ def build_pages(a, root):
     head = a[:a.index('<main>')]
     foot = a[a.index('</main>'):]
     foot = re.sub(r"if \(matchMedia\('\(max-width: 760px\)'\)\.matches\) document\.querySelector\('\.map svg'\)[^\n]*\n", '', foot)
-    foot = re.sub(r'// km markers appear[\s\S]*?\}\)\(\);\n', '', foot)
+    foot = re.sub(r'// les bornes km apparaissent[\s\S]*?\}\)\(\);\n', '', foot)
     head = head.replace('</style>', PAGE_CSS + '</style>', 1)
     def page(slug, title, body):
         h = re.sub(r'<title>[^<]*</title>', f'<title>Perfect Run · {title}</title>', head, count=1)

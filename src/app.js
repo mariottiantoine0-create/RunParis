@@ -40,7 +40,7 @@ const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 const S = {
-  mode: 'loop', start: null, end: null, // {lat,lon,name}
+  mode: 'loop', start: null, end: null, // {lat, lon, name}
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false, showTrack: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
@@ -115,23 +115,23 @@ function cityFirstRun() {
  // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
 let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [], TRACKS = [];
 
-// ---------- loading ----------
+// ---------- chargement ----------
 async function boot() {
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
     const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(CD + 'graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(CD + 'graph.bin' + DV).then(r => r.arrayBuffer()); };
     const [meta, buf] = await Promise.all([fetch(CD + 'meta.json' + DV).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
-    // optional layers: green score per street, official race routes, famous places
+    // couches facultatives : part de vert par rue, parcours mythiques, lieux connus
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
     const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'tracks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
-    // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (retour du 26/10)
+    // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (D-116)
     TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; })
-      .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (retour du 26/10)
+      .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (D-116)
     $('#ly-track').disabled = !TRACKS.length;
     if (gr) E.setGreen(b64(gr));
     if (pv || xc) { const a = pv ? b64(pv) : null, b = xc ? b64(xc) : null, m = new Uint8Array(Math.max(a ? a.length : 0, b ? b.length : 0)); for (let i = 0; i < m.length; i++) m[i] = (a && a[i] || 0) | (b && b[i] || 0); E.setPrivate(m); } // voies privées et impasses fermées (D-80) + passages couverts, galeries, intérieurs, centres commerciaux (D-91) : jamais empruntés
@@ -156,7 +156,7 @@ async function boot() {
   loadTrees();
   cityFirstRun();
 }
-// street trees (OSM natural=tree): x, y in metres as Int16 pairs; loaded after the first route
+// arbres (OSM natural=tree) : x, y en mètres, paires d'Int16 ; chargés après le premier parcours
 function loadTrees() {
   fetch(CD + 'trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
@@ -167,7 +167,7 @@ function loadTrees() {
     draw();
   }).catch(() => { $('#ly-trees').disabled = true; });
 }
-// trees within 10 m of the route (computed once per route)
+// arbres à moins de 10 m du tracé (calculés une fois par parcours)
 function routeTrees(r) {
   if (!TGRID) return null; if (r._trees) return r._trees;
   const seen = new Set(), P = laneInfo(r).pts;
@@ -175,36 +175,36 @@ function routeTrees(r) {
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const i of TGRID.get(gx * 4096 + gy) || []) if (!seen.has(i) && Math.hypot(TREES[i] - x, TREES[i + 1] - y) <= 10) seen.add(i); }
   return (r._trees = [...seen]);
 }
-// ---------- park opening hours ----------
-// Ville de Paris gated gardens: 8:00 (Sa, Su 9:00; large parks 7:00) until a closing time that follows the sunset (indicative)
+// ---------- horaires des parcs ----------
+// jardins clôturés de la Ville de Paris : 8 h (9 h le week-end, 7 h pour les grands parcs) jusqu'à une fermeture qui suit le coucher du soleil (indicatif)
 function lastSunday(y, m) { const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
 function municipalOpen(p, t) {
   const y = t.getFullYear(), day = t.getDay(), mins = t.getHours() * 60 + t.getMinutes(), md = new Date(y, t.getMonth(), t.getDate());
   const open = p.big ? 7 * 60 : (day === 0 || day === 6 ? 9 * 60 : 8 * 60);
   const oct = lastSunday(y, 9), mar = lastSunday(y, 2), m = t.getMonth();
   let close;
-  if (md >= oct || m <= 1) close = 17 * 60 + 45; // last Sunday of October to February
+  if (md >= oct || m <= 1) close = 17 * 60 + 45; // du dernier dimanche d'octobre à février
   else if (m === 2) close = md < mar ? 19 * 60 : 20 * 60 + 30;
   else if (m === 3) close = 20 * 60 + 30;
   else if (m >= 4 && m <= 7) close = 21 * 60 + 30;
   else if (m === 8) close = 20 * 60 + 30;
-  else close = 19 * 60 + 30; // October before its last Sunday
+  else close = 19 * 60 + 30; // octobre avant son dernier dimanche
   return mins >= open && mins < close;
 }
 const MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 }, WD = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
-// small OpenStreetMap opening_hours reader (months, weekdays, time ranges, closed); null when the syntax is beyond it
+// petit lecteur des opening_hours d'OSM (mois, jours, plages, fermé) ; null si la syntaxe le dépasse
 function ohOpen(oh, t) {
   if (/^\s*24\/7\s*$/.test(oh)) return true;
   if (/sun(rise|set)|\|\||"|week|easter/i.test(oh)) return null;
   const y = t.getFullYear();
-  oh = oh.replace(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) Su\[-1\]/g, (x, mo) => `${mo} ${lastSunday(y, MON[mo]).getDate()}`); // last Sunday of the month
+  oh = oh.replace(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) Su\[-1\]/g, (x, mo) => `${mo} ${lastSunday(y, MON[mo]).getDate()}`); // dernier dimanche du mois
   if (/\[/.test(oh)) return null;
   const m = t.getMonth(), d = t.getDate(), wd = t.getDay(), mins = t.getHours() * 60 + t.getMinutes();
   const val = (mo, dd) => mo * 100 + dd, cur = val(m, d);
   const DAYN = '(?: ?\\d{1,2}(?![\\d:]))?', MO = '(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)';
   const monRe = new RegExp(`^((?:${MO}${DAYN}(?:-${MO}?${DAYN})?,?)+)\\s*:?\\s*`);
   let res = null;
-  // ';' starts a rule that replaces the previous ones for its days; ', ' adds to (or with "off" removes from) the current rule
+  // « ; » ouvre une règle qui remplace les précédentes pour ses jours ; « , » complète la règle en cours (ou en retire avec « off »)
   for (const group of oh.split(/\s*;\s*/).filter(Boolean)) {
     group.split(/,\s+(?=(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b)/).forEach((rule, idx) => {
       let r = rule.trim(), ok = true;
@@ -229,7 +229,7 @@ function ohOpen(oh, t) {
   return res;
 }
 function parkOpen(p, t) { if (p.oh) { const v = ohOpen(p.oh, t); if (v !== null) return v; } return municipalOpen(p, t); }
-// sunrise / sunset in Paris for a given day (NOAA approximation, about ±2 min)
+// lever et coucher du soleil pour un jour donné (approximation NOAA, à ±2 min environ)
 function sunTimes(t) {
   const rad = Math.PI / 180, [lat, lon] = C0.ll;
   const start = Date.UTC(t.getFullYear(), 0, 0), n = Math.floor((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - start) / 864e5);
@@ -240,34 +240,34 @@ function sunTimes(t) {
   const utc = m => new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) + m * 60000);
   return { rise: utc(720 - 4 * (lon + ha) - eq), set: utc(720 - 4 * (lon - ha) - eq) };
 }
-// is any part of the run in the dark (from 20 min after sunset to 20 min before sunrise)?
+// une partie de la sortie est-elle de nuit (de 20 min après le coucher à 20 min avant le lever) ?
 function runInDark(t0, minutes) {
   for (let k = 0; k <= minutes + 9; k += 10) { const t = new Date(+t0 + Math.min(k, minutes) * 60000), { rise, set } = sunTimes(t);
     if (t > new Date(+set + 20 * 60000) || t < new Date(+rise - 20 * 60000)) return true; }
   return false;
 }
-// departure time chosen by the runner (today; tomorrow if that time is already well past)
+// heure de départ choisie (aujourd'hui ; demain si l'heure est déjà bien passée)
 function departure() {
   const now = new Date(); if (S.depNow !== false || !$('#dep-time').value) return now;
   const [h, m] = $('#dep-time').value.split(':').map(Number); const t = new Date(now); t.setHours(h, m, 0, 0);
   if (t < now - 30 * 60000) t.setDate(t.getDate() + 1); return t;
 }
-// parks closed at some point between departure and arrival
+// parcs fermés à un moment entre le départ et l'arrivée
 function closedParks(t0, minutes) {
   const out = []; for (const p of PARKS) { for (let k = 0; k <= minutes + 9; k += 10) { if (!parkOpen(p, new Date(+t0 + Math.min(k, minutes) * 60000))) { out.push(p); break; } } } return out;
 }
 const hhmm = t => `${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`;
-// drinking fountains within 30 m of the route, with their position along it (m), and the longest stretch without water
+// fontaines à moins de 30 m du tracé, avec leur position le long du tracé (m), et le plus long passage sans eau
 function routeFountains(r) {
   if (!FONT.length) return null; if (r._font) return r._font;
   const P = laneInfo(r).pts, hit = new Map(); let acc = 0;
   for (let i = 0; i < P.length; i++) { if (i) acc += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]);
     for (const f of FONT) { if (Math.abs(f.x - P[i][0]) > 30 || Math.abs(f.y - P[i][1]) > 30) continue; const d = Math.hypot(f.x - P[i][0], f.y - P[i][1]); if (d <= 30 && (!hit.has(f) || hit.get(f).d > d)) hit.set(f, { d, at: acc }); } }
   const list = [...hit].map(([f, h]) => ({ f, at: h.at })).sort((a, b) => a.at - b.at);
-  // a fountain met twice (out and back) counts once, at its first pass
+  // une fontaine croisée deux fois (aller et retour) compte une fois, au premier passage
   const seen = new Set(), uniq = list.filter(x => !seen.has(x.f) && seen.add(x.f));
   let gap = 0, prev = 0; for (const x of uniq) { gap = Math.max(gap, x.at - prev); prev = x.at; } gap = Math.max(gap, r.len - prev);
-  const stops = []; for (const x of uniq) if (!stops.length || x.at - stops[stops.length - 1] > 400) stops.push(x.at); // fountains less than 400 m apart = one water stop
+  const stops = []; for (const x of uniq) if (!stops.length || x.at - stops[stops.length - 1] > 400) stops.push(x.at); // fontaines à moins de 400 m l'une de l'autre = un seul point d'eau
   return (r._font = { list: uniq, gap, stops });
 }
 function drawDrop(sx, sy, r, hi) {
@@ -275,7 +275,7 @@ function drawDrop(sx, sy, r, hi) {
   const k = r * 0.55; ctx.beginPath(); ctx.moveTo(sx, sy - k * 1.25); ctx.bezierCurveTo(sx + k * 0.9, sy - k * 0.2, sx + k * 0.95, sy + k * 0.95, sx, sy + k); ctx.bezierCurveTo(sx - k * 0.95, sy + k * 0.95, sx - k * 0.9, sy - k * 0.2, sx, sy - k * 1.25);
   ctx.fillStyle = hi ? '#fff' : colors.font; ctx.fill();
 }
-// closest metro / RER station to a point (straight line, metres)
+// station de métro ou de RER la plus proche d'un point (à vol d'oiseau, en mètres)
 function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
 function lineBadge(l) { const b = document.createElement('span'); b.className = 'lb'; const c = METRO.lines[l] || '#888'; b.style.background = c;
   const h = c.replace('#', ''), [R, Gc, B] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); b.style.color = (R * 299 + Gc * 587 + B * 114) / 1000 > 150 ? '#111' : '#fff';
@@ -299,16 +299,16 @@ function transitTexts() {
   }
 }
 
-// ---------- search index ----------
+// ---------- index de recherche ----------
 let IDX = [];
 function buildSearch() {
   const typeLabel = { station: 'Gare / métro', park: 'Parc', attraction: 'Lieu', museum: 'Musée', viewpoint: 'Point de vue', square: 'Place', monument: 'Monument', marketplace: 'Marché', university: 'Université', mall: 'Centre commercial', stadium: 'Stade' };
   for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
   // arrêts de tram (D-98) : cherchables comme les stations, s'ils ne sont pas déjà des lieux
   const known = new Set(IDX.map(x => x.k)); for (const st of METRO.st) if (st.tram && !known.has(norm(st.n))) IDX.push({ name: st.n, type: 'Tram ' + st.ls.map(l => l.replace(/^T([A-Z])$/, '$1')).join(', '), lat: st.lat, lon: st.lon, k: norm(st.n) });
-  // streets: centroid of longest edge per name
+  // rues : milieu du plus long tronçon de chaque nom
   const best = new Map();
-  // one entry per street name and town (the same name exists in several communes)
+  // une entrée par nom de rue et par commune (un même nom existe dans plusieurs communes)
   const town = e => { const q = M.quartiers[G.nq[G.ea[e]] - 1]; return q && q.ar > 100 ? q.name : ''; };
   for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e], key = n + '|' + town(e); const b = best.get(key); if (!b || L > b[0]) best.set(key, [L, e, n]); }
   for (const [key, [, e, n]] of best) {
@@ -385,7 +385,7 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
-  // neighbouring communes: one zone each
+  // communes voisines : une zone chacune
   const cs = M.quartiers.filter(q => q.ar > 100).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   if (cs.length) {
     const h = document.createElement('div'); h.className = 'ah'; h.textContent = 'Communes voisines'; ql.appendChild(h);
@@ -395,9 +395,9 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
-  // initial view: Paris itself (the graph also covers the neighbouring communes)
+  // vue de départ : la ville centre (le graphe couvre aussi les communes voisines)
   { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of M.quartiers) if (q.ar < 100) for (const [la, lo] of q.rings[0]) { const [x, y] = E.toXY(la, lo); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (x1 > x0) M.parisB = [x0, y0, x1, y1]; }
-  // centroids of arrondissements for labels
+  // centre des arrondissements, pour leurs numéros
   M.arrC = {};
   for (const q of M.quartiers) { const r = q.rings[0]; let x = 0, y = 0; for (const [la, lo] of r) { const p = E.toXY(la, lo); x += p[0]; y += p[1]; } const c = M.arrC[q.ar] || [0, 0, 0]; c[0] += x / r.length; c[1] += y / r.length; c[2]++; M.arrC[q.ar] = c; }
 }
@@ -415,7 +415,7 @@ function zonesChanged() {
   renderAvoid(); markStale(); draw();
 }
 function renderPlaces() { renderAvoid(); markStale(); }
-// one place for every exclusion: whole arrondissements, single quartiers, places (+ radius)
+// toutes les exclusions au même endroit : arrondissements entiers, quartiers, lieux (+ rayon)
 function renderAvoid() {
   const box = $('#avoid-list'); box.innerHTML = '';
   const mk = (label, onX, extra) => {
@@ -449,7 +449,7 @@ function setPoint(which, p) {
   S[which] = p; $(`#${which}-name`).textContent = p.name; draw(); if (which === 'start') renderHome();
   if (MPHR && ((MCUR === 'dep' && which === 'start') || (MCUR === 'arr' && which === 'end'))) mClose(); if (MPHR) msync();
 }
-// ---------- « Chez moi » (stored only in this browser) ----------
+// ---------- « Chez moi » (gardé seulement sur cet appareil) ----------
 function getHome() { try { const h = JSON.parse(localStorage.getItem('runparis-home') || 'null'); return h && isFinite(h.lat) && isFinite(h.lon) ? h : null; } catch (e) { return null; } }
 function renderHome() {
   const h = getHome(), go = $('#home-go'), save = $('#home-save');
@@ -460,7 +460,7 @@ function renderHome() {
   go.hidden = !h || isHome;
 }
 
-// ---------- map rendering ----------
+// ---------- dessin de la carte ----------
 const cv = $('#map'), ctx = cv.getContext('2d');
 let V = { s: 0.05, tx: 0, ty: 0 }, W = 0, H = 0, dpr = 1;
 let MAPROT = 0, MAPROT_ON = false; // course : rotation de la carte (degrés), canvas agrandi pour tourner
@@ -485,7 +485,7 @@ function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, MAPROT_ON ? 2 : 4); W = cv.offsetWidth; H = cv.offsetHeight;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); draw();
 }
-// ---------- mobile bottom sheet ----------
+// ---------- feuille mobile ----------
 const MOB = matchMedia('(max-width: 860px)');
 let sheet = 'half';
 function sheetPx() { return MOB.matches ? $('.panel').getBoundingClientRect().height : 0; }
@@ -567,7 +567,7 @@ function setSheet(st, refit) {
 function raceBounds() { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of routePts(S.route)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return [x0, y0, x1, y1]; }
 function fit(bounds) {
   const r = cv.getBoundingClientRect(); W = r.width || 800; H = r.height || 600;
-  const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // on phones, fit into the map area left visible above the sheet
+  const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // sur téléphone, cadrer dans la partie de la carte visible au-dessus de la feuille
   const [x0, y0, x1, y1] = bounds || M.parisB || [0, 0, G.maxX, G.maxY];
   const pad = MOB.matches ? 18 : 30; V.s = Math.min((W - 2 * pad - (MOB.matches ? 50 : 0)) / (x1 - x0 || 1), (Hv - 2 * pad - top) / (y1 - y0 || 1));
   V.tx = (W - (MOB.matches ? 50 : 0)) / 2 - (x0 + x1) / 2 * V.s; V.ty = (Hv + top) / 2 - (y0 + y1) / 2 * V.s; draw();
@@ -583,7 +583,7 @@ function drawMetro(hiOnly) {
       const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi) || (st.tram && !big && !hi && !METRO.onlyTram)) continue; const r = hi ? 9 : big ? 6.5 : 3;
       ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.metroBg; ctx.fill(); ctx.lineWidth = hi ? 2.5 : big ? 1.6 : 1.2; ctx.strokeStyle = hi ? colors.route : colors.metroInk; ctx.stroke();
       if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText(st.tram ? 'T' : 'M', sx, sy + 0.5); }
-      if (badges || hi) { // line badges + name
+      if (badges || hi) { // pastilles de lignes + nom
         let bx = sx + r + 4; ctx.textAlign = 'left';
         for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', '').replace(/^T([A-Z])$/, '$1'), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
           ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 7) : ctx.rect(bx, sy - 7, w, 14); ctx.fill(); // pastille ronde (LineBadge)
@@ -606,30 +606,30 @@ function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
   ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr);
   const px = v => v / V.s;
-  // background: green spaces, water, cemeteries
+  // fond : espaces verts, eau, cimetières
   if (M.greenPath) { ctx.fillStyle = colors.green; ctx.fill(M.greenPath, 'evenodd'); }
   if (M.cemPath) { ctx.fillStyle = colors.cem; ctx.fill(M.cemPath, 'evenodd'); }
   if (M.waterPath) { ctx.fillStyle = colors.water; ctx.fill(M.waterPath, 'evenodd'); }
-  // excluded quartiers
+  // quartiers évités
   if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.fillStyle = colors.avoidFill; ctx.fill(q.path); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(q.path); } }
   if (M.stationPath) { ctx.fillStyle = colors.stationFill; ctx.fill(M.stationPath, 'nonzero'); }
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const z = V.s; // px per metre
+  const z = V.s; // px par mètre
   ctx.strokeStyle = colors.street; ctx.lineWidth = px(z > 0.25 ? 1.6 : z > 0.1 ? 0.9 : 0.5); ctx.stroke(paths.minor);
   ctx.strokeStyle = colors.path; ctx.setLineDash([px(3), px(2)]); ctx.lineWidth = px(z > 0.25 ? 1.4 : 0.7); ctx.stroke(paths.path); ctx.setLineDash([]);
   ctx.strokeStyle = colors.major; ctx.lineWidth = px(z > 0.25 ? 2 : 1); ctx.stroke(paths.c1);
   ctx.lineWidth = px(z > 0.25 ? 3 : 1.5); ctx.stroke(paths.c2);
   ctx.lineWidth = px(z > 0.25 ? 4 : 2); ctx.stroke(paths.c3);
-  // quartier & arr borders
+  // limites des quartiers et des arrondissements
   ctx.strokeStyle = colors.quart; ctx.lineWidth = px(1); ctx.setLineDash([px(5), px(4)]);
   for (const q of M.quartiers) ctx.stroke(q.path);
   ctx.setLineDash([]);
   if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(q.path); }
-  // avoided places
+  // lieux évités
   if (S.tab !== 'race') for (const p of S.places) { const [x, y] = E.toXY(p.lat, p.lon); ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fillStyle = colors.avoidFill; ctx.fill(); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(); } ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(); }
-  // signals
+  // feux
   if (S.showSig) { ctx.fillStyle = colors.sig; const h = px(z > 0.2 ? 3 : 1.8); ctx.beginPath(); for (const s of G.SIG) ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); }
-  // all street trees, as small dots (a density map when zoomed out)
+  // tous les arbres, en petits points (une carte de densité quand on dézoome)
   if (S.showTrees && TREES) {
     const x0 = -V.tx / V.s, y0 = -V.ty / V.s, x1 = (W - V.tx) / V.s, y1 = (H - V.ty) / V.s, r = px(z > 0.4 ? 2.4 : z > 0.15 ? 1.6 : 1);
     ctx.save(); ctx.globalAlpha = z > 0.15 ? 0.75 : 0.45; ctx.fillStyle = colors.tree; ctx.beginPath();
@@ -650,7 +650,7 @@ function render() {
   if (S.showTrack && V.s < 0.25) for (const t of TRACKS) { const sx = t.x * V.s + V.tx, sy = t.y * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
     const rw = V.s > 0.08 ? 8 : 5.5; ctx.beginPath(); ctx.ellipse(sx, sy, rw, rw * 0.6, 0, 0, 7); ctx.lineWidth = V.s > 0.08 ? 3 : 2.2; ctx.strokeStyle = colors.track; ctx.stroke(); }
   ctx.restore();
-  // route
+  // tracé
   const R = NAV.on && NAV.r ? NAV.r : S.route;
   if (R && S.alts && S.alts.length > 1 && !NAV.on) {
     ctx.save(); ctx.globalAlpha = 0.45; ctx.strokeStyle = colors.route; ctx.lineWidth = px(2.5); ctx.setLineDash([px(6), px(5)]);
@@ -658,38 +658,38 @@ function render() {
       for (const [e, fromA] of a.edges) { const pts = E.edgePts(e); if (!fromA) pts.reverse(); pts.forEach(([x, y], i) => { if (f) { p.moveTo(x, y); f = false; } else if (i) p.lineTo(x, y); }); }
       ctx.stroke(p); }
     ctx.restore();
-    // number each proposal at its midpoint
+    // numéro de chaque proposition, au milieu de son tracé
     S.alts.forEach((a, i) => { if (a === R) return; const v = a.nodes[Math.floor(a.nodes.length * 0.55)]; a._label = [G.NX[v], G.NY[v], i + 1]; });
   }
   if (R) {
-    // each pass over the same street gets its own lane (to the right of its direction of travel)
+    // chaque passage dans une même rue a sa voie (à droite de son sens de marche)
     const LI = laneInfo(R), U = 3 / V.s;
     const OP = LI.any ? LI.pts.map(([x, y], i) => [x - LI.ty[i] * LI.lane[i] * U, y + LI.tx[i] * LI.lane[i] * U]) : LI.pts;
     const stroke = (a, b, col) => { const p = new Path2D(); for (let i = a; i <= b; i++) i === a ? p.moveTo(OP[i][0], OP[i][1]) : p.lineTo(OP[i][0], OP[i][1]);
       ctx.strokeStyle = colors.casing; ctx.lineWidth = px(LI.any ? 7 : 8); ctx.stroke(p); ctx.strokeStyle = col; ctx.lineWidth = px(LI.any ? 4 : 4.5); if (col === colors.route2) { ctx.lineCap = 'butt'; ctx.setLineDash([px(7), px(5)]); } ctx.stroke(p); ctx.setLineDash([]); ctx.lineCap = 'round'; };
-    // trees along the route, like the feux: small dots drawn UNDER the line, at street zoom only,
-    // thinned to one dot per ~8 px so a tree-lined avenue reads as a green fringe, not noise
+    // arbres le long du tracé, comme les feux : petits points dessinés SOUS la ligne, au zoom rue seulement,
+    // au plus un point tous les ~8 px : une avenue arborée se lit comme une frange verte, pas comme du bruit
     const rt = z > 0.22 && !S.showTrees ? routeTrees(R) : null;
     if (rt && rt.length) { const seen = new Set(), rr = px(2.2); ctx.fillStyle = colors.tree; ctx.beginPath();
       for (const i of rt) { const k = Math.floor(TREES[i] * z / 8) + ',' + Math.floor(TREES[i + 1] * z / 8); if (seen.has(k)) continue; seen.add(k); ctx.moveTo(TREES[i] + rr, TREES[i + 1]); ctx.arc(TREES[i], TREES[i + 1], rr, 0, 7); }
       ctx.fill(); }
     if (!LI.any) stroke(0, OP.length - 1, colors.route);
-    else for (let a = 0; a < OP.length - 1;) { // short chunks so later passes are drawn over earlier ones; 2nd pass in its own colour
+    else for (let a = 0; a < OP.length - 1;) { // petits morceaux pour que les passages suivants recouvrent les précédents ; 2e passage dans sa couleur
       let b = a + 1; while (b < OP.length - 1 && b - a < 24 && LI.pass[b] === LI.pass[a]) b++;
       stroke(a, b, LI.pass[a] % 2 ? colors.route2 : colors.route); a = b; }
     navDrawDone(px);
-    // feux on route
+    // feux sur le tracé
     const ids = new Set(S.tab === 'race' ? [] : R.clusterIds); ctx.fillStyle = colors.sig; ctx.strokeStyle = colors.casing; ctx.lineWidth = px(1.5);
     for (const s of G.SIG) if (ids.has(s.id)) { const h = px(4.5); ctx.beginPath(); ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // direction chevrons every ~70 px along the line
+    // chevrons de sens tous les ~70 px le long du tracé
     if (V.s >= 0.09) { const P = LI.pts; let run = 35; ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (let i = 1; i < P.length; i++) { run += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]) * V.s;
         if (run < 70 || i < 2 || i > P.length - 3) continue; run = 0;
         const sx = OP[i][0] * V.s + V.tx, sy = OP[i][1] * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
         const dx = LI.tx[i], dy = LI.ty[i], k = 2.6;
         ctx.beginPath(); ctx.moveTo(sx - dx * k - dy * k, sy - dy * k + dx * k); ctx.lineTo(sx + dx * k, sy + dy * k); ctx.lineTo(sx - dx * k + dy * k, sy - dy * k - dx * k); ctx.stroke(); } }
-    // km markers, placed on the lane of the pass they belong to
+    // bornes km, posées sur la voie du passage auquel elles appartiennent
     const kmOff = NAV.on && NAV.r && NAV.r !== S.route ? NAV.base : 0; let acc = 0, next = 1000 - kmOff % 1000;
     ctx.font = `800 11px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     {
@@ -711,7 +711,7 @@ function render() {
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (M.stationPath) { ctx.save(); ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr); ctx.strokeStyle = colors.station; ctx.lineWidth = 1.2 / V.s; ctx.setLineDash([4 / V.s, 3 / V.s]); ctx.stroke(M.stationPath); ctx.restore(); }
-  // arrondissement numbers when zoomed out
+  // numéros des arrondissements quand on dézoome
   if (V.s < 0.12 && M.arrC) {
     ctx.font = `800 ${V.s < 0.07 ? 14 : 17}px ${css('--f-display')}`; if ('fontStretch' in ctx) ctx.fontStretch = 'condensed'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
     for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a >= 50) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
@@ -720,7 +720,7 @@ function render() {
   drawMetro(true);
   if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
   drawRouteNames();
-  // pins
+  // épingles
   // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
   const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
   // départ et arrivée (D-105) : épingle qui pointe le point exact, avec une ombre ; D plein (ink), A en creux (panel cerclé d'ink).
@@ -743,7 +743,7 @@ function render() {
     ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = colors.route; ctx.font = `700 12px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), sx, sy + 1);
   }
-  // famous places passed by the selected route
+  // lieux connus croisés par le parcours choisi
   if (R && R.sightsN) {
     ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     for (const nm of R.sights) { const sg = SIGHTS.find(x => x.name === nm); if (!sg) continue; const sx = sg.x * V.s + V.tx, sy = sg.y * V.s + V.ty;
@@ -761,7 +761,7 @@ function render() {
   navDrawMe();
 }
 
-// ---------- street names ----------
+// ---------- noms des rues ----------
 let labelOrder = null;
 function drawLabels() {
   if (V.s < 0.22) return;
@@ -798,7 +798,7 @@ function drawLabels() {
   }
 }
 
-// ---------- theme ----------
+// ---------- thème ----------
 function applyTheme(t) {
   const root = document.documentElement;
   if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
@@ -811,7 +811,7 @@ $('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); 
 document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
 try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
 
-// ---------- map interaction ----------
+// ---------- gestes sur la carte ----------
 const ptrs = new Map(); let drag = null, pinch = null, pinchRot = null;
 const ptrC = new Map();
 cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (er) {} ptrs.set(e.pointerId, [e.offsetX, e.offsetY]); ptrC.set(e.pointerId, [e.clientX, e.clientY]); if (ptrC.size === 2) { const [a, b] = [...ptrC.values()]; pinchRot = { a0: Math.atan2(b[1] - a[1], b[0] - a[0]), r0: MAPROT, on: false }; } if (ptrs.size === 1) drag = { x: e.offsetX, y: e.offsetY, tx: V.tx, ty: V.ty, moved: false }; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s: V.s, tx: V.tx, ty: V.ty, cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2 }; drag = null; } });
@@ -907,7 +907,7 @@ $('#home-save').onclick = () => {
 $('#pick-end').onclick = () => setTool('end');
 let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, ms); }
 
-// ---------- controls ----------
+// ---------- réglages ----------
 function seg(ids, onPick) { ids.forEach(id => $('#' + id).onclick = () => { ids.forEach(j => $('#' + j).setAttribute('aria-pressed', j === id)); onPick(id); }); }
 // Arrivée : En boucle / Jusqu'à un lieu / N'importe où (mêmes mots que l'accueil)
 function setArrival(k) {
@@ -1006,7 +1006,7 @@ $('#pace').addEventListener('change', () => { if (!parsePace($('#pace').value)) 
 $('#km').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 $('#again').onclick = () => { S.seed++; generate(true); };
 $('#recalc').onclick = () => generate(true);
-// legend: open by default on large screens, closed on phones; remembered on this device
+// légende : ouverte par défaut sur grand écran, fermée sur téléphone ; choix gardé sur l'appareil
 $('#legend').open = false; // légende intégrée (D-65) : le « ? » ouvre la liste complète
 document.addEventListener('click', e => { const lg = $('#legend'); if (lg.open && !lg.contains(e.target)) lg.open = false; });
 $('#edit').onclick = e => { e.stopPropagation(); showView('set'); };
@@ -1019,7 +1019,7 @@ function showView(v) {
   else { $('#stale').hidden = true; $('#view-set').scrollTop = 0; if (MOB.matches) setSheet(MPHR ? 'half' : 'full'); }
 }
 
-// bring the map into view after a calculation (useful when the page is narrow and the map sits above the panel)
+// ramener la carte à l'écran après un calcul (utile quand la page est étroite et la carte au-dessus du panneau)
 function scrollToMap() {
   if (MOB.matches) { setSheet('half', true); return; }
   const r = $('#mapwrap').getBoundingClientRect();
@@ -1052,10 +1052,10 @@ function lastApply() {
   lastSet(Object.assign({}, LAST_DEF, o.g), (o.c || {})[CITY]); $('#last-line').hidden = false; return o.g;
 }
 $('#last-reset').onclick = () => { try { localStorage.removeItem(LAST_K); } catch (e) {} if (LAST_DEF) lastSet(LAST_DEF, null); $('#last-line').hidden = true; toast('Réglages remis à zéro.'); };
-// ---------- type of route ----------
+// ---------- type de parcours ----------
 const KHINT = { green: 'Passe au maximum par les parcs, jardins, quais et rues bordées d’arbres (≈ 160 000 arbres recensés dans OpenStreetMap), quitte à faire quelques détours.', discover: 'Passe devant des monuments et lieux connus à portée de ta distance. Tu peux aussi choisir tes lieux avec « Passer par un lieu ».' };
 ['classic', 'green', 'discover'].forEach(k => $('#k-' + k).onclick = () => { S.kind = k; ['classic', 'green', 'discover'].forEach(j => $('#k-' + j).setAttribute('aria-pressed', j === k)); $('#k-hint').hidden = k === 'classic'; $('#k-hint').textContent = KHINT[k] || ''; });
-// ---------- places to pass by ----------
+// ---------- lieux par où passer ----------
 function addVia(p) {
   if (S.vias.length >= 5) return toast('5 lieux au maximum.');
   S.vias.push(p); renderVias(); markStale(); draw();
@@ -1077,7 +1077,7 @@ function renderVias() {
   box.appendChild(add); msync();
   $('#via-track').hidden = !TRACKS.length || S.mode !== 'loop' || S.vias.some(v => v.track);
 }
-// « Passer par » : la piste d'athlé la plus proche du départ, sans la chercher sur la carte (retour du 26/10)
+// « Passer par » : la piste d'athlé la plus proche du départ, sans la chercher sur la carte (D-116)
 $('#via-track').onclick = () => {
   if (!S.start) return toast('Choisis d’abord ton départ.');
   const [sx, sy] = E.toXY(S.start.lat, S.start.lon); let best = null, bd = 1e9;
@@ -1088,7 +1088,7 @@ $('#via-track').onclick = () => {
   toast(`${name} · piste d’environ ${best.lap} m, à ${bd < 1000 ? Math.round(bd / 50) * 50 + ' m' : fmt(bd / 1000, 1) + ' km'} du départ.`, 4000);
 };
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
-// ---------- official races ----------
+// ---------- parcours mythiques ----------
 function setTab(t) {
   const prev = S.tab;
   S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
@@ -1113,7 +1113,7 @@ function setTab(t) {
 }
 $('#tab-gen').onclick = () => S.tab !== 'gen' && setTab('gen');
 $('#tab-race').onclick = () => S.tab !== 'race' && setTab('race');
-// ---- overlapping passes: resample the route, find where it runs over itself, and give each pass its own lane
+// ---- passages superposés : rééchantillonner le tracé, trouver où il repasse sur lui-même et donner une voie à chaque passage
 function laneInfo(R) {
   if (R._lanes) return R._lanes;
   const src = routePts(R), step = 8, pts = [];
@@ -1132,25 +1132,25 @@ function laneInfo(R) {
     const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C); const js = [];
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || [])
       if (i - j >= 10 && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) js.push(j);
-    if (js.length) { // one earlier pass = a run of consecutive samples; count the passes going the same way
+    if (js.length) { // un passage antérieur = une suite d'échantillons consécutifs ; on compte les passages dans le même sens
       js.sort((a, b) => a - b); let same = 0, tot = 0, prev = -99;
       for (const j of js) { if (j - prev > 6) { tot++; if (tx[i] * tx[j] + ty[i] * ty[j] > 0) same++; } prev = j; }
       lane[i] = 1 + 2 * Math.min(same, 3); pass[i] = Math.min(tot, 3); any = true;
     }
     const k = key(x, y); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i);
   }
-  // the first pass also moves to its own lane wherever a later pass comes back over it
+  // le premier passage prend lui aussi sa voie là où un passage suivant revient sur lui
   if (any) for (let i = 0; i < n; i++) if (lane[i]) {
     const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C);
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || []) if (j < i - 10 && !lane[j] && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) lane[j] = 1;
   }
-  // smooth lane changes over ~40 m so the line glides from one lane to the other
+  // changements de voie lissés sur ~40 m : la ligne glisse d'une voie à l'autre
   const sm = new Float32Array(n); for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = -5; k <= 5; k++) { const j = i + k; if (j >= 0 && j < n) { s += lane[j]; c++; } } sm[i] = s / c; }
-  // a pass shorter than ~50 m is noise (crossing, corner): keep it in the colour of what surrounds it
+  // un passage de moins de ~50 m est du bruit (traversée, coin) : il garde la couleur de ce qui l'entoure
   for (let i = 0; i < n;) { let j = i; while (j < n && pass[j] === pass[i]) j++; if (j - i < 6 && i > 0) for (let k = i; k < j; k++) pass[k] = pass[i - 1]; i = j; }
   return (R._lanes = { pts, tx, ty, lane: sm, pass, any });
 }
-// polyline of a route in map metres: from street edges, or from a GPX geometry (official races)
+// ligne d'un parcours en mètres de carte : depuis les tronçons de rue, ou depuis un tracé GPX (parcours mythiques)
 // point de départ, d'arrivée ou de passage : jamais au bout d'un petit passage sans nom (porche, cour) — on se place au carrefour (D-80)
 function snapNode(x, y) {
   let v = E.nearest(x, y); if (v < 0) return v;
@@ -1164,7 +1164,7 @@ function routePts(r) {
   for (const [e, fromA] of r.edges) { const p = E.edgePts(e); if (!fromA) p.reverse(); p.forEach((q, i) => { if (first || i) pts.push(q); first = false; }); }
   return (r._pts = pts);
 }
-// route object from a polyline (x, y in metres): length, smoothed D+, feux crossed, streets and quartiers
+// parcours à partir d'une ligne (x, y en mètres) : longueur, D+ lissé, feux traversés, rues et quartiers
 function geomRoute(xy) {
   let len = 0; const prof = [], nodes = [], names = new Map(), quart = new Map(), clusters = new Set();
   const step = 15; let acc = 0, next = 0;
@@ -1178,7 +1178,7 @@ function geomRoute(xy) {
     }
   }
   for (const s of G.SIG) { for (let i = 0; i < xy.length; i += 1) { if (Math.abs(xy[i][0] - s.x) < 20 && Math.abs(xy[i][1] - s.y) < 20) { clusters.add(s.id); break; } } }
-  let gl = 0; // green share from nearest street edge
+  let gl = 0; // part de vert d'après le tronçon de rue le plus proche
   return { geom: xy, len, prof, nodes, names, quart, up: E.smoothClimb(prof), feux: clusters.size, clusterIds: [...clusters], edges: [], green: null, kind: 'course' };
 }
 function sliceGeom(xy, a, b) {
@@ -1215,7 +1215,7 @@ function renderRaces() {
     b.querySelector('.s').textContent = `${fmt(race.official, race.official % 1 ? 1 : 0)} km · ${Math.round(st.up)} m D+`;
     b.onclick = () => { S.race = race; showRace(race); renderRaces(); track('course', race.name); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
     box.appendChild(b);
-    if (S.race === race) box.appendChild(det); // the detail opens right under the chosen race
+    if (S.race === race) box.appendChild(det); // le détail s'ouvre juste sous le parcours choisi
   }
 }
 function showRace(race, from, to) {
@@ -1236,7 +1236,7 @@ function showRace(race, from, to) {
   $('#p-from').value = Math.round(from * 10) / 10; $('#p-to').value = Math.round(to * 10) / 10; $('#p-to').max = $('#p-from').max = (Math.round(L / 100) / 10);
   const chips = $('#portion-chips'); chips.innerHTML = '';
   const Lk = L / 1000, opts = [['En entier', 0, Lk], ['5 premiers km', 0, 5], ['10 premiers km', 0, 10], ['5 derniers km', Lk - 5, Lk], ['La moitié', 0, Lk / 2]];
-  // steepest 3 km window
+  // les 3 km les plus pentus
   let best = null; const P = full.prof; for (let i = 0; i < P.length; i++) { let up = 0; for (let j = i + 1; j < P.length && P[j][0] - P[i][0] <= 3000; j++) up += Math.max(0, P[j][1] - P[j - 1][1]); if (!best || up > best[1]) best = [P[i][0], up]; }
   if (best && Lk > 6) opts.push(['3 km les plus vallonnés', best[0] / 1000, best[0] / 1000 + 3]);
   for (const [lab, a, b] of opts) { if (b > Lk + 0.01 || a < 0) continue; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = lab; btn.setAttribute('aria-pressed', Math.abs(a - from) < 0.05 && Math.abs(b - to) < 0.05); btn.onclick = () => showRace(race, a, b); chips.appendChild(btn); }
@@ -1250,7 +1250,7 @@ function showRace(race, from, to) {
 }
 $('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($('#p-from').value).replace(',', '.')) || 0, parseFloat(String($('#p-to').value).replace(',', '.')) || 0); };
 
-// summary of the settings used for the results on screen
+// résumé des réglages utilisés pour les résultats affichés
 function renderSummary() {
   const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
   const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
@@ -1268,9 +1268,9 @@ new MutationObserver(draw).observe(document.documentElement, { attributes: true,
 
 
 
-// ---------- generate ----------
+// ---------- générer ----------
 let busy = false;
-// ---------- input validation ----------
+// ---------- vérification des réglages ----------
 function readKm() {
   if (S.unit === 'min') {
     const v = parseFloat(String($('#dur').value).trim().replace(',', '.'));
@@ -1301,7 +1301,7 @@ function readDplus() {
   return { dplus: Math.round(v) };
 }
 
-// ---------- generate ----------
+// ---------- générer ----------
 function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
 async function generate(isAgain) {
   if ($('#done')) $('#done').setAttribute('aria-pressed', false);
@@ -1326,14 +1326,14 @@ async function generate(isAgain) {
     const dep = departure(), runMin = Math.round(km * pace() / 60), closed = PARKS.length ? closedParks(dep, runMin) : [];
     S.lastDep = { dep, closed, now: S.depNow !== false, night: runInDark(dep, runMin), sun: sunTimes(dep) };
     E.setConstraints(S.exclQ, S.places, { avoidCemeteries: true, closedEdges: closed.flatMap(p => p.e) });
-    const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
+    const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m de D+ par km sur une boucle moyenne à Paris (D+ lissé)
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
     const green = S.kind === 'green';
     E.setWeights({ climb, ...PRIO[S.prio || 'eq'].w, path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : S.prio === 'turn' ? PRIO.turn.w.road : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0, crowd: $('#avoid-crowd').checked ? crowdAt(dep) : 0 });
     const opt = { seed: S.seed * 7919 + 13, sigScore: PRIO[S.prio || 'eq'].score, dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green, simple: S.prio === 'turn' };
     opt.night = S.lastDep.night; S.lastOpt = opt;
-    if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
+    if ($('#water-on').checked && FONT.length) { // carrefours tout près d'une fontaine (zones autorisées seulement)
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
       opt.water = { set, pts, every: 3000 };
     }
@@ -1345,7 +1345,7 @@ async function generate(isAgain) {
       const snapD = Math.hypot(G.NX[s] - sx, G.NY[s] - sy);
       if (snapD > 250) notes.push(`${ab ? 'A est' : 'Ton départ est'} dans une zone évitée : le parcours part de la rue autorisée la plus proche (${Math.round(snapD)} m).`);
       const prog = f => bar.style.width = (5 + f * 95) + '%';
-      // places to pass by, or discovery of famous places
+      // lieux par où passer, ou découverte de lieux connus
       let endN = null;
       if (ab && !S.endFree) {
         const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = snapNode(ex, ey);
@@ -1353,7 +1353,7 @@ async function generate(isAgain) {
         else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « En boucle » ou « N’importe où ».');
       }
       const endArg = !ab ? s : S.endFree ? 'free' : endN;
-      if (errs.length) { /* reported below */ }
+      if (errs.length) { /* signalé plus bas */ }
       else if (S.vias.length) {
         const vn = [];
         for (const v of S.vias) { const [vx, vy] = E.toXY(v.lat, v.lon); const n = snapNode(vx, vy); if (n < 0 || Math.hypot(G.NX[n] - vx, G.NY[n] - vy) > 400) { errs.push(`« ${v.name} » est dans une zone évitée ou inaccessible : retire-le ou réautorise sa zone.`); } else vn.push(n); }
@@ -1370,7 +1370,7 @@ async function generate(isAgain) {
         r = await E.loop(s, target, opt, prog);
         if (!r) errs.push("Aucune boucle trouvée avec ces réglages : les zones évitées isolent le départ. Réautorise un quartier ou change la distance.");
       } else if (S.endFree) {
-        if ($('#end-metro').checked && METRO.st.length) { // finish at a station: their nearest allowed street node
+        if ($('#end-metro').checked && METRO.st.length) { // finir à une station : le carrefour autorisé le plus proche de chacune
           opt.endNodes = []; for (const st of METRO.st) { const n = E.nearest(st.x, st.y); if (n >= 0 && Math.hypot(G.NX[n] - st.x, G.NY[n] - st.y) < 120) opt.endNodes.push({ n, x: st.x, y: st.y }); }
         }
         r = await E.oneWay(s, target, opt, prog);
@@ -1427,7 +1427,7 @@ function routeNotes(r) {
   if (r.kind === 'aller-retour') notes.push('Aller-retour : tu reviens par le même chemin.');
   if (r.cemLen > 50) notes.push(`Le parcours traverse un cimetière sur ${Math.round(r.cemLen)} m : horaires d'ouverture limités et lieu de recueillement.`);
   const ld = S.lastDep;
-  if (ld && ld.closed.length && S.tab !== 'race') { // closed parks the route goes around
+  if (ld && ld.closed.length && S.tab !== 'race') { // parcs fermés que le parcours contourne
     const P = routePts(r); const near = ld.closed.filter(p => P.some(([x, y], i) => i % 6 === 0 && Math.abs(x - p.c[0]) < 350 && Math.abs(y - p.c[1]) < 350)).sort((a, b) => b.e.length - a.e.length);
     if (near.length) notes.push(`Fermé${near.length > 1 ? 's' : ''} à l'heure de ta sortie (départ ${hhmm(ld.dep)}), donc contourné${near.length > 1 ? 's' : ''} : ${near.slice(0, 3).map(p => p.n).join(', ')}${near.length > 3 ? '…' : '.'}`);
   }
@@ -1509,7 +1509,7 @@ function showRoute(r, notes) {
   if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));
   const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
   $('#via').appendChild(sp);
-  // drinking water along the way
+  // points d'eau sur le parcours
   const rf = routeFountains(r);
   if (rf) { const box = document.createElement('div'); box.className = 'water-box';
     const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Points d’eau'; box.appendChild(l);
@@ -1518,13 +1518,13 @@ function showRoute(r, notes) {
     else { t.innerHTML = `<strong></strong> · km ${rf.stops.slice(0, 10).map(a => fmt(a / 1000)).join(' · ')}${rf.stops.length > 10 ? '…' : ''}`; t.querySelector('strong').textContent = `${rf.list.length} fontaine${rf.list.length > 1 ? 's' : ''}, ${rf.stops.length} point${rf.stops.length > 1 ? 's' : ''} d’eau`;
       if (r.len > 4000) { const g = document.createElement('small'); g.textContent = `Plus long passage sans eau : ${fmt(rf.gap / 1000)} km. Certaines fontaines sont coupées en hiver.`; t.appendChild(g); } }
     box.appendChild(t); $('#via').appendChild(box); }
-  // one-way routes: nearest metro / RER at the arrival, to get back home
+  // parcours qui ne reviennent pas au départ : métro ou RER le plus proche de l'arrivée, pour rentrer
   const P = routePts(r), a = P[0], b = P[P.length - 1]; r._metroEnd = null;
   if (METRO.st.length && Math.hypot(b[0] - a[0], b[1] - a[1]) > 300) {
     const ns = nearestStation(b[0], b[1]); r._metroEnd = ns;
     const box = document.createElement('div'); box.className = 'metro-end';
     const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Pour rentrer'; box.appendChild(l);
-    const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // walking ≈ 1.25 × straight line
+    const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // à pied ≈ 1,25 × la distance à vol d'oiseau
     t.innerHTML = `<strong></strong> à ${d < 30 ? 'l’arrivée' : '~' + d + ' m à pied'}`; t.querySelector('strong').textContent = (ns.d > 1500 ? 'Pas de station proche · la plus proche : ' : ns.s.ls.every(x => x.startsWith('RER')) ? 'RER ' : ns.s.tram ? 'Tram ' : 'Métro ') + ns.s.n;
     box.appendChild(t); for (const ln of ns.s.ls) box.appendChild(lineBadge(ln));
     $('#via').appendChild(box);
@@ -1532,7 +1532,7 @@ function showRoute(r, notes) {
   drawProfile(r);
 }
 
-// ---------- profile ----------
+// ---------- profil ----------
 function drawProfile(r) {
   const c = $('#prof'), b = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
   if (!b.width) return;
@@ -1552,7 +1552,7 @@ function drawProfile(r) {
   x.beginPath(); x.moveTo(X(0), Y(lo)); for (const [s, z] of P) x.lineTo(X(s), Y(z)); x.lineTo(X(L), Y(lo)); x.closePath();
   x.globalAlpha = .18; x.fillStyle = col; x.fill(); x.globalAlpha = 1;
   x.beginPath(); P.forEach(([s, z], i) => i ? x.lineTo(X(s), Y(z)) : x.moveTo(X(s), Y(z))); x.strokeStyle = col; x.lineWidth = 1.8; x.stroke();
-  // highest point
+  // point le plus haut
   let im = 0; P.forEach((p, i) => { if (p[1] > P[im][1]) im = i; });
   x.beginPath(); x.arc(X(P[im][0]), Y(P[im][1]), 3.5, 0, 7); x.fillStyle = col; x.fill();
 }
@@ -1572,7 +1572,7 @@ $('#gpx').onclick = async () => {
   try {
     const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX parcours mythique ' + S.race.name : 'GPX parcours');
     if (NATIVE) { await nativeShareFile(fn + '.gpx', g); return; } // application : menu de partage (Strava, Garmin, Fichiers…)
-    if (!window.claude) { // public site: a real .gpx file
+    if (!window.claude) { // site : un vrai fichier .gpx
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       return toast('GPX téléchargé : importe-le dans ta montre ou Strava.', 4000);
@@ -1621,7 +1621,7 @@ function shOpen(secs, doneM) {
 }
 function shClose() {
   $('#shx').hidden = true; SH.photo = null; sbSync();
-  // sortie qui vient d'être enregistrée : on la montre dans « Mes parcours », avec ou sans photo (retour de course test, 8/10)
+  // sortie qui vient d'être enregistrée : on la montre dans « Mes parcours », avec ou sans photo
   if (SH.fresh && APPF) { SH.fresh = false; const i = mineLoad().findIndex(x => x.id === SH.entryId); if (i >= 0) { setTab('mine'); mineOpen(i); toast('Sortie enregistrée dans «\u00a0Mes parcours\u00a0».', 3000); } }
 }
 function shOut() {
@@ -1728,7 +1728,7 @@ if (document.fonts && document.fonts.load) { document.fonts.load('800 100px Arch
 
 // ---------- mode course : suivre le tracé en direct, sans montre (mobile) ----------
 // Le téléphone compare sa position au tracé : prochain virage, km faits / restants, hors tracé, arrivée.
-// Tout reste dans le téléphone. Limite d'un site : rien ne se passe écran verrouillé, d'où l'écran gardé allumé.
+// Tout reste dans le téléphone. Sur le site, rien ne se passe écran verrouillé ; dans l'application, la position continue (D-100).
 const NAV = { on: false };
 const RUN_IC = {
   right: '<path d="M7 21V12h10"/><path d="M13 8l4 4-4 4"/>', left: '<path d="M17 21V12H7"/><path d="M11 8l-4 4 4 4"/>',
@@ -1781,7 +1781,7 @@ function navBuild(r) {
       if (jx && jx.j > i + 1 || jx && jx.complex || jx && Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10) {
         const jog = Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10 && jx.br.some(b => b.maj && !b.out && Math.abs(Math.abs(b.a) - 90) < 45);
         const name = nmAfter(jx.j);
-        // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (retour testeur 26/10)
+        // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (D-114)
         if (!jog && name && segs[jx.k][2] === name && (Math.abs(jx.a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(name) && Math.abs(turn((segs[jx.k][1] + segs[jx.j][0]) / 2, 60)) < 45)) { i = jx.j - 1; continue; }
         if (jog) man.push({ d: dd, a: jx.lat > 0 ? 1 : -1, jog: Math.abs(jx.lat), lat: jx.lat, name, jx, cross: (jx.br.find(b => b.maj && !b.out) || {}).name || '' });
         else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: Math.abs(jx.a) < 20 });
@@ -1795,7 +1795,7 @@ function navBuild(r) {
         const dv = dev(hin, hdg(q[0], q[j])); if (Math.abs(dv) < 30) straight = true; if (Math.abs(dv) < 60 && Math.sign(dv) !== Math.sign(a)) fork = true; }
       let keep = false;
       if (Math.abs(a) < 35) { if (fork && Math.abs(a) >= 12) keep = true; else continue; } // petit angle sans fourche : on continue, rien à dire
-      else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // « légèrement » supprimé (course test du 8/10)
+      else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // pas de « légèrement » : jugé confus en course
       let nm = ''; for (let j = i + 1; j < segs.length && segs[j][0] < dd + 60; j++) if (segs[j][2]) { nm = segs[j][2]; break; }
       if (nm && segs[i][2] === nm && (Math.abs(a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(nm) && Math.abs(turn(dd, 60)) < 45)) continue; // même rue qui tourne un peu (ou trottoir qui contourne un coin) : on continue
       man.push({ d: dd, a, name: nm, keep, jx });
@@ -1806,9 +1806,9 @@ function navBuild(r) {
     for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
   }
   man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
-  // même consigne répétée à quelques mètres sur la même rue (trottoirs qui se croisent au carrefour) : une seule (retour testeur 26/10)
+  // même consigne répétée à quelques mètres sur la même rue (trottoirs qui se croisent au carrefour) : une seule (D-114)
   man = man.filter((m, i) => !(i && m.name && m.name === man[i - 1].name && m.d - man[i - 1].d < 50 && Math.sign(m.a) === Math.sign(man[i - 1].a) && !m.jog && !man[i - 1].jog));
-  // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (build 4)
+  // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (D-93)
   for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (m.jog || q.jog || m.straight || q.straight) continue;
     if (q.d - m.d <= 45 && Math.abs(m.a) >= 50 && Math.abs(m.a) <= 130 && Math.abs(q.a) >= 50 && Math.abs(q.a) <= 130 && Math.sign(m.a) !== Math.sign(q.a) && Math.abs(m.a + q.a) < 35) {
       const sg = r.edges ? (() => { let d0 = 0; for (const [e] of r.edges) { const l = G.LEN[e]; if (d0 + l > m.d + 2) return e; d0 += l; } return -1; })() : -1;
@@ -2035,7 +2035,7 @@ function streetAt(x, y) {
   return best;
 }
 // mv : sens dans lequel le coureur avance ; un passage du tracé parcouru dans l'autre sens est ignoré
-// (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, retour testeur 26/10)
+// (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, D-114)
 function navProject(x, y, d0, d1, mv, strict) {
   const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
   for (let i = i0; i <= i1; i++) { const [ax, ay] = n.pts[i], [bx, by] = n.pts[i + 1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1e-9;
@@ -2225,7 +2225,7 @@ function navDrawMe() {
   ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = colors.panel; ctx.stroke(); ctx.fillStyle = colors.ink; ctx.fill(); ctx.restore();
 }
 
-// ---------- course : hors parcours, deux choix (retours course test, build 3) ----------
+// ---------- course : hors parcours, deux choix (D-90) ----------
 function navOffMsg(d) {
   const n = $('#run-msg'), txt = `Le tracé est à ${navDistTxt(d)}${NAV.proj && NAV.n ? '' : ''}.`;
   if (NAV.ask && !NAV.busy) {
@@ -2271,7 +2271,7 @@ async function navReroute(kind, auto) {
   track('hors-parcours', (kind === 'back' ? 'Me ramener' : 'Continuer par ici') + (auto ? ' (auto)' : ''));
   navUI();
 }
-// ---------- course : carte qui suit ta direction (retours course test, build 3) ----------
+// ---------- course : carte qui suit ta direction (D-90) ----------
 const navHeadPref = () => { try { return localStorage.getItem('runparis-headup') !== '0'; } catch (e) { return true; } };
 function uprightAng(ang) { const r = MAPROT * Math.PI / 180; let a = ang + r; while (a > Math.PI / 2) a -= Math.PI; while (a < -Math.PI / 2) a += Math.PI; return a - r; }
 { // textes toujours droits à l'écran quand la carte tourne
@@ -2441,7 +2441,7 @@ function mineDel(id) {
   u.onclick = () => { const M2 = mineLoad(); M2.splice(Math.min(i, M2.length), 0, gone); mineSave(M2); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 }
-// glisser une sortie vers la gauche : bouton « Supprimer » (app, retour du 26/10)
+// glisser une sortie vers la gauche : bouton « Supprimer » (application, D-115)
 const MINE_SW = 104; // bouton 96 px + 8 px d'écart
 function mineSwipe(row, card, id) {
   let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
@@ -2455,7 +2455,7 @@ function mineSwipe(row, card, id) {
   row.querySelector('.mine-del').onclick = () => mineDel(id);
 }
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
-// ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
+// ---------- mesure d'audience (site en production seulement) : GoatCounter, anonyme, sans cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis|perfectrun/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
 const STATS = PUBLIC && PROD; // pas de stats sur staging ni en local
@@ -2489,7 +2489,7 @@ const ABOUT = {
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
 };
-// lien reçu : erreur de lien incomplet (D-88) ; l'invitation à l'app sur le site est retirée (12/10)
+// lien reçu : erreur de lien incomplet (D-88) ; pas d'invitation à l'app sur le site
 function linkErr(on) { $('#lnk-err').hidden = !on; }
 $('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
@@ -2535,7 +2535,7 @@ $('#fb-form').onsubmit = async ev => {
   finally { $('#fb-send').disabled = false; }
 };
 
-// public site: the logo leads back to the welcome page
+// site : le logo ramène à l'accueil
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'Perfect Run, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
 // Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.

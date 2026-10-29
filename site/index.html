@@ -60,7 +60,7 @@ a{color:inherit}
 .btn.secondary:active{background:var(--soft)}
 :focus-visible{outline:none;box-shadow:var(--ring);border-radius:4px}
 
-/* header */
+/* en-tête */
 header{position:absolute;top:0;left:0;right:0;z-index:5}
 header .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
 .logo{font-stretch:75%;font-weight:800;font-size:28px;text-decoration:none;line-height:1}
@@ -71,7 +71,7 @@ nav a:hover{color:var(--ink)}
 nav .btn{height:44px;font-size:15px;padding:0 16px;color:var(--accent-ink)}
 nav .btn:hover{color:var(--accent-ink)}
 
-/* hero */
+/* haut de page */
 .hero{position:relative;min-height:min(100svh,880px);display:flex;align-items:center;overflow:hidden;padding:104px 0 56px}
 .map{position:absolute;inset:0;z-index:0;background:var(--bg)}
 .map svg{position:absolute;inset:0;width:100%;height:100%}
@@ -373,7 +373,7 @@ footer p{margin:0;max-width:62em}
   </div>
 </footer>
 <script>
-// anonymous audience measurement, no cookie (public site only)
+// mesure d'audience anonyme, sans cookie (site en production seulement)
 if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname)) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
 // formulaire de l'accueil (D-70) : construit le lien vers l'app
 (() => {
@@ -416,7 +416,7 @@ if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname))
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { pop.hidden = true; btn.setAttribute('aria-expanded', false); btn.focus(); } });
 })();
 if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');
-// km markers appear as the route is drawn
+// les bornes km apparaissent pendant que le tracé se dessine
 (() => {
   const p = document.querySelector('.m-route'); if (!p || !p.getTotalLength) return;
   const L = p.getTotalLength(), real = 10208, per = L * 1000 / real, svg = p.ownerSVGElement, ns = 'http://www.w3.org/2000/svg';
