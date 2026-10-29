@@ -111,7 +111,7 @@ function mineDel(id) {
 }
 // glisser une sortie vers la gauche : bouton « Supprimer » (application, D-115)
 const MINE_SW = 104; // bouton 96 px + 8 px d'écart
-function mineSwipe(row, card, id) {
+function mineSwipe(row, card, id, del = mineDel) { // aussi pour Mes villes (del = mvDel)
   let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
   const set = (v, anim) => { card.style.transition = anim ? 'transform .18s ease' : 'none'; card.style.transform = v ? `translateX(${v}px)` : ''; row.classList.toggle('open', v <= -MINE_SW / 2); };
   card.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = row.classList.contains('open') ? -MINE_SW : 0; on = true; lock = 0;
@@ -120,7 +120,7 @@ function mineSwipe(row, card, id) {
     if (!lock) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; lock = Math.abs(mx) > Math.abs(my) ? 1 : 2; }
     if (lock !== 1) return; e.preventDefault(); const base = row.classList.contains('open') ? -MINE_SW : 0; dx = Math.max(-MINE_SW * 1.4, Math.min(0, base + mx)); set(dx); }, { passive: false });
   card.addEventListener('touchend', () => { if (!on) return; on = false; if (lock === 1) { set(dx < -MINE_SW / 2 ? -MINE_SW : 0, true); card.dataset.sw = '1'; setTimeout(() => delete card.dataset.sw, 60); } });
-  row.querySelector('.mine-del').onclick = () => mineDel(id);
+  row.querySelector('.mine-del').onclick = () => del(id);
 }
 // ---------- badges, appelés « Trophées » dans l'app (RP-85) : calculés sur l'appareil à partir des sorties, jamais retirés ----------
 // Les compteurs sont gardés à part (runparis-badges) : supprimer une sortie ou dépasser 200 sorties ne fait rien perdre.

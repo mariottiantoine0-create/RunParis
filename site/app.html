@@ -471,6 +471,26 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* Menu › Mes villes (application) : même glisser pour supprimer que Mes parcours */
+#m-villes.dot::after{content:"";width:8px;height:8px;border-radius:999px;background:var(--accent);margin-left:auto;margin-right:8px;flex:none}
+.mv-p{font-size:14px;line-height:1.45;color:var(--muted);margin:0 0 12px}
+.mv-h{margin:20px 0 8px}
+.mv-list{display:flex;flex-direction:column}
+.mv-row{border-radius:0;border-bottom:1px solid var(--line)}
+.mv-card{position:relative;z-index:1;touch-action:pan-y;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 0;background:var(--panel);flex:1;width:100%}
+.mv-card .ico,.mv-add .ico{width:18px;height:18px;flex:none}
+.mv-add .ico{color:var(--accent)}
+.mv-t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left}
+.mv-t b{font-size:16px;font-weight:600}
+.mv-t span{font-size:13px;color:var(--muted)}
+.mv-ok,.mv-pc,.mv-soon{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mv-up{height:36px;padding:0 10px;font-size:14px}
+.mv-up .ico{width:16px;height:16px;margin-right:6px}
+.mv-add{display:flex;align-items:center;gap:12px;min-height:52px;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;padding:6px 0;cursor:pointer}
+.mv-add.off{cursor:default}.mv-add.off b{color:var(--disabled-ink)}
+.mv-ask{display:flex;flex-direction:column;gap:12px}
+.mv-ask p{margin:0;font-size:15px;line-height:1.45}
+.mv-ask .btn{width:100%}
 /* onboarding (application) : plein écran, tokens v2.22 ; titres title-xl, boutons 48 px, cartes 8 px, sélection accent-fill + 2 px accent */
 .onb{position:fixed;inset:0;z-index:1100;background:var(--panel);color:var(--ink);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .onb[hidden]{display:none}
@@ -921,7 +941,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="themepop" id="themepop" hidden>
       <nav class="mlinks" id="mlinks" aria-label="Pages"><a href="./">Accueil</a><a href="a-propos.html">Comment ça marche</a></nav>
       <span class="lbl">À propos</span>
-      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
+      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="villes" id="m-villes" hidden>Mes villes<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
       <span class="lbl">Apparence</span>
       <div class="seg sm">
         <button id="t-auto" aria-pressed="true">Auto</button>
@@ -2227,7 +2247,7 @@ try { localStorage.setItem(CITY_K, CITY); } catch (e) {}
 const C0 = CITIES[CITY], CD = C0.dir;
 document.documentElement.dataset.city = CITY;
 // changer de ville : on recharge l'app sur la nouvelle carte (le choix est gardé sur l'appareil) ; extra = paramètres à ajouter (parcours à rouvrir…)
-function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
+function setCity(k, extra, force) { if (!CITIES[k]) return; if ((NATIVE || ONB_DEMO) && !force && !dlState()[k]) { cityAsk(k, extra); return; } try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
   const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
   if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
 const DV = '?v=8f4f41c1';
@@ -2262,7 +2282,7 @@ async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: '
 async function dlReady() {
   await dlRoot();
   if (dlState()[CITY]) return true;
-  const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
+  const ld = $('#loading'); ld.classList.add('dl-full'); const recv = new URLSearchParams(location.search).has('p'), txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
   catch (e) {
     track('ville-echec', 'Téléchargement de ville raté'); splashDone();
@@ -4643,7 +4663,7 @@ function mineDel(id) {
 }
 // glisser une sortie vers la gauche : bouton « Supprimer » (application, D-115)
 const MINE_SW = 104; // bouton 96 px + 8 px d'écart
-function mineSwipe(row, card, id) {
+function mineSwipe(row, card, id, del = mineDel) { // aussi pour Mes villes (del = mvDel)
   let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
   const set = (v, anim) => { card.style.transition = anim ? 'transform .18s ease' : 'none'; card.style.transform = v ? `translateX(${v}px)` : ''; row.classList.toggle('open', v <= -MINE_SW / 2); };
   card.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = row.classList.contains('open') ? -MINE_SW : 0; on = true; lock = 0;
@@ -4652,7 +4672,7 @@ function mineSwipe(row, card, id) {
     if (!lock) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; lock = Math.abs(mx) > Math.abs(my) ? 1 : 2; }
     if (lock !== 1) return; e.preventDefault(); const base = row.classList.contains('open') ? -MINE_SW : 0; dx = Math.max(-MINE_SW * 1.4, Math.min(0, base + mx)); set(dx); }, { passive: false });
   card.addEventListener('touchend', () => { if (!on) return; on = false; if (lock === 1) { set(dx < -MINE_SW / 2 ? -MINE_SW : 0, true); card.dataset.sw = '1'; setTimeout(() => delete card.dataset.sw, 60); } });
-  row.querySelector('.mine-del').onclick = () => mineDel(id);
+  row.querySelector('.mine-del').onclick = () => del(id);
 }
 // ---------- badges, appelés « Trophées » dans l'app (RP-85) : calculés sur l'appareil à partir des sorties, jamais retirés ----------
 // Les compteurs sont gardés à part (runparis-badges) : supprimer une sortie ou dépasser 200 sorties ne fait rien perdre.
@@ -4809,6 +4829,7 @@ const ABOUT = {
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
+  villes: ['Mes villes', () => '<div id="mv"></div>'],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
@@ -4822,13 +4843,14 @@ function aboutOpen(k) {
   if (k === 'aide') { if (NATIVE) window.open('https://perfectrun.fr/aide', '_blank'); else location.href = 'aide.html'; return; } // page publique Aide et contact (D-112)
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
   $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+  if (k === 'villes') { mvRender(); if (!DLX.idx) dlIndex().then(i => { DLX.idx = i; mvRender(); }).catch(() => {}); }
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
 $('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
-  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
+  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-') && k !== DL_K) { /* les villes téléchargées restent : ce ne sont pas des données personnelles */ bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
@@ -4937,7 +4959,7 @@ const onbDone = () => { try { return localStorage.getItem(ONB_K) === '1'; } catc
 const ONB_OLD = (() => { try { return !!(localStorage.getItem('runparis-done') || localStorage.getItem('runparis-last') || CITY_STORED); } catch (e) { return false; } })();
 const ONB = { step: 1, pick: new Set(), idx: null, prog: {}, err: new Set(), done: new Set(), queue: null, resolve: null };
 const onbCities = () => Object.keys(CITIES);
-const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + ' Mo' : Math.max(1, Math.round(b / 1e3)) + ' Ko';
+const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round(b / 1e3)) + '\u00a0Ko'; // espace insécable : « 4,0 Mo » ne se coupe pas
 function onbShow(n) {
   ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
   document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
@@ -4969,7 +4991,7 @@ async function onbDownload() {
   for (const k of onbList()) {
     if (ONB.done.has(k)) continue;
     try {
-      if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { ONB.prog[k] = p; onbProgress(); await new Promise(r => setTimeout(r, 120)); } }
+      if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { ONB.prog[k] = p; onbProgress(); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: 'demo', bytes: ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0, at: new Date().toISOString() }; dlSave(s); }
       else await cityDownload(k, p => { ONB.prog[k] = p; onbProgress(); }, ONB.idx);
       ONB.done.add(k); ONB.prog[k] = 1;
     } catch (e) { ONB.err.add(k); track('ville-echec', 'Téléchargement de ville raté'); }
@@ -5022,6 +5044,90 @@ async function onbGate() {
   if ((NATIVE || ONB_DEMO) && (!onbDone() || ONB_DEMO)) { if (NATIVE) await dlRoot(); await onboarding(); }
   return NATIVE ? dlReady() : true;
 }
+// ---------- Menu › Mes villes : villes sur le téléphone, mises à jour, suppression, ajout (application) ----------
+const DLX = { idx: null, busy: {} };
+const DL_SEEN = 'runparis-villes-vu'; // empreintes des mises à jour déjà signalées (une seule annonce par mise à jour)
+const dlUpdates = () => { const st = dlState(), i = DLX.idx; return i ? Object.keys(st).filter(k => i.cities[k] && i.cities[k].h !== st[k].h) : []; };
+// au lancement, en silence : y a-t-il de nouvelles données pour une ville du téléphone ? (pas de mise à jour automatique en v1)
+async function dlCheck() {
+  if (!NATIVE && !ONB_DEMO) return;
+  try { DLX.idx = await dlIndex(); } catch (e) { return; }
+  const up = dlUpdates(); $('#m-villes').classList.toggle('dot', !!up.length);
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem(DL_SEEN) || '{}'); } catch (e) {}
+  const fresh = up.filter(k => seen[k] !== DLX.idx.cities[k].h); if (!fresh.length) return;
+  for (const k of fresh) seen[k] = DLX.idx.cities[k].h; try { localStorage.setItem(DL_SEEN, JSON.stringify(seen)); } catch (e) {}
+  const t = $('#toast'); t.innerHTML = ''; t.append(`Nouvelles données pour ${fresh.map(k => CITIES[k].name).join(', ')}`);
+  const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Voir'; u.onclick = () => { t.hidden = true; aboutOpen('villes'); };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 6000);
+}
+function mvRender() {
+  const b = $('#mv'); if (!b) return; const st = dlState(), i = DLX.idx, have = Object.keys(CITIES).filter(k => st[k]), miss = Object.keys(CITIES).filter(k => !st[k]);
+  b.innerHTML = `<p class="mv-p">Les rues de ces villes sont sur ton téléphone : l’app marche sans réseau.${have.length > 1 ? ' Glisse une ville vers la gauche pour la supprimer.' : ''}</p><div class="mv-list" id="mv-have"></div>` +
+    (miss.length || CITY_SOON.length ? '<div class="lbl mv-h">Ajouter une ville</div><div class="mv-list" id="mv-miss"></div>' : '');
+  for (const k of have) {
+    const up = i && i.cities[k] && i.cities[k].h !== st[k].h, busy = DLX.busy[k];
+    const row = document.createElement('div'); row.className = 'mine-row mv-row';
+    row.innerHTML = `<div class="mv-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5z"/><path d="M9.5 10a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0"/></svg><span class="mv-t"><b></b><span></span></span><span class="mv-s"></span></div><button type="button" class="mine-del" tabindex="-1">Supprimer</button>`;
+    row.querySelector('b').textContent = CITIES[k].name + (k === CITY ? ' · affichée' : '');
+    row.querySelector('.mv-t span').textContent = mo(st[k].bytes || 0);
+    const s = row.querySelector('.mv-s');
+    if (busy != null) s.innerHTML = `<span class="mv-pc">${Math.round(busy * 100)} %</span>`;
+    else if (up) { const u = document.createElement('button'); u.type = 'button'; u.className = 'btn ghost mv-up'; u.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Mettre à jour'; u.setAttribute('aria-label', 'Mettre à jour ' + CITIES[k].name); u.onclick = () => mvGet(k, true); s.appendChild(u); }
+    else s.innerHTML = '<span class="mv-ok">À jour</span>';
+    if (have.length > 1) mineSwipe(row, row.firstChild, k, mvDel); else row.querySelector('.mine-del').remove();
+    $('#mv-have').appendChild(row);
+  }
+  for (const k of miss) {
+    const c = i && i.cities[k], busy = DLX.busy[k], r = document.createElement('button'); r.type = 'button'; r.className = 'mv-add';
+    r.innerHTML = `<span class="mv-t"><b></b><span></span></span>${busy != null ? `<span class="mv-pc">${Math.round(busy * 100)} %</span>` : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>'}`;
+    r.querySelector('b').textContent = CITIES[k].name; r.querySelector('.mv-t span').textContent = CITIES[k].sub + (c ? ' · ' + mo(c.bytes) : '');
+    r.setAttribute('aria-label', 'Télécharger ' + CITIES[k].name); r.disabled = busy != null; r.onclick = () => mvGet(k, false);
+    $('#mv-miss').appendChild(r);
+  }
+  for (const n of CITY_SOON) { const d = document.createElement('div'); d.className = 'mv-add off'; d.innerHTML = '<span class="mv-t"><b></b></span><span class="mv-soon">Bientôt</span>'; d.querySelector('b').textContent = n; $('#mv-miss').appendChild(d); }
+}
+// télécharger ou mettre à jour une ville depuis Mes villes
+async function mvGet(k, update) {
+  if (DLX.busy[k] != null) return; DLX.busy[k] = 0; mvRender();
+  try {
+    if (!DLX.idx) DLX.idx = await dlIndex();
+    if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { DLX.busy[k] = p; mvRender(); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: DLX.idx.cities[k].h, bytes: DLX.idx.cities[k].bytes, at: new Date().toISOString() }; dlSave(s); }
+    else await cityDownload(k, p => { DLX.busy[k] = p; mvRender(); }, DLX.idx);
+    delete DLX.busy[k]; mvRender(); $('#m-villes').classList.toggle('dot', !!dlUpdates().length);
+    if (update) track('ville-maj-' + k, 'Ville mise à jour ' + CITIES[k].name);
+    if (update && k === CITY) { toast(`${CITIES[k].name} à jour : la carte se recharge.`, 2000); setTimeout(() => setCity(k, null, true), 1200); }
+    else toast(update ? `${CITIES[k].name} à jour.` : `${CITIES[k].name} est sur ton téléphone.`);
+  } catch (e) { delete DLX.busy[k]; mvRender(); track('ville-echec', 'Téléchargement de ville raté'); toast('Téléchargement interrompu : vérifie ta connexion et réessaie.', 3500); }
+}
+// supprimer une ville : « Annuler » pendant 5 s, puis les fichiers sont effacés ; la dernière ville ne peut pas l'être
+function mvDel(k) {
+  const st = dlState(); if (Object.keys(st).length < 2) return toast('Garde au moins une ville.');
+  const gone = st[k]; delete st[k]; dlSave(st); mvRender(); track('ville-supprimee-' + k, 'Ville supprimée ' + CITIES[k].name);
+  const t = $('#toast'); t.innerHTML = ''; t.append(`${CITIES[k].name} supprimée`); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  let undone = false; u.onclick = () => { undone = true; const s = dlState(); s[k] = gone; dlSave(s); mvRender(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt);
+  tt = setTimeout(() => { t.hidden = true; if (undone) return;
+    if (NATIVE) NP.fs.rmdir({ path: 'villes/' + k, directory: 'DATA', recursive: true }).catch(() => {});
+    if (k === CITY) setCity(Object.keys(dlState())[0], null, true); }, 5000);
+}
+// passer sur une ville absente du téléphone : on propose de la télécharger d'abord
+async function cityAsk(k, extra) {
+  const c = CITIES[k]; $('#about-t').textContent = `Télécharger ${c.name} ?`; $('#about-f').hidden = true; $('#about').hidden = false;
+  const b = $('#about-b'); b.innerHTML = `<div class="mv-ask"><p></p><div class="onb-progs" id="ask-prog"></div><button type="button" class="btn primary" id="ask-go">Télécharger</button><button type="button" class="textbtn" id="ask-no">Annuler</button></div>`;
+  const p = b.querySelector('p'); p.textContent = `Les rues de ${c.name} et de ses communes voisines. Ensuite, ${c.name} marche sans réseau.`;
+  $('#ask-no').onclick = () => { $('#about').hidden = true; };
+  try { if (!DLX.idx) DLX.idx = await dlIndex(); p.textContent = `Les rues de ${c.name} et de ses communes voisines : ${mo(DLX.idx.cities[k].bytes)}. Ensuite, ${c.name} marche sans réseau.`; } catch (e) {}
+  $('#ask-go').onclick = async () => {
+    const go = $('#ask-go'); go.disabled = true; go.textContent = 'Téléchargement…';
+    const show = q => { $('#ask-prog').innerHTML = `<div class="onb-prog"><div class="onb-pr"><b>${c.name}</b><span>${Math.round(q * 100)} %</span></div><span class="onb-bar" role="progressbar" aria-label="Téléchargement de ${c.name}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(q * 100)}"><i style="width:${Math.round(q * 100)}%"></i></span></div>`; };
+    try {
+      if (ONB_DEMO) { for (let q = 0; q <= 1; q += 0.25) { show(q); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: 'demo', bytes: 0, at: new Date().toISOString() }; dlSave(s); }
+      else { if (!DLX.idx) DLX.idx = await dlIndex(); await cityDownload(k, show, DLX.idx); }
+      setCity(k, extra, true);
+    } catch (e) { go.disabled = false; go.textContent = 'Réessayer'; $('#ask-prog').innerHTML = '<div class="note err" role="alert"><b>Téléchargement interrompu</b> Vérifie ta connexion, puis réessaie.</div>'; track('ville-echec', 'Téléchargement de ville raté'); }
+  };
+}
+if (NATIVE || ONB_DEMO) { $('#m-villes').hidden = false; setTimeout(dlCheck, 4000); }
 boot();
 })();
 </script>

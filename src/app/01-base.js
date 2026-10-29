@@ -68,7 +68,7 @@ try { localStorage.setItem(CITY_K, CITY); } catch (e) {}
 const C0 = CITIES[CITY], CD = C0.dir;
 document.documentElement.dataset.city = CITY;
 // changer de ville : on recharge l'app sur la nouvelle carte (le choix est gardé sur l'appareil) ; extra = paramètres à ajouter (parcours à rouvrir…)
-function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
+function setCity(k, extra, force) { if (!CITIES[k]) return; if ((NATIVE || ONB_DEMO) && !force && !dlState()[k]) { cityAsk(k, extra); return; } try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
   const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
   if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
 const DV = '__DATAV__';
@@ -103,7 +103,7 @@ async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: '
 async function dlReady() {
   await dlRoot();
   if (dlState()[CITY]) return true;
-  const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
+  const ld = $('#loading'); ld.classList.add('dl-full'); const recv = new URLSearchParams(location.search).has('p'), txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
   catch (e) {
     track('ville-echec', 'Téléchargement de ville raté'); splashDone();

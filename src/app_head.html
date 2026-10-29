@@ -464,6 +464,26 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* Menu › Mes villes (application) : même glisser pour supprimer que Mes parcours */
+#m-villes.dot::after{content:"";width:8px;height:8px;border-radius:999px;background:var(--accent);margin-left:auto;margin-right:8px;flex:none}
+.mv-p{font-size:14px;line-height:1.45;color:var(--muted);margin:0 0 12px}
+.mv-h{margin:20px 0 8px}
+.mv-list{display:flex;flex-direction:column}
+.mv-row{border-radius:0;border-bottom:1px solid var(--line)}
+.mv-card{position:relative;z-index:1;touch-action:pan-y;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 0;background:var(--panel);flex:1;width:100%}
+.mv-card .ico,.mv-add .ico{width:18px;height:18px;flex:none}
+.mv-add .ico{color:var(--accent)}
+.mv-t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left}
+.mv-t b{font-size:16px;font-weight:600}
+.mv-t span{font-size:13px;color:var(--muted)}
+.mv-ok,.mv-pc,.mv-soon{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mv-up{height:36px;padding:0 10px;font-size:14px}
+.mv-up .ico{width:16px;height:16px;margin-right:6px}
+.mv-add{display:flex;align-items:center;gap:12px;min-height:52px;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;padding:6px 0;cursor:pointer}
+.mv-add.off{cursor:default}.mv-add.off b{color:var(--disabled-ink)}
+.mv-ask{display:flex;flex-direction:column;gap:12px}
+.mv-ask p{margin:0;font-size:15px;line-height:1.45}
+.mv-ask .btn{width:100%}
 /* onboarding (application) : plein écran, tokens v2.22 ; titres title-xl, boutons 48 px, cartes 8 px, sélection accent-fill + 2 px accent */
 .onb{position:fixed;inset:0;z-index:1100;background:var(--panel);color:var(--ink);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .onb[hidden]{display:none}
@@ -914,7 +934,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="themepop" id="themepop" hidden>
       <nav class="mlinks" id="mlinks" aria-label="Pages"><a href="./">Accueil</a><a href="a-propos.html">Comment ça marche</a></nav>
       <span class="lbl">À propos</span>
-      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
+      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="villes" id="m-villes" hidden>Mes villes<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
       <span class="lbl">Apparence</span>
       <div class="seg sm">
         <button id="t-auto" aria-pressed="true">Auto</button>

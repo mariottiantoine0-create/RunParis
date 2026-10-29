@@ -28,6 +28,7 @@ const ABOUT = {
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
+  villes: ['Mes villes', () => '<div id="mv"></div>'],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
@@ -41,13 +42,14 @@ function aboutOpen(k) {
   if (k === 'aide') { if (NATIVE) window.open('https://perfectrun.fr/aide', '_blank'); else location.href = 'aide.html'; return; } // page publique Aide et contact (D-112)
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
   $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+  if (k === 'villes') { mvRender(); if (!DLX.idx) dlIndex().then(i => { DLX.idx = i; mvRender(); }).catch(() => {}); }
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
 $('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
-  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
+  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-') && k !== DL_K) { /* les villes téléchargées restent : ce ne sont pas des données personnelles */ bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
