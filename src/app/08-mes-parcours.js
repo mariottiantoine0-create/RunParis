@@ -180,10 +180,12 @@ function bGeo(e) {
 }
 function bStats(s) { return { km: s.km, best: s.best || 0, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities }; }
 const bVal = (b, st) => b.key.startsWith('city:') ? (st.cities.includes(b.key.slice(5)) ? 1 : 0) : st[b.key] || 0;
+const bReal = e => !!e.meas && (e.km || 0) >= 0.5 && (!e.secs || e.secs / e.km >= 150);
 // met les compteurs à jour avec les sorties pas encore comptées ; renvoie les badges qui viennent d'être obtenus
 function badgeSync(quiet) {
   if (!APPF) return [];
-  const s = bLoad(), L = mineLoad(), geo = !!(M && G);
+  // seules comptent les sorties vraiment courues : mesurées, au moins 500 m, allure humaine (plus lente que 2:30 /km) — retour d'Antoine le 29/10
+  const s = bLoad(), L = mineLoad().filter(bReal), geo = !!(M && G);
   for (const e of L) {
     const id = String(e.id || e.d), c = e.city || 'paris';
     if (!s.seen[id]) { s.seen[id] = 1; s.km += e.km || 0; s.n++; s.up += e.up || 0; const w = bWeek(e.d); if (!s.weeks.includes(w)) s.weeks.push(w); if (!s.cities.includes(c)) s.cities.push(c); if (e.race) s.myth = 1; if (e.pk) s.piste = 1; }
@@ -245,7 +247,8 @@ function badgeAnnounce(fresh) {
   $('#shx-badge-k').textContent = one ? 'Nouveau trophée' : `${fresh.length} nouveaux trophées`;
   $('#shx-badge-l').innerHTML = fresh.map(b => badgeHTML(b, one ? 104 : 72, true)).join('');
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
-  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : fresh.map(b => b.name).join(' · ');
+  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
+  $('#shx-badge-t').hidden = !one; // plusieurs trophées : leurs noms sont déjà sous les écussons
 }
 // « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite
 $('#shx-badge-go').onclick = () => { S.mineView = 'badges'; S.badgeBack = true; $('#shx').hidden = true; sbSync(); setTab('mine'); };

@@ -17,7 +17,7 @@ function shareData() {
 function shOpen(secs, doneM) {
   const meas = typeof secs === 'number';
   const d = shareData(); if (!d) return toast("Génère d'abord un parcours.");
-  if (meas && typeof doneM === 'number' && doneM > 100) d.km = doneM / 1000;
+  if (meas && typeof doneM === 'number') d.km = doneM / 1000;
   SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
   $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';

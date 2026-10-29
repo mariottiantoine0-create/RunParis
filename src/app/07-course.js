@@ -224,7 +224,8 @@ function runFinish(arrived) {
   if (!started) return;
   track('suivi-fin', free ? 'Terminé après avoir continué' : arrived ? 'Arrivée détectée' : 'Terminé avant l’arrivée');
   SH.extra = free && extra > 50 ? { km: Math.round(extra / 100) / 10, streets } : null;
-  shOpen(secs, arrived && !free && !base ? null : done);
+  // distance prévue seulement si l'on a vraiment parcouru presque tout le tracé (une boucle « arrive » dès le départ)
+  shOpen(secs, arrived && !free && !base && NAV.prog >= NAV.n.L * 0.8 ? null : done);
 }
 // arrivée : on ne coupe pas d'office, le coureur choisit de terminer ou de continuer (D-80)
 function navArrive() {
