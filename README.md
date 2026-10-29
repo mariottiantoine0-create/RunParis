@@ -42,7 +42,7 @@ site/              ce que Netlify publie
 src/
   engine.js        moteur de calcul des parcours
   app_head.html    structure et styles de la page
-  app.js           interface
+  app/             interface, découpée par domaine (01-base.js … 09-pages.js), assemblée dans l’ordre des noms
   landing.html     modèle de la page d'accueil
   a-propos.html    modèle de la page « Comment ça marche »
   hero.json        carte de Paris et parcours dessinés sur la page d'accueil

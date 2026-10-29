@@ -12,7 +12,9 @@ meta = ('<!doctype html>\n<html lang="fr">\n<meta charset="utf-8">\n'
         '<meta name="description" content="Perfect Run génère des parcours de course à Paris, à Lyon et dans leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">\n'
         '<meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">\n<meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">\n'
         '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">\n')
-app = meta + (rd('app_head.html') + rd('app.js')).replace('/*ENGINE*/', rd('engine.js'))
+# le code de l'interface est découpé par domaine dans src/app/ (01-base.js … 09-pages.js), assemblé dans l'ordre des noms
+app_js = ''.join(f.read_text(encoding='utf-8') for f in sorted((src / 'app').glob('*.js')))
+app = meta + (rd('app_head.html') + app_js).replace('/*ENGINE*/', rd('engine.js'))
 # version des données : change dès qu'un fichier de données change, pour que le navigateur recharge la nouvelle version
 h = hashlib.sha1()
 DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt', 'crowd.txt', 'tracks.json']
