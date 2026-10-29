@@ -1,0 +1,51 @@
+{
+ "city": "lille",
+ "name": "Lille",
+ "pbf": "/mnt/user-data/uploads/RunParis/_brut/nord-pas-de-calais-261028.osm.pbf",
+ "bbox": [
+  50.565,
+  50.715,
+  2.885,
+  3.215
+ ],
+ "dem": {
+  "file": "/mnt/user-data/uploads/RunParis/_brut/lille_dem_4400x3200.f32",
+  "bbox": [
+   50.565,
+   50.715,
+   2.885,
+   3.215
+  ],
+  "W": 4400,
+  "H": 3200
+ },
+ "center_insee": "59350",
+ "communes": [
+  "59350",
+  "59457",
+  "59527",
+  "59368",
+  "59195",
+  "59328",
+  "59356",
+  "59128",
+  "59378",
+  "59410",
+  "59566",
+  "59346",
+  "59470",
+  "59196",
+  "59360",
+  "59507",
+  "59220",
+  "59648",
+  "59009"
+ ],
+ "arr_insee": [],
+ "transit_network": "Ilévia",
+ "quartiers": true,
+ "quartiers9": true,
+ "noms": {
+  "Hellemmes-Lille": "Hellemmes"
+ }
+}

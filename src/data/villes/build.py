@@ -20,8 +20,9 @@ for a in ARR:
 # quartiers de la ville centre (OSM admin_level 10), quand elle n'a pas d'arrondissements : ar 50 à 99
 if CFG.get('quartiers'):
     CEN=apoly([a for a in A if a['level']=='8' and a['insee']==CFG['center_insee']][0])
-    QS=sorted([a for a in A if a['level']=='10' and CEN.contains(apoly(a).representative_point())],key=lambda a:a['name'])
-    for i,a in enumerate(QS): feats.append(dict(type='Feature',properties=dict(l_qu=a['name'],c_ar=50+i),geometry=(apoly(a).intersection(CEN)).__geo_interface__))
+    # communes associées de niveau 9 (Lille : Lomme, Hellemmes) ajoutées comme quartiers avec "quartiers9": true
+    QS=sorted([a for a in A if (a['level']=='10' or (CFG.get('quartiers9') and a['level']=='9' and a['insee']!=CFG['center_insee'])) and CEN.contains(apoly(a).representative_point())],key=lambda a:a['name'])
+    for i,a in enumerate(QS): feats.append(dict(type='Feature',properties=dict(l_qu=CFG.get('noms',{}).get(a['name'],a['name']),c_ar=50+i),geometry=(apoly(a).intersection(CEN)).__geo_interface__))
     print('quartiers',[a['name'] for a in QS])
 CF=sorted([a for a in A if a['level']=='8' and a['insee'] in CFG['communes'] and a['insee']!=CFG['center_insee']],key=lambda a:a['name'])
 for a in CF: feats.append(dict(type='Feature',properties=dict(l_qu=a['name'],c_ar=int(a['insee'])),geometry=apoly(a).__geo_interface__))
