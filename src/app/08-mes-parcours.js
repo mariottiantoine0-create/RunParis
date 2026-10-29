@@ -135,6 +135,7 @@ const B_ICO = {
   mythique: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
   piste: '<path d="M8 6.5h8a5.5 5.5 0 0 1 0 11H8a5.5 5.5 0 0 1 0-11zM8.5 9.5h7a2.5 2.5 0 0 1 0 5h-7a2.5 2.5 0 0 1 0-5z"/>',
   dplus: '<path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/>',
+  longue: '<path d="M5 21V4h12l-2.5 4L17 12H5"/>',
 };
 const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
 const B_TIER = { depart: 'Départ', bronze: 'Bronze', argent: 'Argent', or: 'Or', special: 'Spécial' };
@@ -142,6 +143,8 @@ const B_TIER = { depart: 'Départ', bronze: 'Bronze', argent: 'Argent', or: 'Or'
 const BADGES = (() => {
   const L = [], add = (id, fam, ico, val, unit, tier, name, key, goal) => L.push({ id, fam, ico, val, unit, tier, name, key, goal });
   [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km', 'km', n));
+  // sorties longues : la plus longue sortie d'un coup (demande d'Antoine le 29/10)
+  [[5, '5', 'depart', '5 km d’un coup'], [10, '10', 'bronze', '10 km d’un coup'], [21.1, '21,1', 'argent', 'Semi-marathon'], [42.2, '42,2', 'or', 'Marathon']].forEach(([n, v, t, nm]) => add('long' + Math.round(n), 'long', 'longue', v, 'km', t, nm, 'best', n));
   [[1, 'depart'], [10, 'bronze'], [25, 'argent'], [50, 'or']].forEach(([n, t]) => add('n' + n, 'n', 'sorties', n === 1 ? '1re' : String(n), n === 1 ? 'sortie' : 'sorties', t, n === 1 ? '1re sortie' : n + ' sorties', 'n', n));
   [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines', 'streak', n));
   [[5, 'bronze'], [10, 'argent'], [20, 'or']].forEach(([n, t]) => add('zone' + n, 'expl', 'exploration', String(n), 'arr.', t, n + ' arrondissements', 'zones', n));
@@ -176,7 +179,7 @@ function bGeo(e) {
   }
   return { z, p };
 }
-function bStats(s) { return { km: s.km, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities }; }
+function bStats(s) { return { km: s.km, best: s.best || 0, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities }; }
 const bVal = (b, st) => b.key.startsWith('city:') ? (st.cities.includes(b.key.slice(5)) ? 1 : 0) : st[b.key] || 0;
 // met les compteurs à jour avec les sorties pas encore comptées ; renvoie les badges qui viennent d'être obtenus
 function badgeSync(quiet) {
@@ -187,6 +190,7 @@ function badgeSync(quiet) {
     if (!s.seen[id]) { s.seen[id] = 1; s.km += e.km || 0; s.n++; s.up += e.up || 0; const w = bWeek(e.d); if (!s.weeks.includes(w)) s.weeks.push(w); if (!s.cities.includes(c)) s.cities.push(c); if (e.race) s.myth = 1; if (e.pk) s.piste = 1; }
     if (!s.geo[id] && geo && c === CITY && e.g) { s.geo[id] = 1; const g = bGeo(e); for (const z of g.z) if (!s.zones.includes(z)) s.zones.push(z); if (g.p) s.piste = 1; }
   }
+  s.best = Math.max(s.best || 0, ...L.map(e => e.km || 0)); // plus longue sortie, sorties déjà faites comprises
   const st = bStats(s), fresh = [];
   for (const b of BADGES) if (!s.got[b.id] && bVal(b, st) >= b.goal) { s.got[b.id] = new Date().toISOString(); fresh.push(b); }
   const first = !s.init; s.init = 1; bSave(s); // première fois : les sorties déjà faites comptent, sans annonce
@@ -217,8 +221,8 @@ function bFitDom(root) {
   });
 }
 // prochain palier non obtenu de la même famille (pas pour les villes ni les défis à une étape)
-function badgeNext(b, s, st) { const n = BADGES.find(x => x.fam === b.fam && x.goal > b.goal && !s.got[x.id] && x.goal > 1); if (!n) return ''; const left = n.goal - bVal(n, st); return `Prochain : ${n.name}, encore ${n.key === 'km' ? fmt(Math.max(0.1, left), 1) + ' km' : n.key === 'up' ? Math.round(left) + ' m' : Math.ceil(left)}.`; }
-const B_LEFT = (b, v) => { const l = b.goal - v; return b.key === 'km' ? 'encore ' + fmt(Math.max(0.1, l), 1) + ' km' : b.key === 'up' ? 'encore ' + Math.round(l) + ' m' : 'encore ' + Math.ceil(l); };
+function badgeNext(b, s, st) { const n = BADGES.find(x => x.fam === b.fam && x.goal > b.goal && !s.got[x.id] && x.goal > 1); if (!n) return ''; const left = n.goal - bVal(n, st); return `Prochain : ${n.name}, encore ${n.key === 'km' || n.key === 'best' ? fmt(Math.max(0.1, left), 1) + ' km' : n.key === 'up' ? Math.round(left) + ' m' : Math.ceil(left)}.`; }
+const B_LEFT = (b, v) => { const l = b.goal - v; return b.key === 'km' || b.key === 'best' ? 'encore ' + fmt(Math.max(0.1, l), 1) + ' km' : b.key === 'up' ? 'encore ' + Math.round(l) + ' m' : 'encore ' + Math.ceil(l); };
 function renderBadges() {
   badgeSync(true);
   const s = bLoad(), st = bStats(s), got = BADGES.filter(b => s.got[b.id]), off = BADGES.filter(b => !s.got[b.id]);
