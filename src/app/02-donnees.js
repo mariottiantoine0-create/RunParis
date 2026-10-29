@@ -1,13 +1,14 @@
 // ---------- chargement ----------
 async function boot() {
+  if (NATIVE && !(await dlReady())) return;
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
-    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(CD + 'graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(CD + 'graph.bin' + DV).then(r => r.arrayBuffer()); };
-    const [meta, buf] = await Promise.all([fetch(CD + 'meta.json' + DV).then(r => r.json()), loadGraph()]);
+    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(dataURL('graph.gz')); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(dataURL('graph.bin')).then(r => r.arrayBuffer()); };
+    const [meta, buf] = await Promise.all([fetch(dataURL('meta.json')).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
     // couches facultatives : part de vert par rue, parcours mythiques, lieux connus
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'tracks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(dataURL('green.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('races.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('sights.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('metro.json')).then(r => r.ok ? r.json() : null).catch(() => null), fetch(dataURL('fountains.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('parks.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('dark.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('private.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('excl.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('crowd.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('tracks.json')).then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
@@ -41,7 +42,7 @@ async function boot() {
 }
 // arbres (OSM natural=tree) : x, y en mètres, paires d'Int16 ; chargés après le premier parcours
 function loadTrees() {
-  fetch(CD + 'trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
+  fetch(dataURL('trees.txt')).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();

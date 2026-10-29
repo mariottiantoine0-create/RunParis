@@ -3,10 +3,9 @@
 const fs = require('fs'), path = require('path');
 const SITE = path.join(__dirname, '..', 'site'), WWW = path.join(__dirname, 'www');
 fs.rmSync(WWW, { recursive: true, force: true }); fs.mkdirSync(path.join(WWW, 'fonts'), { recursive: true });
-const DATA = ['meta.json', 'graph.bin', 'green.txt', 'races.json', 'sights.json', 'metro.json', 'trees.txt', 'fountains.json', 'parks.json', 'dark.txt', 'private.txt', 'excl.txt'];
-for (const f of DATA) fs.copyFileSync(path.join(SITE, f), path.join(WWW, f));
-// autres villes (D-97) : un dossier par ville, mêmes fichiers
-for (const d of ['lyon', 'bordeaux', 'nantes']) { fs.mkdirSync(path.join(WWW, d), { recursive: true }); for (const f of DATA) if (fs.existsSync(path.join(SITE, d, f))) fs.copyFileSync(path.join(SITE, d, f), path.join(WWW, d, f)); }
+// rien n'est embarqué (onboarding) : l'app télécharge chaque ville depuis le site et la garde sur le téléphone.
+// Pour tester sur l'iPhone avant la mise en production : PR_DL_BASE=https://<aperçu>.workers.dev/ npm run sync
+const DL_BASE = process.env.PR_DL_BASE || '';
 for (const f of fs.readdirSync(path.join(__dirname, 'fonts'))) fs.copyFileSync(path.join(__dirname, 'fonts', f), path.join(WWW, 'fonts', f));
 let html = fs.readFileSync(path.join(SITE, 'app.html'), 'utf8');
 const FACE = `<style>
@@ -21,5 +20,6 @@ const firstDiv = html.indexOf('<div'); html = html.slice(0, firstDiv) + SPLASH +
 // thème choisi dans l'app appliqué avant le premier affichage
 html = html.replace('<html lang="fr">', '<html lang="fr"><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>');
 if (!html.includes('id="splash"')) throw new Error('écran de lancement non inséré');
+if (DL_BASE) html = html.replace('<html lang="fr">', '<html lang="fr"><script>window.PR_DL_BASE=' + JSON.stringify(DL_BASE) + '</script>');
 fs.writeFileSync(path.join(WWW, 'index.html'), html);
 console.log('www prêt :', fs.readdirSync(WWW).length, 'fichiers');

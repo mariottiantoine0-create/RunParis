@@ -464,6 +464,12 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* téléchargement d'une ville (application) : plein écran pendant le téléchargement, et message bloquant s'il échoue */
+.loading.dl-full{position:fixed;inset:0;z-index:1000}
+.dl-err{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;max-width:320px;padding:0 16px;color:var(--ink);font-size:15px;line-height:1.45}
+.dl-err b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1.05}
+.dl-err span{color:var(--muted)}
+.dl-err .btn{flex:none;min-width:200px}
 .attrib{border-radius:4px}
 @media (max-width:860px){
   .panel{border-radius:8px 8px 0 0;box-shadow:var(--shadow-sheet)}

@@ -471,6 +471,12 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* téléchargement d'une ville (application) : plein écran pendant le téléchargement, et message bloquant s'il échoue */
+.loading.dl-full{position:fixed;inset:0;z-index:1000}
+.dl-err{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;max-width:320px;padding:0 16px;color:var(--ink);font-size:15px;line-height:1.45}
+.dl-err b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1.05}
+.dl-err span{color:var(--muted)}
+.dl-err .btn{flex:none;min-width:200px}
 .attrib{border-radius:4px}
 @media (max-width:860px){
   .panel{border-radius:8px 8px 0 0;box-shadow:var(--shadow-sheet)}
@@ -2124,6 +2130,43 @@ const DV = '?v=8f4f41c1';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
 $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
+
+// ---------- villes à télécharger (application, onboarding) : rien n'est embarqué, chaque ville vient du site puis reste sur le téléphone ----------
+// Sur le site, rien ne change : la page lit les fichiers de la ville à côté d'elle (CD + fichier + version).
+const DL_BASE = (window.PR_DL_BASE || 'https://perfectrun.fr/').replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
+const DL_K = 'runparis-villes'; // { ville: { h: empreinte, bytes, at } } : villes complètes sur le téléphone
+const dlState = () => { try { return JSON.parse(localStorage.getItem(DL_K) || '{}') || {}; } catch (e) { return {}; } };
+const dlSave = s => { try { localStorage.setItem(DL_K, JSON.stringify(s)); } catch (e) {} };
+let DL_ROOT = ''; // adresse locale du dossier « villes » (stockage de l'application)
+const dataURL = f => NATIVE ? DL_ROOT + CITY + '/' + f + '?h=' + ((dlState()[CITY] || {}).h || '') : CD + f + DV;
+const b64buf = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+async function dlIndex() { const r = await fetch(DL_BASE + 'villes.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('index ' + r.status); return r.json(); }
+// télécharge tous les fichiers d'une ville ; la ville n'est marquée complète qu'à la fin (un téléchargement coupé est repris en entier)
+async function cityDownload(id, onp, idx) {
+  idx = idx || await dlIndex(); const c = idx.cities[id]; if (!c) throw new Error('ville inconnue : ' + id);
+  let done = 0; onp && onp(0);
+  for (const [f, size, sh] of c.files) {
+    const r = await fetch(DL_BASE + c.dir + f + '?v=' + sh); if (!r.ok) throw new Error(f + ' ' + r.status);
+    await NP.fs.writeFile({ path: 'villes/' + id + '/' + f, data: b64buf(await r.arrayBuffer()), directory: 'DATA', recursive: true });
+    done += size; onp && onp(done / c.bytes);
+  }
+  const s = dlState(); s[id] = { h: c.h, bytes: c.bytes, at: new Date().toISOString() }; dlSave(s);
+  track('ville-telechargee-' + id, 'Ville téléchargée ' + c.name);
+}
+// au lancement : dossier local, puis la ville choisie si elle n'est pas encore sur le téléphone (en attendant l'onboarding, téléchargée d'office)
+async function dlReady() {
+  if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); }
+  if (dlState()[CITY]) return true;
+  const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
+  try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
+  catch (e) {
+    track('ville-echec', 'Téléchargement de ville raté'); splashDone();
+    ld.innerHTML = '<div class="dl-err" role="alert"><b>Pas de connexion</b><span></span><button class="btn primary" type="button">Réessayer</button></div>';
+    ld.querySelector('span').textContent = 'Il faut internet une première fois pour télécharger les rues de ' + C0.name + '. Ensuite, l’app marche sans réseau.';
+    ld.querySelector('button').onclick = () => location.reload();
+    return false;
+  }
+}
 $('#hill-hint').textContent = C0.hill; $('#zones-sum').textContent = `Choisir quartier par quartier (${C0.zones})`; $('#avoid-q').placeholder = C0.avoidEx; $('#race-hint').textContent = C0.races;
 $('#map').setAttribute('aria-label', `Carte de ${C0.name} et des communes voisines avec le parcours`); $('#attrib-od').textContent = C0.od ? ' · ' + C0.od : '';
 // ---------- choix de la ville (D-97, CityPicker) : bouton d'en-tête, feuille sur téléphone, liste sous l'en-tête sur ordinateur ----------
@@ -2166,14 +2209,15 @@ let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {},
 
 // ---------- chargement ----------
 async function boot() {
+  if (NATIVE && !(await dlReady())) return;
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
-    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(CD + 'graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(CD + 'graph.bin' + DV).then(r => r.arrayBuffer()); };
-    const [meta, buf] = await Promise.all([fetch(CD + 'meta.json' + DV).then(r => r.json()), loadGraph()]);
+    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(dataURL('graph.gz')); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(dataURL('graph.bin')).then(r => r.arrayBuffer()); };
+    const [meta, buf] = await Promise.all([fetch(dataURL('meta.json')).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
     // couches facultatives : part de vert par rue, parcours mythiques, lieux connus
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'tracks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(dataURL('green.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('races.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('sights.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('metro.json')).then(r => r.ok ? r.json() : null).catch(() => null), fetch(dataURL('fountains.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('parks.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('dark.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('private.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('excl.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('crowd.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('tracks.json')).then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
@@ -2207,7 +2251,7 @@ async function boot() {
 }
 // arbres (OSM natural=tree) : x, y en mètres, paires d'Int16 ; chargés après le premier parcours
 function loadTrees() {
-  fetch(CD + 'trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
+  fetch(dataURL('trees.txt')).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();

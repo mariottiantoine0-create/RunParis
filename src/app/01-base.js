@@ -75,6 +75,43 @@ const DV = '__DATAV__';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
 $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
+
+// ---------- villes à télécharger (application, onboarding) : rien n'est embarqué, chaque ville vient du site puis reste sur le téléphone ----------
+// Sur le site, rien ne change : la page lit les fichiers de la ville à côté d'elle (CD + fichier + version).
+const DL_BASE = (window.PR_DL_BASE || 'https://perfectrun.fr/').replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
+const DL_K = 'runparis-villes'; // { ville: { h: empreinte, bytes, at } } : villes complètes sur le téléphone
+const dlState = () => { try { return JSON.parse(localStorage.getItem(DL_K) || '{}') || {}; } catch (e) { return {}; } };
+const dlSave = s => { try { localStorage.setItem(DL_K, JSON.stringify(s)); } catch (e) {} };
+let DL_ROOT = ''; // adresse locale du dossier « villes » (stockage de l'application)
+const dataURL = f => NATIVE ? DL_ROOT + CITY + '/' + f + '?h=' + ((dlState()[CITY] || {}).h || '') : CD + f + DV;
+const b64buf = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+async function dlIndex() { const r = await fetch(DL_BASE + 'villes.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('index ' + r.status); return r.json(); }
+// télécharge tous les fichiers d'une ville ; la ville n'est marquée complète qu'à la fin (un téléchargement coupé est repris en entier)
+async function cityDownload(id, onp, idx) {
+  idx = idx || await dlIndex(); const c = idx.cities[id]; if (!c) throw new Error('ville inconnue : ' + id);
+  let done = 0; onp && onp(0);
+  for (const [f, size, sh] of c.files) {
+    const r = await fetch(DL_BASE + c.dir + f + '?v=' + sh); if (!r.ok) throw new Error(f + ' ' + r.status);
+    await NP.fs.writeFile({ path: 'villes/' + id + '/' + f, data: b64buf(await r.arrayBuffer()), directory: 'DATA', recursive: true });
+    done += size; onp && onp(done / c.bytes);
+  }
+  const s = dlState(); s[id] = { h: c.h, bytes: c.bytes, at: new Date().toISOString() }; dlSave(s);
+  track('ville-telechargee-' + id, 'Ville téléchargée ' + c.name);
+}
+// au lancement : dossier local, puis la ville choisie si elle n'est pas encore sur le téléphone (en attendant l'onboarding, téléchargée d'office)
+async function dlReady() {
+  if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); }
+  if (dlState()[CITY]) return true;
+  const ld = $('#loading'); ld.classList.add('dl-full'); const txt = p => 'Téléchargement des rues de ' + C0.name + '… ' + Math.round(p * 100) + ' %';
+  try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
+  catch (e) {
+    track('ville-echec', 'Téléchargement de ville raté'); splashDone();
+    ld.innerHTML = '<div class="dl-err" role="alert"><b>Pas de connexion</b><span></span><button class="btn primary" type="button">Réessayer</button></div>';
+    ld.querySelector('span').textContent = 'Il faut internet une première fois pour télécharger les rues de ' + C0.name + '. Ensuite, l’app marche sans réseau.';
+    ld.querySelector('button').onclick = () => location.reload();
+    return false;
+  }
+}
 $('#hill-hint').textContent = C0.hill; $('#zones-sum').textContent = `Choisir quartier par quartier (${C0.zones})`; $('#avoid-q').placeholder = C0.avoidEx; $('#race-hint').textContent = C0.races;
 $('#map').setAttribute('aria-label', `Carte de ${C0.name} et des communes voisines avec le parcours`); $('#attrib-od').textContent = C0.od ? ' · ' + C0.od : '';
 // ---------- choix de la ville (D-97, CityPicker) : bouton d'en-tête, feuille sur téléphone, liste sous l'en-tête sur ordinateur ----------

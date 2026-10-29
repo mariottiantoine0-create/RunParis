@@ -57,6 +57,16 @@ def myth_cards(races):
 import struct
 CITY_NAMES = [('', 'Paris', 'paris'), ('lyon/', 'Lyon', 'lyon'), ('bordeaux/', 'Bordeaux', 'bordeaux'), ('nantes/', 'Nantes', 'nantes'), ('toulouse/', 'Toulouse', 'toulouse'), ('dijon/', 'Dijon', 'dijon')]  # même ordre que CITY_DIRS
 CITY_SOON = ['Lille']
+# villes à télécharger dans l'application (onboarding) : fichiers, tailles et empreinte de chaque ville, lus par l'app (site/villes.json)
+VJ = {'v': 1, 'cities': {}}
+for d, name, cid in CITY_NAMES:
+    files, hc, tot = [], hashlib.sha1(), 0
+    for f in DATA:
+        p = root / 'site' / d / f
+        if p.exists():
+            b = p.read_bytes(); files.append([f, len(b), hashlib.sha1(b).hexdigest()[:8]]); hc.update(b); tot += len(b)
+    VJ['cities'][cid] = {'name': name, 'dir': d, 'files': files, 'bytes': tot, 'h': hc.hexdigest()[:8]}
+(root / 'site' / 'villes.json').write_text(json.dumps(VJ, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 def nb(n): return f'{n:,}'.replace(',', '\u00a0')
 def city_stats():
     km = feux = font = trees = 0; races = []
