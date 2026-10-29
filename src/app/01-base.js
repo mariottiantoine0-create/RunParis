@@ -103,7 +103,16 @@ async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: '
 async function dlReady() {
   await dlRoot();
   if (dlState()[CITY]) return true;
-  const ld = $('#loading'); ld.classList.add('dl-full'); const recv = new URLSearchParams(location.search).has('p'), txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
+  const recv = new URLSearchParams(location.search).has('p'), other = Object.keys(dlState()).find(k => CITIES[k]);
+  if (!recv && other) { setCity(other, null, true); return false; } // la ville affichée n'est pas sur le téléphone : on passe sur une ville qui y est
+  const ld = $('#loading'); ld.classList.add('dl-full');
+  if (!recv && onbDone()) { // aucune ville (onboarding quitté avant la fin) : on propose de la choisir, sans rien télécharger d'office
+    splashDone();
+    ld.innerHTML = '<div class="dl-err"><b>Aucune ville sur ton téléphone</b><span>Choisis la ville où tu cours : ses rues se téléchargent une fois, puis l’app marche sans réseau.</span><button class="btn primary" type="button">Choisir ma ville</button></div>';
+    ld.querySelector('button').onclick = () => { try { localStorage.removeItem(ONB_K); } catch (e) {} location.reload(); };
+    return false;
+  }
+  const txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
   catch (e) {
     track('ville-echec', 'Téléchargement de ville raté'); splashDone();

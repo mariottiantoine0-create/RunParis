@@ -493,7 +493,10 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-map svg{display:block}
 .onb-in{flex:1;padding:max(12px,env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:16px}
 .onb-map+.onb-in{padding-top:12px}
-.onb-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.onb-top .onb-back{width:44px;height:44px;margin-left:-10px;border:0;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.onb-top .onb-back[hidden]{display:flex;visibility:hidden}
+.onb-top .onb-dots{flex:1;justify-content:center}
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
@@ -1229,43 +1232,44 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <section data-step="1" class="onb-s">
       <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <div class="logo" aria-label="Perfect Run">PERFECT<span>RUN</span></div>
         <h2 class="onb-h">Des parcours<br>sur mesure</h2>
         <ul class="onb-pts">
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>En boucle, jusqu’à un lieu ou n’importe où, à la distance que tu veux.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Plat ou vallonné, moins de feux, et les zones que tu veux éviter.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage à la voix, téléphone en poche.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>La distance que tu veux, en boucle, jusqu’à un lieu ou n’importe où.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Avec ou sans dénivelé, en évitant les feux et les zones de ton choix.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage vocal, téléphone en poche.</li>
         </ul>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-start">Commencer</button></div>
     </section>
     <section data-step="2" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
-        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras en ajouter plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
+        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras ajouter d’autres villes plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
         <div class="onb-cities" id="onb-cities"></div>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-dl" disabled>Choisis au moins une ville</button><p class="onb-note" id="onb-dl-note"></p></div>
     </section>
     <section data-step="3" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <div class="onb-progs"></div>
         <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
         <h2 class="onb-h">Ta position</h2>
-        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone.</li></ol>
+        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone, elle n’est jamais partagée.</li></ol>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
     </section>
     <section data-step="4" class="onb-s" hidden>
       <div class="onb-map" aria-hidden="true"></div>
       <div class="onb-in">
-        <h2 class="onb-h">C’est prêt</h2>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <h2 class="onb-h" id="onb-t4">C’est prêt</h2>
         <div class="onb-progs"></div>
-        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
-        <p class="onb-p">Il ne te reste qu’à créer ton premier parcours !</p>
+        <div class="note warn" id="onb-part" role="status" hidden></div>
+        <p class="onb-p" id="onb-p4">Il ne te reste qu’à créer ton premier parcours !</p>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-go" disabled>Téléchargement…</button></div>
     </section>

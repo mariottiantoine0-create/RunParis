@@ -12,6 +12,8 @@ const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round
 function onbShow(n) {
   ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
   document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  // retour : pas sur le premier écran ; de « C'est prêt », retour au choix des villes
+  document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
@@ -56,13 +58,23 @@ function onbProgress() {
   // on peut partir dès que la première ville est prête ; les autres finissent derrière
   const first = list.find(k => ONB.done.has(k)), ready = !!first && (ONB.done.has(list[0]) || !ONB.busy);
   document.querySelectorAll('#onb .onb-neterr').forEach(e => e.hidden = !ONB.err.size || ONB.busy);
-  const go = $('#onb-go'); if (go) { go.disabled = !ready; go.textContent = ready ? 'Créer mon premier parcours' : 'Téléchargement…'; }
+  // rien de prêt et téléchargement arrêté sur une erreur : le bouton principal devient « Réessayer »
+  const retry = !ready && ONB.err.size && !ONB.busy, go = $('#onb-go'); ONB.ready = ready;
+  if (go) { go.disabled = !ready && !retry; go.textContent = ready ? 'Créer mon premier parcours' : retry ? 'Réessayer' : 'Téléchargement…'; }
+  // écran 4 selon la situation : en cours, prêt, impossible (sans réseau), ou prêt avec une ville ratée
+  const t4 = $('#onb-t4'), p4 = $('#onb-p4'), part = $('#onb-part'); if (!t4) return;
+  const names = ks => ks.map(k => CITIES[k].name).join(', '), failed = list.filter(k => ONB.err.has(k));
+  if (ready) { t4.textContent = 'C’est prêt'; p4.textContent = 'Il ne te reste qu’à créer ton premier parcours !'; }
+  else if (retry) { t4.textContent = 'Pas de connexion'; p4.textContent = 'Il faut internet une première fois pour télécharger les rues de ' + names(failed) + '. Ensuite, l’app marche sans réseau. Reconnecte-toi, puis réessaie.'; }
+  else { t4.textContent = 'Presque prêt'; p4.textContent = 'Les rues de ' + names(list.filter(k => !ONB.done.has(k))) + ' se téléchargent. Quelques secondes…'; }
+  part.hidden = !(ready && failed.length && !ONB.busy);
+  if (!part.hidden) part.innerHTML = `<b>${names(failed)} n’a pas pu se télécharger.</b> Tu pourras ${failed.length > 1 ? 'les' : 'la'} reprendre dans Menu › Mes villes.`;
 }
 // à la fin : la ville affichée doit être sur le téléphone, sinon on passe sur la première ville choisie
 function onbFinish() {
   try { localStorage.setItem(ONB_K, '1'); } catch (e) {}
   S.onbJust = true; track('onb-fin', 'Onboarding terminé');
-  const keep = ONB.done.has(CITY) ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
+  const keep = ONB.done.has(CITY) || dlState()[CITY] ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
   if (keep !== CITY) { setCity(keep); return; }
   $('#onb').hidden = true; sbSync(); ONB.resolve && ONB.resolve(true);
 }
@@ -82,12 +94,14 @@ async function onboarding() {
   return new Promise(r => { ONB.resolve = r; });
 }
 $('#onb-start').onclick = () => onbShow(2);
-document.querySelectorAll('#onb .onb-skip').forEach(b => b.onclick = () => { track('onb-passer', 'Onboarding · Passer'); onbShow(ONB.step === 1 ? 2 : 4); });
+document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 2 : ONB.step - 1));
+// « Plus tard » : on sort à tout moment ; sans ville sur le téléphone, l'app propose de la choisir au lieu de bloquer
+document.querySelectorAll('#onb .onb-exit').forEach(b => b.onclick = () => { track('onb-plus-tard', 'Onboarding · Plus tard · écran ' + ONB.step); onbFinish(); });
 $('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
 $('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
 $('#onb-later').onclick = () => onbShow(4);
 document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
-$('#onb-go').onclick = onbFinish;
+$('#onb-go').onclick = () => ONB.ready ? onbFinish() : onbDownload();
 // au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone
 async function onbGate() {
   if ((NATIVE || ONB_DEMO) && (!onbDone() || ONB_DEMO)) { if (NATIVE) await dlRoot(); await onboarding(); }

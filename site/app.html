@@ -500,7 +500,10 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-map svg{display:block}
 .onb-in{flex:1;padding:max(12px,env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:16px}
 .onb-map+.onb-in{padding-top:12px}
-.onb-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.onb-top .onb-back{width:44px;height:44px;margin-left:-10px;border:0;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.onb-top .onb-back[hidden]{display:flex;visibility:hidden}
+.onb-top .onb-dots{flex:1;justify-content:center}
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
@@ -1236,43 +1239,44 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <section data-step="1" class="onb-s">
       <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
         <h2 class="onb-h">Des parcours<br>sur mesure</h2>
         <ul class="onb-pts">
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>En boucle, jusqu’à un lieu ou n’importe où, à la distance que tu veux.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Plat ou vallonné, moins de feux, et les zones que tu veux éviter.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage à la voix, téléphone en poche.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>La distance que tu veux, en boucle, jusqu’à un lieu ou n’importe où.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Avec ou sans dénivelé, en évitant les feux et les zones de ton choix.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage vocal, téléphone en poche.</li>
         </ul>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-start">Commencer</button></div>
     </section>
     <section data-step="2" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
-        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras en ajouter plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
+        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras ajouter d’autres villes plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
         <div class="onb-cities" id="onb-cities"></div>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-dl" disabled>Choisis au moins une ville</button><p class="onb-note" id="onb-dl-note"></p></div>
     </section>
     <section data-step="3" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-skip">Passer</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <div class="onb-progs"></div>
         <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
         <h2 class="onb-h">Ta position</h2>
-        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone.</li></ol>
+        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone, elle n’est jamais partagée.</li></ol>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
     </section>
     <section data-step="4" class="onb-s" hidden>
       <div class="onb-map" aria-hidden="true"></div>
       <div class="onb-in">
-        <h2 class="onb-h">C’est prêt</h2>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <h2 class="onb-h" id="onb-t4">C’est prêt</h2>
         <div class="onb-progs"></div>
-        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
-        <p class="onb-p">Il ne te reste qu’à créer ton premier parcours !</p>
+        <div class="note warn" id="onb-part" role="status" hidden></div>
+        <p class="onb-p" id="onb-p4">Il ne te reste qu’à créer ton premier parcours !</p>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-go" disabled>Téléchargement…</button></div>
     </section>
@@ -2282,7 +2286,16 @@ async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: '
 async function dlReady() {
   await dlRoot();
   if (dlState()[CITY]) return true;
-  const ld = $('#loading'); ld.classList.add('dl-full'); const recv = new URLSearchParams(location.search).has('p'), txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
+  const recv = new URLSearchParams(location.search).has('p'), other = Object.keys(dlState()).find(k => CITIES[k]);
+  if (!recv && other) { setCity(other, null, true); return false; } // la ville affichée n'est pas sur le téléphone : on passe sur une ville qui y est
+  const ld = $('#loading'); ld.classList.add('dl-full');
+  if (!recv && onbDone()) { // aucune ville (onboarding quitté avant la fin) : on propose de la choisir, sans rien télécharger d'office
+    splashDone();
+    ld.innerHTML = '<div class="dl-err"><b>Aucune ville sur ton téléphone</b><span>Choisis la ville où tu cours : ses rues se téléchargent une fois, puis l’app marche sans réseau.</span><button class="btn primary" type="button">Choisir ma ville</button></div>';
+    ld.querySelector('button').onclick = () => { try { localStorage.removeItem(ONB_K); } catch (e) {} location.reload(); };
+    return false;
+  }
+  const txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
   try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
   catch (e) {
     track('ville-echec', 'Téléchargement de ville raté'); splashDone();
@@ -4963,6 +4976,8 @@ const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round
 function onbShow(n) {
   ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
   document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  // retour : pas sur le premier écran ; de « C'est prêt », retour au choix des villes
+  document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
@@ -5007,13 +5022,23 @@ function onbProgress() {
   // on peut partir dès que la première ville est prête ; les autres finissent derrière
   const first = list.find(k => ONB.done.has(k)), ready = !!first && (ONB.done.has(list[0]) || !ONB.busy);
   document.querySelectorAll('#onb .onb-neterr').forEach(e => e.hidden = !ONB.err.size || ONB.busy);
-  const go = $('#onb-go'); if (go) { go.disabled = !ready; go.textContent = ready ? 'Créer mon premier parcours' : 'Téléchargement…'; }
+  // rien de prêt et téléchargement arrêté sur une erreur : le bouton principal devient « Réessayer »
+  const retry = !ready && ONB.err.size && !ONB.busy, go = $('#onb-go'); ONB.ready = ready;
+  if (go) { go.disabled = !ready && !retry; go.textContent = ready ? 'Créer mon premier parcours' : retry ? 'Réessayer' : 'Téléchargement…'; }
+  // écran 4 selon la situation : en cours, prêt, impossible (sans réseau), ou prêt avec une ville ratée
+  const t4 = $('#onb-t4'), p4 = $('#onb-p4'), part = $('#onb-part'); if (!t4) return;
+  const names = ks => ks.map(k => CITIES[k].name).join(', '), failed = list.filter(k => ONB.err.has(k));
+  if (ready) { t4.textContent = 'C’est prêt'; p4.textContent = 'Il ne te reste qu’à créer ton premier parcours !'; }
+  else if (retry) { t4.textContent = 'Pas de connexion'; p4.textContent = 'Il faut internet une première fois pour télécharger les rues de ' + names(failed) + '. Ensuite, l’app marche sans réseau. Reconnecte-toi, puis réessaie.'; }
+  else { t4.textContent = 'Presque prêt'; p4.textContent = 'Les rues de ' + names(list.filter(k => !ONB.done.has(k))) + ' se téléchargent. Quelques secondes…'; }
+  part.hidden = !(ready && failed.length && !ONB.busy);
+  if (!part.hidden) part.innerHTML = `<b>${names(failed)} n’a pas pu se télécharger.</b> Tu pourras ${failed.length > 1 ? 'les' : 'la'} reprendre dans Menu › Mes villes.`;
 }
 // à la fin : la ville affichée doit être sur le téléphone, sinon on passe sur la première ville choisie
 function onbFinish() {
   try { localStorage.setItem(ONB_K, '1'); } catch (e) {}
   S.onbJust = true; track('onb-fin', 'Onboarding terminé');
-  const keep = ONB.done.has(CITY) ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
+  const keep = ONB.done.has(CITY) || dlState()[CITY] ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
   if (keep !== CITY) { setCity(keep); return; }
   $('#onb').hidden = true; sbSync(); ONB.resolve && ONB.resolve(true);
 }
@@ -5033,12 +5058,14 @@ async function onboarding() {
   return new Promise(r => { ONB.resolve = r; });
 }
 $('#onb-start').onclick = () => onbShow(2);
-document.querySelectorAll('#onb .onb-skip').forEach(b => b.onclick = () => { track('onb-passer', 'Onboarding · Passer'); onbShow(ONB.step === 1 ? 2 : 4); });
+document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 2 : ONB.step - 1));
+// « Plus tard » : on sort à tout moment ; sans ville sur le téléphone, l'app propose de la choisir au lieu de bloquer
+document.querySelectorAll('#onb .onb-exit').forEach(b => b.onclick = () => { track('onb-plus-tard', 'Onboarding · Plus tard · écran ' + ONB.step); onbFinish(); });
 $('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
 $('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
 $('#onb-later').onclick = () => onbShow(4);
 document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
-$('#onb-go').onclick = onbFinish;
+$('#onb-go').onclick = () => ONB.ready ? onbFinish() : onbDownload();
 // au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone
 async function onbGate() {
   if ((NATIVE || ONB_DEMO) && (!onbDone() || ONB_DEMO)) { if (NATIVE) await dlRoot(); await onboarding(); }

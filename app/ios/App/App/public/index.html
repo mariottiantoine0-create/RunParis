@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr"><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<html lang="fr"><script>window.PR_DL_BASE="https://prochaine-perfectrun.mariottiantoine0.workers.dev/"</script><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="description" content="Perfect Run génère des parcours de course à Paris, à Lyon et dans leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
@@ -21,6 +21,7 @@
   --avoid:#D23C32; --avoid-fill:rgba(210,60,50,.12); --sig:#D98A00; --pin-b:#0B0B0C;
   --good:#1E8E4F; --poi:#C2338A; --water:#D5DFE6; --green:#E1E7DC; --cem:#E6E6E2; --station:#8A8D93; --station-fill:rgba(110,113,120,.14); --label:#6A6D72; --warn:#B26B00;
   --warn-bg:#FFF4E0; --warn-line:#F0D29A; --err:#C2362D; --err-bg:#FDEDEC; --err-line:#F2BDB8; --info-bg:#EEF2FD; --ok:#1E7A44; --ok-fill:#E6F4EA; --toast:#0B0B0C;
+  --badge-bronze:#9C5A2E;--badge-argent:#636B72;--badge-or:#86650E;--on-badge:#FFFFFF;
   --map-bg:#F4F4F2; --shadow:0 1px 4px rgba(0,0,0,.18); --shadow-pop:0 4px 14px rgba(0,0,0,.10); --shadow-sheet:0 -2px 12px rgba(0,0,0,.12);
   --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
   --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -37,6 +38,7 @@
     --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
     --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
     --warn-bg:#2A2111; --warn-line:#5A4415; --err:#FF7B72; --err-bg:#2A1615; --err-line:#6A2B2B; --info-bg:#1A2035; --ok:#6EE7A0; --ok-fill:#15291D; --toast:#2A2E35;
+    --badge-bronze:#D99A6C;--badge-argent:#B4BAC0;--badge-or:#E3B84A;--on-badge:#0B0B0C;
     --map-bg:#121417; --shadow:0 1px 6px rgba(0,0,0,.55); --shadow-pop:0 6px 18px rgba(0,0,0,.5); --shadow-sheet:0 -2px 14px rgba(0,0,0,.5);
   }
 }
@@ -49,6 +51,7 @@
   --avoid:#FF6B6B; --avoid-fill:rgba(255,107,107,.14); --sig:#FFB020; --pin-b:#F2F3F5;
   --good:#4ADE80; --poi:#F27AC0; --water:#16222D; --green:#17211A; --cem:#1A1D21; --station:#6B7178; --station-fill:rgba(139,150,163,.12); --label:#8C939C; --warn:#FFB020;
   --warn-bg:#2A2111; --warn-line:#5A4415; --err:#FF7B72; --err-bg:#2A1615; --err-line:#6A2B2B; --info-bg:#1A2035; --ok:#6EE7A0; --ok-fill:#15291D; --toast:#2A2E35;
+    --badge-bronze:#D99A6C;--badge-argent:#B4BAC0;--badge-or:#E3B84A;--on-badge:#0B0B0C;
   --map-bg:#121417; --shadow:0 1px 6px rgba(0,0,0,.55); --shadow-pop:0 6px 18px rgba(0,0,0,.5); --shadow-sheet:0 -2px 14px rgba(0,0,0,.5);
 }
 [hidden]{display:none!important}
@@ -59,7 +62,7 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* ---------- layout ---------- */
+/* ---------- mise en page ---------- */
 .app{display:grid;grid-template-columns:400px 1fr;height:100%}
 .panel{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;position:relative;z-index:2}
 .phead{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line)}
@@ -71,7 +74,7 @@ a.logo{color:inherit;text-decoration:none}
 .pbody{flex:1;overflow-y:auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:14px;min-height:0}
 .pfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
 
-/* ---------- steps ---------- */
+/* ---------- étapes ---------- */
 .step{display:flex;flex-direction:column;gap:8px}
 .step h2 .seg{margin-left:auto;width:180px}
 .step h2{margin:0;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800}
@@ -146,7 +149,7 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .qlist .ah{grid-column:1/-1;font-family:var(--f-cond);font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:6px}
 .moreb{display:flex;flex-direction:column;gap:4px;padding-top:8px}
 
-/* ---------- buttons ---------- */
+/* ---------- boutons ---------- */
 .btn{border:0;border-radius:12px;padding:14px 16px;font-weight:800;font-size:16px;min-height:48px}
 .btn.primary{background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:20px;letter-spacing:.05em;text-transform:uppercase;padding:12px 16px}
 .btn.primary:disabled{opacity:.6;cursor:progress}
@@ -168,7 +171,7 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .textbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:14.5px;padding:8px}
 .lastline{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;line-height:1.3;font-weight:700;color:var(--muted);margin:0 0 4px}.lastline .textbtn{font-size:13px;padding:0;min-height:36px} /* D-107 : texte label, lien d'action control-sm */
 
-/* ---------- results ---------- */
+/* ---------- résultats ---------- */
 .summary{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px 12px}
 .summary .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .summary b{font-size:15px}
@@ -205,7 +208,7 @@ details.more summary::after{content:" ▾"} details.more[open] summary::after{co
 .note{font-size:13.5px;line-height:1.4;padding:9px 12px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-left:4px solid var(--warn)}
 .note.err{background:var(--err-bg);border-color:var(--err-line);border-left-color:var(--avoid)}
 
-/* ---------- map ---------- */
+/* ---------- carte ---------- */
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .mapwrap{position:relative;flex:1;min-height:0;background:var(--map-bg);overflow:hidden}
 canvas#map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
@@ -282,7 +285,7 @@ canvas#map.pick{cursor:crosshair}
 .bar{height:3px;background:var(--accent);position:absolute;top:0;left:0;transition:width .15s;z-index:6}
 
 .grab{display:none}
-/* ---------- mobile: full-screen map + bottom sheet ---------- */
+/* ---------- mobile : carte plein écran + feuille ---------- */
 @media (max-width:860px){
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   .app{display:block;position:fixed;inset:0;height:auto}
@@ -469,6 +472,93 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .lb{border-radius:999px;font-family:var(--f-display);font-stretch:75%;font-size:13px;min-width:22px;height:22px;padding:0 6px}
 .toast{top:auto;bottom:16px;border-radius:4px;background:var(--toast);color:#fff;padding:12px 14px;box-shadow:var(--shadow-pop)}
 .loading{font-family:var(--f-body)}
+/* Menu › Mes villes (application) : même glisser pour supprimer que Mes parcours */
+#m-villes.dot::after{content:"";width:8px;height:8px;border-radius:999px;background:var(--accent);margin-left:auto;margin-right:8px;flex:none}
+.mv-p{font-size:14px;line-height:1.45;color:var(--muted);margin:0 0 12px}
+.mv-h{margin:20px 0 8px}
+.mv-list{display:flex;flex-direction:column}
+.mv-row{border-radius:0;border-bottom:1px solid var(--line)}
+.mv-card{position:relative;z-index:1;touch-action:pan-y;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 0;background:var(--panel);flex:1;width:100%}
+.mv-card .ico,.mv-add .ico{width:18px;height:18px;flex:none}
+.mv-add .ico{color:var(--accent)}
+.mv-t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left}
+.mv-t b{font-size:16px;font-weight:600}
+.mv-t span{font-size:13px;color:var(--muted)}
+.mv-ok,.mv-pc,.mv-soon{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mv-up{height:36px;padding:0 10px;font-size:14px}
+.mv-up .ico{width:16px;height:16px;margin-right:6px}
+.mv-add{display:flex;align-items:center;gap:12px;min-height:52px;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;padding:6px 0;cursor:pointer}
+.mv-add.off{cursor:default}.mv-add.off b{color:var(--disabled-ink)}
+.mv-ask{display:flex;flex-direction:column;gap:12px}
+.mv-ask p{margin:0;font-size:15px;line-height:1.45}
+.mv-ask .btn{width:100%}
+/* onboarding (application) : plein écran, tokens v2.22 ; titres title-xl, boutons 48 px, cartes 8 px, sélection accent-fill + 2 px accent */
+.onb{position:fixed;inset:0;z-index:1100;background:var(--panel);color:var(--ink);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.onb[hidden]{display:none}
+.onb-s{min-height:100%;display:flex;flex-direction:column}
+.onb-s[hidden]{display:none}
+.onb-map{height:min(36vh,300px);flex:none;background:var(--map-bg)}
+.onb-map svg{display:block}
+.onb-in{flex:1;padding:max(12px,env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:16px}
+.onb-map+.onb-in{padding-top:12px}
+.onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.onb-top .onb-back{width:44px;height:44px;margin-left:-10px;border:0;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.onb-top .onb-back[hidden]{display:flex;visibility:hidden}
+.onb-top .onb-dots{flex:1;justify-content:center}
+.onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
+.onb-dots{display:flex;gap:6px;align-items:center}
+.onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
+.onb-dots span.past{background:var(--accent)}
+.onb-dots span.on{width:24px;background:var(--accent)}
+.onb .logo{font-size:22px}
+.onb-h{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;margin:0}
+.onb-p{font-size:15px;line-height:1.45;color:var(--muted);margin:0}
+.onb .onb-oldt,.onb.old .onb-new{display:none}
+.onb.old .onb-oldt{display:inline}
+.onb-pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.onb-pts li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-pts .ico{width:20px;height:20px;flex:none;margin-top:1px}
+.onb-cities{display:flex;flex-direction:column;gap:8px}
+.onb-city{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-sizing:border-box;cursor:pointer}
+.onb-city.on{border:2px solid var(--accent);background:var(--accent-fill);padding:7px 11px}
+.onb-city input{position:absolute;opacity:0;width:1px;height:1px}
+.onb-city input:focus-visible+.onb-box{outline:2px solid var(--accent);outline-offset:2px}
+.onb-box{width:24px;height:24px;flex:none;border-radius:4px;border:2px solid var(--ink);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent}
+.onb-city.on .onb-box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.onb-ct{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.onb-ct b{font-size:16px;font-weight:600}
+.onb-ct span{font-size:13px;color:var(--muted)}
+.onb-tag{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-fill);padding:3px 6px;border-radius:4px;white-space:nowrap}
+.onb-city.off{background:var(--disabled-bg);border-color:var(--disabled-bg);cursor:default;min-height:48px}
+.onb-city.off .onb-box{border-color:var(--disabled-ink)}
+.onb-city.off b{color:var(--disabled-ink)}
+.onb-soon{font-size:13px;color:var(--muted)}
+.onb-f{position:sticky;bottom:0;background:var(--panel);padding:12px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.onb-s[data-step="1"] .onb-f,.onb-s[data-step="3"] .onb-f,.onb-s[data-step="4"] .onb-f{border-top:0}
+.onb-f .btn{width:100%}
+.onb-f .textbtn{min-height:44px;width:100%}
+.onb-note{font-size:13px;color:var(--muted);text-align:center;margin:4px 0 0}
+.onb-progs{display:flex;flex-direction:column;gap:8px}
+.onb-progs:empty{display:none}
+.onb-prog{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.onb-pr{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.onb-pr b{font-weight:600}
+.onb-pr span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.onb-pr .ok{color:var(--ok);font-weight:700}
+.onb-bar{display:block;height:6px;border-radius:999px;background:var(--field)}
+.onb-bar i{display:block;height:6px;border-radius:999px;background:var(--accent);transition:width .2s}
+.onb-why{margin:0;padding:0;list-style:none;counter-reset:w;display:flex;flex-direction:column;gap:14px}
+.onb-why li{counter-increment:w;display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.onb-why li::before{content:counter(w);width:28px;height:28px;flex:none;border-radius:999px;background:var(--info-bg);color:var(--accent);font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:-3px}
+.onb-neterr .textbtn{display:inline;min-height:0;padding:0;margin-left:4px}
+.onb .btn.primary:disabled{background:var(--disabled-bg);color:var(--disabled-ink)}
+@media (min-width:861px){.onb-s{max-width:480px;margin:0 auto}}
+/* téléchargement d'une ville (application) : plein écran pendant le téléchargement, et message bloquant s'il échoue */
+.loading.dl-full{position:fixed;inset:0;z-index:1000}
+.dl-err{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;max-width:320px;padding:0 16px;color:var(--ink);font-size:15px;line-height:1.45}
+.dl-err b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1.05}
+.dl-err span{color:var(--muted)}
+.dl-err .btn{flex:none;min-width:200px}
 .attrib{border-radius:4px}
 @media (max-width:860px){
   .panel{border-radius:8px 8px 0 0;box-shadow:var(--shadow-sheet)}
@@ -635,6 +725,40 @@ button,a,label{-webkit-tap-highlight-color:transparent}
 #view-mine[hidden]{display:none}
 #mine-list,#mine-detail{display:flex;flex-direction:column;gap:12px}
 #mine-list[hidden],#mine-detail[hidden]{display:none}
+/* badges (RP-85) : écussons, application seulement */
+.mine-seg{margin:0 0 16px}
+.mine-seg[hidden]{display:none}
+.bdg-count{display:flex;align-items:baseline;gap:8px;margin:0 0 16px}
+.bdg-count b{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
+.bdg-count span{font-size:15px;color:var(--muted)}
+.bdg-h{margin:20px 0 12px}
+.bdg-pl{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.bdg-pi{width:40px;height:40px;border-radius:999px;background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;flex:none}
+.bdg-pt{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.bdg-pr{display:flex;justify-content:space-between;gap:8px;font-size:15px}
+.bdg-pr b{font-weight:600}
+.bdg-pr span{font-size:13px;color:var(--muted);white-space:nowrap}
+.bdg-pb{display:block;height:6px;border-radius:999px;background:var(--field)}
+.bdg-pb i{display:block;height:6px;border-radius:999px;background:var(--accent)}
+.bdg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:16px;justify-items:center}
+.bdg{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;--bdg-bg:var(--ink);--bdg-ink:var(--panel)}
+.bdg-s{clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--bdg-bg);color:var(--bdg-ink)}
+.bdg-s svg{display:block;flex:none}
+.bdg-s .v{font-family:var(--f-display);font-stretch:75%;font-weight:800;line-height:.95;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bdg-s .u{font-family:var(--f-display);font-stretch:75%;font-weight:700;line-height:1;white-space:nowrap}
+.bdg-c b{display:block;font-size:12px;font-weight:700;line-height:1.3}
+.bdg-c span{display:block;font-size:12px;color:var(--muted);line-height:1.3;font-variant-numeric:tabular-nums}
+.t-bronze{--bdg-bg:var(--badge-bronze);--bdg-ink:var(--on-badge)}
+.t-argent{--bdg-bg:var(--badge-argent);--bdg-ink:var(--on-badge)}
+.t-or{--bdg-bg:var(--badge-or);--bdg-ink:var(--on-badge)}
+.t-special{--bdg-bg:var(--accent);--bdg-ink:var(--accent-ink)}
+.bdg.off{--bdg-bg:var(--disabled-bg);--bdg-ink:var(--disabled-ink)}
+.bdg.off .bdg-c b{color:var(--muted)}
+.bdg-foot{font-size:13px;color:var(--muted);margin:20px 0 0}
+.bdg-new{border:1px solid var(--line);border-radius:8px;padding:16px 12px 8px;margin:0 0 16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.bdg-new[hidden]{display:none}
+.bdg-new-l{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.bdg-new p{margin:0;font-size:15px;line-height:1.45}
 .mine-tot{display:flex;gap:26px;border-top:2px solid var(--ink);padding-top:8px}
 .mine-tot[hidden]{display:none}
 .mine-tot b,.mine-stats b{display:block;font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
@@ -778,7 +902,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .lnk-err .iconbtn{position:absolute;top:4px;right:4px}
 html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 
-/* course : hors parcours (deux choix), sous-titre du bandeau, boussole, bouton de position à deux modes (build 3) */
+/* course : hors parcours (deux choix), sous-titre du bandeau, boussole, bouton de position à deux modes (D-90) */
 .run-sub{font-size:14px;color:#9AA0A8;margin-top:3px}
 .run-sub[hidden]{display:none}
 .run-choice{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -821,7 +945,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="themepop" id="themepop" hidden>
       <nav class="mlinks" id="mlinks" aria-label="Pages"><a href="./">Accueil</a><a href="a-propos.html">Comment ça marche</a></nav>
       <span class="lbl">À propos</span>
-      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
+      <nav class="mlinks mabout" aria-label="À propos"><button type="button" data-about="villes" id="m-villes" hidden>Mes villes<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="aide">Aide et contact<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="conf">Confidentialité<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="ml">Mentions légales<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="src">Sources et licences<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="fb">Signaler un problème<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" data-about="erase" id="m-erase" hidden>Effacer mes données<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></nav>
       <span class="lbl">Apparence</span>
       <div class="seg sm">
         <button id="t-auto" aria-pressed="true">Auto</button>
@@ -840,6 +964,14 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <div class="note info" id="city-note" role="status" hidden></div>
     <!-- ===== Mes parcours (D-81) ===== -->
     <div class="pbody" id="view-mine" hidden>
+      <div class="seg mine-seg" id="mine-seg" role="group" aria-label="Afficher"><button type="button" data-mv="runs" aria-pressed="true">Sorties</button><button type="button" data-mv="badges" aria-pressed="false">Trophées</button></div>
+      <div id="mine-badges" hidden>
+        <div class="bdg-count"><b id="bdg-n">0</b><span id="bdg-of">trophée sur 24</span></div>
+        <div id="bdg-near-w"><div class="lbl">Les plus proches</div><div id="bdg-near"></div></div>
+        <div id="bdg-got-w" hidden><div class="lbl bdg-h">Obtenus</div><div class="bdg-grid" id="bdg-got"></div></div>
+        <div id="bdg-off-w"><div class="lbl bdg-h">À débloquer</div><div class="bdg-grid" id="bdg-off"></div></div>
+        <p class="bdg-foot">Tes trophées restent sur cet appareil, comme tes sorties.</p>
+      </div>
       <div id="mine-list">
         <button type="button" class="btn ghost mine-solo" id="mine-solo"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 4l13 8-13 8z"/></svg>Courir sans parcours</button>
         <div class="mine-tot" id="mine-tot"></div>
@@ -1103,6 +1235,53 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   </div>
 
   <!-- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) -->
+  <!-- onboarding (application) : 4 écrans au premier lancement, et une fois à la mise à jour (« Choisis tes villes ») -->
+  <div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Bienvenue sur Perfect Run">
+    <section data-step="1" class="onb-s">
+      <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
+      <div class="onb-in">
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
+        <h2 class="onb-h">Des parcours<br>sur mesure</h2>
+        <ul class="onb-pts">
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>La distance que tu veux, en boucle, jusqu’à un lieu ou n’importe où.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/></svg>Avec ou sans dénivelé, en évitant les feux et les zones de ton choix.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>Guidage vocal, téléphone en poche.</li>
+        </ul>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-start">Commencer</button></div>
+    </section>
+    <section data-step="2" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
+        <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras ajouter d’autres villes plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
+        <div class="onb-cities" id="onb-cities"></div>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-dl" disabled>Choisis au moins une ville</button><p class="onb-note" id="onb-dl-note"></p></div>
+    </section>
+    <section data-step="3" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-progs"></div>
+        <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
+        <h2 class="onb-h">Ta position</h2>
+        <ol class="onb-why"><li>Pour partir de là où tu es.</li><li>Pour te guider pendant la course, téléphone en poche.</li><li>Ta position reste sur ton téléphone, elle n’est jamais partagée.</li></ol>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
+    </section>
+    <section data-step="4" class="onb-s" hidden>
+      <div class="onb-map" aria-hidden="true"></div>
+      <div class="onb-in">
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <h2 class="onb-h" id="onb-t4">C’est prêt</h2>
+        <div class="onb-progs"></div>
+        <div class="note warn" id="onb-part" role="status" hidden></div>
+        <p class="onb-p" id="onb-p4">Il ne te reste qu’à créer ton premier parcours !</p>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-go" disabled>Téléchargement…</button></div>
+    </section>
+  </div>
   <div class="shx" id="about" hidden>
     <div class="shx-back" id="about-back"></div>
     <section class="shx-bravo about" role="dialog" aria-modal="true" aria-labelledby="about-t">
@@ -1305,6 +1484,7 @@ SOFTWARE.
       <div class="msheet-h"><h2 id="shx-t1">Bravo !</h2><button type="button" class="iconbtn" id="shx-x1" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
       <div class="shx-b">
         <p class="shx-lede" id="shx-lede">Immortalise ta sortie et partage-la.</p>
+        <div class="bdg-new" id="shx-badge" hidden><span class="lbl" id="shx-badge-k">Nouveau trophée</span><div class="bdg-new-l" id="shx-badge-l"></div><p id="shx-badge-t"></p><button type="button" class="textbtn" id="shx-badge-go">Voir mes trophées</button></div>
         <label class="shx-name" id="shx-name-l" hidden><span class="lbl">Nom du parcours</span><input type="text" id="shx-name" autocomplete="off" maxlength="60"></label>
         <label class="shx-time"><span class="lbl">Ton temps</span><span class="row"><input type="text" id="shx-time" inputmode="numeric" autocomplete="off" aria-label="Ton temps, en minutes et secondes"><small>Estimé avec ton allure, modifie-le si besoin</small></span></label>
         <label class="btn primary shx-pick"><svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13.5" r="4"/></svg>Prendre une photo<input type="file" accept="image/*" capture="environment" id="shx-cam" hidden></label>
@@ -1346,7 +1526,7 @@ SOFTWARE.
 </div>
 
 <script>
-// RunParis routing engine — works in browser and node
+// Moteur de parcours Perfect Run : tourne dans le navigateur et dans Node
 const Engine = (() => {
   let M, G = {};
   const DEG = Math.PI / 180;
@@ -1373,13 +1553,13 @@ const Engine = (() => {
     for (let i = 0; i < nG; i++) { GX[i] = (qlon(gx[i]) - lo0) * kx; GY[i] = (la1 - qlat(gy[i])) * ky; }
     const LEN = new Float32Array(nE), C = new Uint8Array(nE), P = new Uint8Array(nE), S = new Uint8Array(nE);
     for (let e = 0; e < nE; e++) { LEN[e] = el[e] / 2; C[e] = ef[e] & 3; P[e] = (ef[e] >> 2) & 3; S[e] = ef[e] >> 4; }
-    // CSR adjacency
+    // voisinage au format CSR
     const deg = new Uint32Array(nN + 1);
     for (let e = 0; e < nE; e++) { deg[ea[e] + 1]++; deg[eb[e] + 1]++; }
     for (let i = 0; i < nN; i++) deg[i + 1] += deg[i];
     const adjE = new Uint32Array(2 * nE), fill = deg.slice(0, nN);
     for (let e = 0; e < nE; e++) { adjE[fill[ea[e]]++] = e; adjE[fill[eb[e]]++] = e; }
-    // spatial grid (200 m)
+    // grille spatiale (200 m)
     const CELL = 200; let maxX = 0, maxY = 0;
     for (let i = 0; i < nN; i++) { if (NX[i] > maxX) maxX = NX[i]; if (NY[i] > maxY) maxY = NY[i]; }
     const GW = Math.ceil(maxX / CELL) + 1, GH = Math.ceil(maxY / CELL) + 1;
@@ -1389,7 +1569,7 @@ const Engine = (() => {
     for (let i = 0; i < GW * GH; i++) cellCount[i + 1] += cellCount[i];
     const cellNodes = new Uint32Array(nN), cf = cellCount.slice(0, GW * GH);
     for (let i = 0; i < nN; i++) cellNodes[cf[cellOf(i)]++] = i;
-    // signal cluster centroids
+    // centre de chaque carrefour à feux
     const sc = new Map();
     for (let i = 0; i < nN; i++) if (nc[i]) { const k = nc[i]; const a = sc.get(k) || [0, 0, 0]; a[0] += NX[i]; a[1] += NY[i]; a[2]++; sc.set(k, a); }
     const SIG = [...sc.entries()].map(([k, a]) => ({ id: k, x: a[0] / a[2], y: a[1] / a[2] }));
@@ -1403,7 +1583,7 @@ const Engine = (() => {
   const toXY = (lat, lon) => [(lon - G.lo0) * G.kx, (G.la1 - lat) * G.ky];
   const toLL = (x, y) => [G.la1 - y / G.ky, G.lo0 + x / G.kx];
 
-  // ---------- constraints ----------
+  // ---------- contraintes ----------
   function segDist(px, py, ax, ay, bx, by) {
     const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
     let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
@@ -1420,7 +1600,7 @@ const Engine = (() => {
     blocked.fill(0); nodeOk.fill(1);
     if (G.PRIV) for (let e = 0; e < nE; e++) if (G.PRIV[e]) blocked[e] = 1; // voies privées, impasses fermées par une barrière (OSM)
     if (opts.avoidCemeteries) for (let e = 0; e < nE; e++) if (G.CEM[e]) blocked[e] = 1;
-    if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parks closed at the time of the run
+    if (opts.closedEdges) for (const e of opts.closedEdges) blocked[e] = 1; // parcs fermés à l'heure de la sortie
     for (let i = 0; i < nN; i++) if (exclQ.has(nq[i])) nodeOk[i] = 0;
     for (let e = 0; e < nE; e++) {
       for (let k = 0; k < 4; k++) { const z = ez[4 * e + k]; if (z && exclQ.has(z)) { blocked[e] = 1; break; } }
@@ -1439,12 +1619,12 @@ const Engine = (() => {
       }
       for (let i = 0; i < nN; i++) if (Math.hypot(G.NX[i] - px, G.NY[i] - py) < r) nodeOk[i] = 0;
     }
-    // a node is usable only if it keeps an open edge
+    // un nœud n'est utilisable que s'il garde un tronçon ouvert
     for (let i = 0; i < nN; i++) if (nodeOk[i]) {
       let open = false; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) if (!blocked[G.adjE[k]]) { open = true; break; }
       if (!open) nodeOk[i] = 0;
     }
-    // drop small islands cut off by exclusions (e.g. a square whose exits are all in an avoided zone)
+    // retirer les petits îlots coupés par les exclusions (ex. une place dont toutes les sorties sont dans une zone évitée)
     const comp = new Int32Array(nN).fill(-1), stack = [];
     for (let i = 0; i < nN; i++) {
       if (!nodeOk[i] || comp[i] >= 0) continue;
@@ -1489,9 +1669,9 @@ const Engine = (() => {
 
   // ---------- A* ----------
   let W = { road: [0, 0.15, 0.35, 0.6], path: -0.1, steps: 0.6, climb: 0, sig: 250, reuse: 4, green: 0, turn: 150, turnRun: 100, turnFar: 0.3 }; // turn : coût d'un virage avec changement de rue (parcours plus simples, retours du 12/10)
-  // green share per edge (0..1): parks + streets lined with trees (OSM natural=tree)
+  // part de vert par tronçon (0 à 1) : parcs + rues bordées d'arbres (OSM natural=tree)
   function setPrivate(bits) { G.PRIV = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.PRIV[e] = (bits[e >> 3] >> (e & 7)) & 1; }
-  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // unlit segments (OSM lit=no, unlit paths)
+  function setDark(bits) { G.DK = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.DK[e] = (bits[e >> 3] >> (e & 7)) & 1; } // tronçons non éclairés (OSM lit=no, chemins sans éclairage)
   function setCrowd(u8) { G.CR = new Uint8Array(G.nE); for (let e = 0; e < G.nE; e++) G.CR[e] = (u8[e >> 2] >> (2 * (e & 3))) & 3; } // rues bondées, niveau 0 à 3 (D-109)
   const CROWD = [0, 0.25, 0.6, 1.2];
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
@@ -1503,7 +1683,7 @@ const Engine = (() => {
     let m = 1 + W.road[G.C[e]];
     const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
     if (W.green && G.GR) m -= W.green * G.GR[e];
-    if (W.dark && G.DK && G.DK[e]) m += W.dark; // at night, keep to lit streets
+    if (W.dark && G.DK && G.DK[e]) m += W.dark; // de nuit, rester sur les rues éclairées
     if (W.crowd && G.CR && G.CR[e]) m += W.crowd * CROWD[G.CR[e]]; // commerces, terrasses, sites touristiques, selon l'heure
     let cost = L * m;
     const up = (fromA ? G.eu[e] : G.ed[e]) / 10;
@@ -1516,7 +1696,7 @@ const Engine = (() => {
     return cost;
   }
 
-  // binary heap
+  // tas binaire
   let hN = new Uint32Array(1 << 16), hK = new Float64Array(1 << 16), hS = 0;
   function hpush(n, k) {
     if (hS >= hN.length) { const a = new Uint32Array(hN.length * 2); a.set(hN); hN = a; const b = new Float64Array(hK.length * 2); b.set(hK); hK = b; }
@@ -1531,7 +1711,7 @@ const Engine = (() => {
   function astar(s, t) {
     const { dist, stamp, prev, done, NX, NY, deg, adjE, ea, eb } = G;
     const cur = ++G.cur; hS = 0;
-    const hk = 0.3; // admissible lower bound factor
+    const hk = 0.3; // facteur de la borne inférieure admissible
     const tx = NX[t], ty = NY[t];
     stamp[s] = cur; dist[s] = 0; prev[s] = -1; hpush(s, 0);
     while (hS) {
@@ -1592,7 +1772,7 @@ const Engine = (() => {
     return { green: len ? gl / len : 0, lit: G.DK && len ? 1 - dl / len : null, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
   }
 
-  // D+ as a GPS watch would report it: 10 m resampling, 60 m moving average, 1 m hysteresis
+  // D+ comme le donnerait une montre GPS : rééchantillonnage à 10 m, moyenne glissante sur 60 m, hystérésis de 1 m
   function smoothClimb(prof, win = 60, hyst = 1) {
     if (prof.length < 2) return 0;
     const L = prof[prof.length - 1][0], pts = []; let j = 0;
@@ -1612,13 +1792,13 @@ const Engine = (() => {
 
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-  // ---------- drinking water: longest stretch between street nodes that sit next to a fountain ----------
+  // ---------- points d'eau : plus long passage entre deux carrefours proches d'une fontaine ----------
   function waterGap(st, set) {
     let acc = 0, prev = 0, gap = 0;
     for (const [e, fromA] of st.edges) { acc += G.LEN[e]; const v = fromA ? G.eb[e] : G.ea[e]; if (set.has(v)) { gap = Math.max(gap, acc - prev); prev = acc; } }
     return Math.max(gap, acc - prev);
   }
-  function waterSnap(x, y, opt, R = 550) { // fountain node closest to a planned waypoint
+  function waterSnap(x, y, opt, R = 550) { // carrefour à fontaine le plus proche d'un point de passage prévu
     let b = -1, bd = R; for (const q of opt.water.pts) { const d = Math.abs(q.x - x) + Math.abs(q.y - y); if (d < bd * 1.4 && Math.hypot(q.x - x, q.y - y) < bd) { bd = Math.hypot(q.x - x, q.y - y); b = q.n; } }
     return b;
   }
@@ -1658,7 +1838,7 @@ const Engine = (() => {
     // ce qui part vers l'arrière (autre chaussée de la même rue) ne prête pas à confusion
     out = out.filter(b => b.out || Math.abs(b.a) <= 150);
     const ex = out.find(b => b.out); if (!ex) return null;
-    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (retour testeur 26/10)
+    // l'autre moitié de la rue qu'on prend (chaussée à côté du trottoir, double voie) : pas une rue de plus (D-114)
     if (ex.name) out = out.filter(b => b.out || b.name !== ex.name || Math.abs(b.a - ex.a) >= 40);
     // décalage latéral de la sortie par rapport à l'axe d'arrivée (rue qui reprend en face mais décalée)
     const r = hin * Math.PI / 180, lat = -(G.NX[nOut] - G.NX[nIn]) * Math.sin(r) + (G.NY[nOut] - G.NY[nIn]) * Math.cos(r);
@@ -1690,7 +1870,7 @@ const Engine = (() => {
     s += st.overlap * (opt.allowRepeat ? 0 : 120);
     if (opt.green) s -= st.green * 90;
     if (opt.sights) s -= Math.min(st.sightsN || 0, 8) * 20;
-    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // dark stretches weigh in the choice at night
+    if (opt.night && st.lit != null) s += (1 - st.lit) * 250; // de nuit, les passages sombres pèsent dans le choix
     if (!opt.noTurn) { const ts = st.edges && st.edges.length ? (st._ts || (st._ts = turnStats(st.edges))) : null; if (ts) s += (ts.cx + ts.zz) * Math.max(0.6, opt.sigScore || 0) + ts.turns * (opt.simple ? 2.5 : 0.05); } // D-93 : un carrefour compliqué ou un zigzag compte comme un feu
     if (opt.water) { st.waterGap = waterGap(st, opt.water.set); s += Math.max(0, st.waterGap - opt.water.every) / 1000 * 90; }
     return s;
@@ -1698,7 +1878,7 @@ const Engine = (() => {
 
   const tick = () => new Promise(r => setTimeout(r, 0));
 
-  // ---------- alternatives: keep up to 3 good and clearly different routes ----------
+  // ---------- propositions : garder jusqu'à 3 bons parcours bien différents ----------
   function edgeSet(st) { const m = new Map(); for (const [e] of st.edges) m.set(e, G.LEN[e]); return m; }
   function similarity(a, b) {
     const A = a._set || (a._set = edgeSet(a)), B = b._set || (b._set = edgeSet(b));
@@ -1735,7 +1915,7 @@ const Engine = (() => {
     }
     return cb;
   }
-  // straight out to a point and back (only when repeating streets is allowed)
+  // aller tout droit jusqu'à un point et revenir (seulement si l'on accepte de repasser par les mêmes rues)
   function candidateOutBack(start, target, opt, theta) {
     const sx = G.NX[start], sy = G.NY[start];
     let D = target / 2 / 1.25, cb = null;
@@ -1762,7 +1942,7 @@ const Engine = (() => {
     return best;
   }
 
-  // « Lignes droites » (retour du 26/10, boucles façon Strava) : des blocs de 3 ou 4 grands côtés.
+  // « Lignes droites » (D-117, boucles façon Strava) : des blocs de 3 ou 4 grands côtés.
   // Les coins sont des carrefours de grands axes (deux rues nommées de classe ≥ 2 qui se croisent).
   let MAJ = null;
   function majors() {
@@ -1801,10 +1981,10 @@ const Engine = (() => {
     const NC = opt.candidates || (opt.green ? 16 : 12), NB = opt.allowRepeat ? 4 : 0, cands = [];
     const sx = G.NX[start], sy = G.NY[start], off = rng() * 2 * Math.PI;
     for (let c = 0; c < NC + NB; c++) {
-      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // spread directions for variety
+      let theta = off + (c % NC) * 2 * Math.PI / NC + (rng() - 0.5) * 0.4; // directions réparties pour varier
       let st;
       if (c < NC) {
-        let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // more waypoints = more water stops
+        let nW = rng() < 0.55 ? 2 : 3; if (opt.water) nW = Math.min(6, Math.max(nW, Math.round(target / opt.water.every) - 1)); // plus de points de passage = plus de points d'eau
         if (opt.hill) theta = hillTheta(sx, sy, target / ((nW + 1) * 2 * Math.sin(Math.PI / (nW + 1)) * 1.3), rng, theta);
         st = candidateLoop(start, target, opt, rng, theta, nW);
       } else {
@@ -1849,7 +2029,7 @@ const Engine = (() => {
     return pickAlts(cands, target) || (bst.alts = [bst], bst);
   }
 
-  // A → free arrival: one-way routes of the requested length in different directions
+  // départ A, arrivée n'importe où : allers simples de la longueur demandée dans des directions différentes
   async function oneWay(A, target, opt, onProgress) {
     const rng = mulberry(opt.seed || 1);
     const NC = opt.candidates || (opt.endNodes ? 16 : 12), cands = [], endSet = opt.endNodes ? new Set(opt.endNodes.map(q => q.n)) : null;
@@ -1858,7 +2038,7 @@ const Engine = (() => {
       let theta = off + c * 2 * Math.PI / NC + (rng() - 0.5) * 0.3;
       if (opt.hill) theta = hillTheta(ax, ay, target / 2.6, rng, theta);
       let D = target / 1.3, cb = null;
-      const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // Paris is ~12 km wide: long one-ways zigzag through waypoints
+      const legs = Math.max(1, Math.ceil(D / (opt.water ? Math.min(6000, opt.water.every * 1.1) : 6000))); // une ville ne fait que quelques km de large (Paris ~12 km) : les longs allers simples zigzaguent entre des points de passage
       const turns = Array.from({ length: legs }, (_, k) => k ? (k % 2 ? 1 : -1) * (0.9 + rng() * 0.4) : 0);
       for (let it = 0; it < 4; it++) {
         const pts = [A]; let x = ax, y = ay, th = theta;
@@ -1867,7 +2047,7 @@ const Engine = (() => {
           x = Math.max(300, Math.min(G.maxX - 300, x + step * Math.cos(th))); y = Math.max(300, Math.min(G.maxY - 300, y + step * Math.sin(th)));
           let n = nearest(x, y, opt.hill && k === legs - 1 ? { hillRadius: 400 } : {});
           if (opt.water && (k < legs - 1 || !opt.endNodes)) { const ws = waterSnap(x, y, opt); if (ws >= 0) n = ws; }
-          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finish at a metro / RER station near the planned end
+          if (k === legs - 1 && opt.endNodes && opt.endNodes.length) { // finir à une station de métro ou de RER près de l'arrivée prévue
             let bd = 1e9, bn = -1; for (const q of opt.endNodes) { const dd = Math.hypot(q.x - x, q.y - y); if (dd < bd) { bd = dd; bn = q.n; } }
             if (bn >= 0 && bd < 1500) n = bn;
           }
@@ -1890,9 +2070,9 @@ const Engine = (() => {
   }
 
 
-  // ---------- through places (via points) ----------
+  // ---------- passer par des lieux ----------
   function orderVias(start, vias, end) {
-    // brute-force order (<= 6 vias) on straight-line distance
+    // ordre de passage cherché par force brute (6 lieux au plus), à vol d'oiseau
     if (vias.length < 2) return vias.slice();
     const d = (a, b) => Math.hypot(G.NX[a] - G.NX[b], G.NY[a] - G.NY[b]);
     let best = null, bl = Infinity;
@@ -1900,7 +2080,7 @@ const Engine = (() => {
       for (let i = l; i < arr.length; i++) { [arr[l], arr[i]] = [arr[i], arr[l]]; perm(arr, l + 1); [arr[l], arr[i]] = [arr[i], arr[l]]; } };
     perm(vias.slice(), 0); return best;
   }
-  // pts: ordered nodes; end: node or 'free'. Adds one detour point to reach the target length.
+  // pts : nœuds dans l'ordre ; end : nœud ou 'free'. Ajoute un point de détour pour atteindre la distance voulue.
   async function through(pts, end, target, opt, onProgress) {
     const rng = mulberry(opt.seed || 1);
     const free = end === 'free', full = free ? pts.slice() : pts.concat([end]);
@@ -1911,7 +2091,7 @@ const Engine = (() => {
     for (let c = 0; c < NC; c++) {
       let cb = null;
       if (free) {
-        // extend beyond the last place
+        // prolonger après le dernier lieu
         const last = pts[pts.length - 1], prev = pts.length > 1 ? pts[pts.length - 2] : last;
         let th = Math.atan2(G.NY[last] - G.NY[prev], G.NX[last] - G.NX[prev]); if (pts.length < 2) th = 0;
         th += (c - NC / 2) * 0.45 + (rng() - 0.5) * 0.2;
@@ -1924,7 +2104,7 @@ const Engine = (() => {
           if (Math.abs(st.len / target - 1) < 0.025) break; D *= Math.pow(target / st.len, 1.2);
         }
       } else {
-        // detour on one leg of the chain, alternating legs and sides
+        // détour sur un tronçon de la chaîne, en alternant tronçons et côtés
         const legs = full.length - 1, i = c % legs, side = (c >> 0) % 2 ? 1 : -1;
         const a = full[i], b = full[i + 1];
         const ax = G.NX[a], ay = G.NY[a], bx = G.NX[b], by = G.NY[b];
@@ -1952,7 +2132,7 @@ const Engine = (() => {
     const ord = orderVias(A, vias, end === 'free' ? null : end);
     return through([A, ...ord], end, target, opt, onProgress);
   }
-  // ---------- discovery: pass by famous places ----------
+  // ---------- découverte : passer par des lieux connus ----------
   function sightsOn(st, sights, R = 70) {
     const hit = [];
     const v0 = st.nodes[0];
@@ -1985,7 +2165,7 @@ const Engine = (() => {
       }
       if (!pick.length) { if (onProgress) onProgress((c + 1) / NC); continue; }
       let r = await viaRoute(A, pick, end, target, o2);
-      // too long: drop the farthest place until it fits
+      // trop long : retirer le lieu le plus éloigné jusqu'à ce que ça tienne
       while (r && r.len > target * 1.05 && pick.length > 1) { pick.pop(); r = await viaRoute(A, pick, end, target, o2); }
       if (r) for (const a of (r.alts || [r])) { sightsOn(a, ok); a.score = score(a, target, Object.assign({}, opt, { sights: true })); cands.push(a); }
       if (onProgress) onProgress((c + 1) / NC);
@@ -2044,7 +2224,7 @@ const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 const S = {
-  mode: 'loop', start: null, end: null, // {lat,lon,name}
+  mode: 'loop', start: null, end: null, // {lat, lon, name}
   dmode: 'any', sig: 1, exclQ: new Set(), places: [], seed: 1, tool: null, route: null, showSig: false, showMetro: true, showTrees: false, showFont: false, showTrack: false,
   unit: 'km', endFree: false, view: 'set', kind: 'classic', vias: [], tab: 'gen', race: null
 };
@@ -2072,13 +2252,60 @@ try { localStorage.setItem(CITY_K, CITY); } catch (e) {}
 const C0 = CITIES[CITY], CD = C0.dir;
 document.documentElement.dataset.city = CITY;
 // changer de ville : on recharge l'app sur la nouvelle carte (le choix est gardé sur l'appareil) ; extra = paramètres à ajouter (parcours à rouvrir…)
-function setCity(k, extra) { if (!CITIES[k]) return; try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
+function setCity(k, extra, force) { if (!CITIES[k]) return; if ((NATIVE || ONB_DEMO) && !force && !dlState()[k]) { cityAsk(k, extra); return; } try { localStorage.setItem(CITY_K, k); } catch (e) {} track('ville', 'Ville · ' + CITIES[k].name);
   const u = new URL(location.href); for (const x of [...u.searchParams.keys()]) if (x !== 'web') u.searchParams.delete(x); u.searchParams.set('ville', k); u.hash = '';
   if (extra) for (const [a, b] of Object.entries(extra)) u.searchParams.set(a, b); location.href = u.toString(); }
 const DV = '?v=8f4f41c1';
 // textes de la ville
 $('#city-name').textContent = C0.name; $('#city-btn').setAttribute('aria-label', `Ville : ${C0.name}. Changer de ville`);
 $('#loading').textContent = 'Chargement des rues de ' + C0.name + '…'; // D-104 : plus de « rues parisiennes » dans les autres villes
+
+// ---------- villes à télécharger (application, onboarding) : rien n'est embarqué, chaque ville vient du site puis reste sur le téléphone ----------
+// Sur le site, rien ne change : la page lit les fichiers de la ville à côté d'elle (CD + fichier + version).
+const DL_BASE = (window.PR_DL_BASE || (NATIVE ? 'https://perfectrun.fr/' : new URL('./', location.href).href)).replace(/\/?$/, '/'); // copy-web.js peut viser un aperçu pour les tests (PR_DL_BASE)
+const DL_K = 'runparis-villes'; // { ville: { h: empreinte, bytes, at } } : villes complètes sur le téléphone
+const dlState = () => { try { return JSON.parse(localStorage.getItem(DL_K) || '{}') || {}; } catch (e) { return {}; } };
+const dlSave = s => { try { localStorage.setItem(DL_K, JSON.stringify(s)); } catch (e) {} };
+let DL_ROOT = ''; // adresse locale du dossier « villes » (stockage de l'application)
+const dataURL = f => NATIVE ? DL_ROOT + CITY + '/' + f + '?h=' + ((dlState()[CITY] || {}).h || '') : CD + f + DV;
+const b64buf = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+async function dlIndex() { const r = await fetch(DL_BASE + 'villes.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('index ' + r.status); return r.json(); }
+// télécharge tous les fichiers d'une ville ; la ville n'est marquée complète qu'à la fin (un téléchargement coupé est repris en entier)
+async function cityDownload(id, onp, idx) {
+  idx = idx || await dlIndex(); const c = idx.cities[id]; if (!c) throw new Error('ville inconnue : ' + id);
+  let done = 0; onp && onp(0);
+  for (const [f, size, sh] of c.files) {
+    const r = await fetch(DL_BASE + c.dir + f + '?v=' + sh); if (!r.ok) throw new Error(f + ' ' + r.status);
+    await NP.fs.writeFile({ path: 'villes/' + id + '/' + f, data: b64buf(await r.arrayBuffer()), directory: 'DATA', recursive: true });
+    done += size; onp && onp(done / c.bytes);
+  }
+  const s = dlState(); s[id] = { h: c.h, bytes: c.bytes, at: new Date().toISOString() }; dlSave(s);
+  track('ville-telechargee-' + id, 'Ville téléchargée ' + c.name);
+}
+// au lancement : dossier local, puis la ville choisie si elle n'est pas encore sur le téléphone (en attendant l'onboarding, téléchargée d'office)
+async function dlRoot() { if (!DL_ROOT) { const u = await NP.fs.getUri({ path: 'villes', directory: 'DATA' }); DL_ROOT = CAP.convertFileSrc(u.uri).replace(/\/?$/, '/'); } }
+async function dlReady() {
+  await dlRoot();
+  if (dlState()[CITY]) return true;
+  const recv = new URLSearchParams(location.search).has('p'), other = Object.keys(dlState()).find(k => CITIES[k]);
+  if (!recv && other) { setCity(other, null, true); return false; } // la ville affichée n'est pas sur le téléphone : on passe sur une ville qui y est
+  const ld = $('#loading'); ld.classList.add('dl-full');
+  if (!recv && onbDone()) { // aucune ville (onboarding quitté avant la fin) : on propose de la choisir, sans rien télécharger d'office
+    splashDone();
+    ld.innerHTML = '<div class="dl-err"><b>Aucune ville sur ton téléphone</b><span>Choisis la ville où tu cours : ses rues se téléchargent une fois, puis l’app marche sans réseau.</span><button class="btn primary" type="button">Choisir ma ville</button></div>';
+    ld.querySelector('button').onclick = () => { try { localStorage.removeItem(ONB_K); } catch (e) {} location.reload(); };
+    return false;
+  }
+  const txt = p => 'Téléchargement des rues de ' + C0.name + (recv ? ' pour ouvrir le parcours reçu' : '') + '… ' + Math.round(p * 100) + ' %';
+  try { await cityDownload(CITY, p => { ld.textContent = txt(p); }); ld.textContent = 'Chargement des rues de ' + C0.name + '…'; ld.classList.remove('dl-full'); return true; }
+  catch (e) {
+    track('ville-echec', 'Téléchargement de ville raté'); splashDone();
+    ld.innerHTML = '<div class="dl-err" role="alert"><b>Pas de connexion</b><span></span><button class="btn primary" type="button">Réessayer</button></div>';
+    ld.querySelector('span').textContent = 'Il faut internet une première fois pour télécharger les rues de ' + C0.name + '. Ensuite, l’app marche sans réseau.';
+    ld.querySelector('button').onclick = () => location.reload();
+    return false;
+  }
+}
 $('#hill-hint').textContent = C0.hill; $('#zones-sum').textContent = `Choisir quartier par quartier (${C0.zones})`; $('#avoid-q').placeholder = C0.avoidEx; $('#race-hint').textContent = C0.races;
 $('#map').setAttribute('aria-label', `Carte de ${C0.name} et des communes voisines avec le parcours`); $('#attrib-od').textContent = C0.od ? ' · ' + C0.od : '';
 // ---------- choix de la ville (D-97, CityPicker) : bouton d'en-tête, feuille sur téléphone, liste sous l'en-tête sur ordinateur ----------
@@ -2111,7 +2338,7 @@ function cityHint(la, lo) {
 }
 // première ouverture : si la position est déjà autorisée, on ouvre directement la ville où l'on est
 function cityFirstRun() {
-  if (CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
+  if (S.onbJust || CITY_STORED || new URLSearchParams(location.search).has('ville') || !navigator.geolocation) return;
   const go = () => navigator.geolocation.getCurrentPosition(p => { const k = cityAt(p.coords.latitude, p.coords.longitude); if (k && k !== CITY) setCity(k); }, () => {}, { maximumAge: 600000, timeout: 8000 });
   if (NATIVE && NP.geo && NP.geo.checkPermissions) NP.geo.checkPermissions().then(r => { if (r && r.location === 'granted') go(); }).catch(() => {});
   else if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: 'geolocation' }).then(st => { if (st.state === 'granted') go(); }).catch(() => {});
@@ -2119,23 +2346,24 @@ function cityFirstRun() {
  // version des données (ajoutée à la mise en ligne) : force le rechargement après une mise à jour
 let M, G, paths = {}, colors = {}, RACES = [], SIGHTS = [], METRO = { lines: {}, st: [] }, TREES = null, TGRID = null, FONT = [], PARKS = [], TRACKS = [];
 
-// ---------- loading ----------
+// ---------- chargement ----------
 async function boot() {
+  if (!(await onbGate())) return;
   try {
     // carte de Paris compressée (gzip, 1,5 Mo au lieu de 4,2 Mo) : moins de trafic ; repli sur graph.bin si le navigateur ne sait pas décompresser
-    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(CD + 'graph.gz' + DV); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(CD + 'graph.bin' + DV).then(r => r.arrayBuffer()); };
-    const [meta, buf] = await Promise.all([fetch(CD + 'meta.json' + DV).then(r => r.json()), loadGraph()]);
+    const loadGraph = async () => { if (!NATIVE && typeof DecompressionStream === 'function') { try { const r = await fetch(dataURL('graph.gz')); if (r.ok) { const b = await r.arrayBuffer(), u = new Uint8Array(b, 0, 2); if (u[0] === 0x1f && u[1] === 0x8b) return await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); } } catch (e) {} } return fetch(dataURL('graph.bin')).then(r => r.arrayBuffer()); };
+    const [meta, buf] = await Promise.all([fetch(dataURL('meta.json')).then(r => r.json()), loadGraph()]);
     M = meta; G = E.init(meta, buf);
-    // optional layers: green score per street, official race routes, famous places
+    // couches facultatives : part de vert par rue, parcours mythiques, lieux connus
     const b64 = t => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(CD + 'green.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'races.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'sights.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'metro.json' + DV).then(r => r.ok ? r.json() : null).catch(() => null), fetch(CD + 'fountains.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'parks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => []), fetch(CD + 'dark.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'private.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'excl.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'crowd.txt' + DV).then(r => r.ok ? r.text() : null).catch(() => null), fetch(CD + 'tracks.json' + DV).then(r => r.ok ? r.json() : []).catch(() => [])]);
+    const [gr, rc, sg, mt, ft, pk, dk, pv, xc, cw, tk] = await Promise.all([fetch(dataURL('green.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('races.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('sights.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('metro.json')).then(r => r.ok ? r.json() : null).catch(() => null), fetch(dataURL('fountains.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('parks.json')).then(r => r.ok ? r.json() : []).catch(() => []), fetch(dataURL('dark.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('private.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('excl.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('crowd.txt')).then(r => r.ok ? r.text() : null).catch(() => null), fetch(dataURL('tracks.json')).then(r => r.ok ? r.json() : []).catch(() => [])]);
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
     PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
-    // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (retour du 26/10)
+    // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (D-116)
     TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; })
-      .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (retour du 26/10)
+      .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (D-116)
     $('#ly-track').disabled = !TRACKS.length;
     if (gr) E.setGreen(b64(gr));
     if (pv || xc) { const a = pv ? b64(pv) : null, b = xc ? b64(xc) : null, m = new Uint8Array(Math.max(a ? a.length : 0, b ? b.length : 0)); for (let i = 0; i < m.length; i++) m[i] = (a && a[i] || 0) | (b && b[i] || 0); E.setPrivate(m); } // voies privées et impasses fermées (D-80) + passages couverts, galeries, intérieurs, centres commerciaux (D-91) : jamais empruntés
@@ -2144,7 +2372,7 @@ async function boot() {
     RACES = rc || []; SIGHTS = sg || [];
     for (const x of SIGHTS) { const [px, py] = E.toXY(x.lat, x.lon); x.x = px; x.y = py; const n = E.nearest(px, py); x._n = n >= 0 && Math.hypot(G.NX[n] - px, G.NY[n] - py) < 250 ? n : null; }
   } catch (e) { $('#loading').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:0 16px">Impossible de charger les données de ' + C0.name + ' (connexion interrompue ?).<button class="btn primary" style="flex:none" onclick="location.reload()">Réessayer</button></div>'; return; }
-  mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; splashDone(); sbSync(); renderAvoid(); renderVias(); renderRaces(); updateConv();
+  mApply(); buildSearch(); buildZones(); buildPaths(); fit(); $('#loading').hidden = true; splashDone(); sbSync(); renderAvoid(); renderVias(); renderRaces(); updateConv(); badgeSync(true);
   if (APPF && new URLSearchParams(location.search).get('libre')) { const u = new URL(location.href); u.searchParams.delete('libre'); history.replaceState(null, '', u); setTimeout(soloPrep, 400); } // retour de « Passer sur … » depuis la course libre
   const home = getHome();
   if (home) setPoint('start', { lat: home.lat, lon: home.lon, name: 'Chez moi · ' + home.name.replace(/^Chez moi · /, '') });
@@ -2160,9 +2388,9 @@ async function boot() {
   loadTrees();
   cityFirstRun();
 }
-// street trees (OSM natural=tree): x, y in metres as Int16 pairs; loaded after the first route
+// arbres (OSM natural=tree) : x, y en mètres, paires d'Int16 ; chargés après le premier parcours
 function loadTrees() {
-  fetch(CD + 'trees.txt' + DV).then(r => r.ok ? r.text() : null).then(t => {
+  fetch(dataURL('trees.txt')).then(r => r.ok ? r.text() : null).then(t => {
     if (!t) { $('#ly-trees').disabled = true; return; }
     const bin = atob(t.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     TREES = new Int16Array(u.buffer); TGRID = new Map();
@@ -2171,7 +2399,7 @@ function loadTrees() {
     draw();
   }).catch(() => { $('#ly-trees').disabled = true; });
 }
-// trees within 10 m of the route (computed once per route)
+// arbres à moins de 10 m du tracé (calculés une fois par parcours)
 function routeTrees(r) {
   if (!TGRID) return null; if (r._trees) return r._trees;
   const seen = new Set(), P = laneInfo(r).pts;
@@ -2179,36 +2407,36 @@ function routeTrees(r) {
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const i of TGRID.get(gx * 4096 + gy) || []) if (!seen.has(i) && Math.hypot(TREES[i] - x, TREES[i + 1] - y) <= 10) seen.add(i); }
   return (r._trees = [...seen]);
 }
-// ---------- park opening hours ----------
-// Ville de Paris gated gardens: 8:00 (Sa, Su 9:00; large parks 7:00) until a closing time that follows the sunset (indicative)
+// ---------- horaires des parcs ----------
+// jardins clôturés de la Ville de Paris : 8 h (9 h le week-end, 7 h pour les grands parcs) jusqu'à une fermeture qui suit le coucher du soleil (indicatif)
 function lastSunday(y, m) { const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
 function municipalOpen(p, t) {
   const y = t.getFullYear(), day = t.getDay(), mins = t.getHours() * 60 + t.getMinutes(), md = new Date(y, t.getMonth(), t.getDate());
   const open = p.big ? 7 * 60 : (day === 0 || day === 6 ? 9 * 60 : 8 * 60);
   const oct = lastSunday(y, 9), mar = lastSunday(y, 2), m = t.getMonth();
   let close;
-  if (md >= oct || m <= 1) close = 17 * 60 + 45; // last Sunday of October to February
+  if (md >= oct || m <= 1) close = 17 * 60 + 45; // du dernier dimanche d'octobre à février
   else if (m === 2) close = md < mar ? 19 * 60 : 20 * 60 + 30;
   else if (m === 3) close = 20 * 60 + 30;
   else if (m >= 4 && m <= 7) close = 21 * 60 + 30;
   else if (m === 8) close = 20 * 60 + 30;
-  else close = 19 * 60 + 30; // October before its last Sunday
+  else close = 19 * 60 + 30; // octobre avant son dernier dimanche
   return mins >= open && mins < close;
 }
 const MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 }, WD = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
-// small OpenStreetMap opening_hours reader (months, weekdays, time ranges, closed); null when the syntax is beyond it
+// petit lecteur des opening_hours d'OSM (mois, jours, plages, fermé) ; null si la syntaxe le dépasse
 function ohOpen(oh, t) {
   if (/^\s*24\/7\s*$/.test(oh)) return true;
   if (/sun(rise|set)|\|\||"|week|easter/i.test(oh)) return null;
   const y = t.getFullYear();
-  oh = oh.replace(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) Su\[-1\]/g, (x, mo) => `${mo} ${lastSunday(y, MON[mo]).getDate()}`); // last Sunday of the month
+  oh = oh.replace(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) Su\[-1\]/g, (x, mo) => `${mo} ${lastSunday(y, MON[mo]).getDate()}`); // dernier dimanche du mois
   if (/\[/.test(oh)) return null;
   const m = t.getMonth(), d = t.getDate(), wd = t.getDay(), mins = t.getHours() * 60 + t.getMinutes();
   const val = (mo, dd) => mo * 100 + dd, cur = val(m, d);
   const DAYN = '(?: ?\\d{1,2}(?![\\d:]))?', MO = '(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)';
   const monRe = new RegExp(`^((?:${MO}${DAYN}(?:-${MO}?${DAYN})?,?)+)\\s*:?\\s*`);
   let res = null;
-  // ';' starts a rule that replaces the previous ones for its days; ', ' adds to (or with "off" removes from) the current rule
+  // « ; » ouvre une règle qui remplace les précédentes pour ses jours ; « , » complète la règle en cours (ou en retire avec « off »)
   for (const group of oh.split(/\s*;\s*/).filter(Boolean)) {
     group.split(/,\s+(?=(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b)/).forEach((rule, idx) => {
       let r = rule.trim(), ok = true;
@@ -2233,7 +2461,7 @@ function ohOpen(oh, t) {
   return res;
 }
 function parkOpen(p, t) { if (p.oh) { const v = ohOpen(p.oh, t); if (v !== null) return v; } return municipalOpen(p, t); }
-// sunrise / sunset in Paris for a given day (NOAA approximation, about ±2 min)
+// lever et coucher du soleil pour un jour donné (approximation NOAA, à ±2 min environ)
 function sunTimes(t) {
   const rad = Math.PI / 180, [lat, lon] = C0.ll;
   const start = Date.UTC(t.getFullYear(), 0, 0), n = Math.floor((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - start) / 864e5);
@@ -2244,34 +2472,34 @@ function sunTimes(t) {
   const utc = m => new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) + m * 60000);
   return { rise: utc(720 - 4 * (lon + ha) - eq), set: utc(720 - 4 * (lon - ha) - eq) };
 }
-// is any part of the run in the dark (from 20 min after sunset to 20 min before sunrise)?
+// une partie de la sortie est-elle de nuit (de 20 min après le coucher à 20 min avant le lever) ?
 function runInDark(t0, minutes) {
   for (let k = 0; k <= minutes + 9; k += 10) { const t = new Date(+t0 + Math.min(k, minutes) * 60000), { rise, set } = sunTimes(t);
     if (t > new Date(+set + 20 * 60000) || t < new Date(+rise - 20 * 60000)) return true; }
   return false;
 }
-// departure time chosen by the runner (today; tomorrow if that time is already well past)
+// heure de départ choisie (aujourd'hui ; demain si l'heure est déjà bien passée)
 function departure() {
   const now = new Date(); if (S.depNow !== false || !$('#dep-time').value) return now;
   const [h, m] = $('#dep-time').value.split(':').map(Number); const t = new Date(now); t.setHours(h, m, 0, 0);
   if (t < now - 30 * 60000) t.setDate(t.getDate() + 1); return t;
 }
-// parks closed at some point between departure and arrival
+// parcs fermés à un moment entre le départ et l'arrivée
 function closedParks(t0, minutes) {
   const out = []; for (const p of PARKS) { for (let k = 0; k <= minutes + 9; k += 10) { if (!parkOpen(p, new Date(+t0 + Math.min(k, minutes) * 60000))) { out.push(p); break; } } } return out;
 }
 const hhmm = t => `${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`;
-// drinking fountains within 30 m of the route, with their position along it (m), and the longest stretch without water
+// fontaines à moins de 30 m du tracé, avec leur position le long du tracé (m), et le plus long passage sans eau
 function routeFountains(r) {
   if (!FONT.length) return null; if (r._font) return r._font;
   const P = laneInfo(r).pts, hit = new Map(); let acc = 0;
   for (let i = 0; i < P.length; i++) { if (i) acc += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]);
     for (const f of FONT) { if (Math.abs(f.x - P[i][0]) > 30 || Math.abs(f.y - P[i][1]) > 30) continue; const d = Math.hypot(f.x - P[i][0], f.y - P[i][1]); if (d <= 30 && (!hit.has(f) || hit.get(f).d > d)) hit.set(f, { d, at: acc }); } }
   const list = [...hit].map(([f, h]) => ({ f, at: h.at })).sort((a, b) => a.at - b.at);
-  // a fountain met twice (out and back) counts once, at its first pass
+  // une fontaine croisée deux fois (aller et retour) compte une fois, au premier passage
   const seen = new Set(), uniq = list.filter(x => !seen.has(x.f) && seen.add(x.f));
   let gap = 0, prev = 0; for (const x of uniq) { gap = Math.max(gap, x.at - prev); prev = x.at; } gap = Math.max(gap, r.len - prev);
-  const stops = []; for (const x of uniq) if (!stops.length || x.at - stops[stops.length - 1] > 400) stops.push(x.at); // fountains less than 400 m apart = one water stop
+  const stops = []; for (const x of uniq) if (!stops.length || x.at - stops[stops.length - 1] > 400) stops.push(x.at); // fontaines à moins de 400 m l'une de l'autre = un seul point d'eau
   return (r._font = { list: uniq, gap, stops });
 }
 function drawDrop(sx, sy, r, hi) {
@@ -2279,7 +2507,7 @@ function drawDrop(sx, sy, r, hi) {
   const k = r * 0.55; ctx.beginPath(); ctx.moveTo(sx, sy - k * 1.25); ctx.bezierCurveTo(sx + k * 0.9, sy - k * 0.2, sx + k * 0.95, sy + k * 0.95, sx, sy + k); ctx.bezierCurveTo(sx - k * 0.95, sy + k * 0.95, sx - k * 0.9, sy - k * 0.2, sx, sy - k * 1.25);
   ctx.fillStyle = hi ? '#fff' : colors.font; ctx.fill();
 }
-// closest metro / RER station to a point (straight line, metres)
+// station de métro ou de RER la plus proche d'un point (à vol d'oiseau, en mètres)
 function nearestStation(x, y) { let b = null, bd = 1e9; for (const s of METRO.st) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; b = s; } } return b && { s: b, d: bd }; }
 function lineBadge(l) { const b = document.createElement('span'); b.className = 'lb'; const c = METRO.lines[l] || '#888'; b.style.background = c;
   const h = c.replace('#', ''), [R, Gc, B] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); b.style.color = (R * 299 + Gc * 587 + B * 114) / 1000 > 150 ? '#111' : '#fff';
@@ -2303,16 +2531,16 @@ function transitTexts() {
   }
 }
 
-// ---------- search index ----------
+// ---------- index de recherche ----------
 let IDX = [];
 function buildSearch() {
   const typeLabel = { station: 'Gare / métro', park: 'Parc', attraction: 'Lieu', museum: 'Musée', viewpoint: 'Point de vue', square: 'Place', monument: 'Monument', marketplace: 'Marché', university: 'Université', mall: 'Centre commercial', stadium: 'Stade' };
   for (const [n, t, la, lo] of M.poi) IDX.push({ name: n, type: typeLabel[t] || 'Lieu', lat: la, lon: lo, k: norm(n) });
   // arrêts de tram (D-98) : cherchables comme les stations, s'ils ne sont pas déjà des lieux
   const known = new Set(IDX.map(x => x.k)); for (const st of METRO.st) if (st.tram && !known.has(norm(st.n))) IDX.push({ name: st.n, type: 'Tram ' + st.ls.map(l => l.replace(/^T([A-Z])$/, '$1')).join(', '), lat: st.lat, lon: st.lon, k: norm(st.n) });
-  // streets: centroid of longest edge per name
+  // rues : milieu du plus long tronçon de chaque nom
   const best = new Map();
-  // one entry per street name and town (the same name exists in several communes)
+  // une entrée par nom de rue et par commune (un même nom existe dans plusieurs communes)
   const town = e => { const q = M.quartiers[G.nq[G.ea[e]] - 1]; return q && q.ar > 100 ? q.name : ''; };
   for (let e = 0; e < G.nE; e++) { const n = G.en[e]; if (!n) continue; const L = G.LEN[e], key = n + '|' + town(e); const b = best.get(key); if (!b || L > b[0]) best.set(key, [L, e, n]); }
   for (const [key, [, e, n]] of best) {
@@ -2389,7 +2617,7 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
-  // neighbouring communes: one zone each
+  // communes voisines : une zone chacune
   const cs = M.quartiers.filter(q => q.ar > 100).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   if (cs.length) {
     const h = document.createElement('div'); h.className = 'ah'; h.textContent = 'Communes voisines'; ql.appendChild(h);
@@ -2399,9 +2627,9 @@ function buildZones() {
       ql.appendChild(l);
     }
   }
-  // initial view: Paris itself (the graph also covers the neighbouring communes)
+  // vue de départ : la ville centre (le graphe couvre aussi les communes voisines)
   { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of M.quartiers) if (q.ar < 100) for (const [la, lo] of q.rings[0]) { const [x, y] = E.toXY(la, lo); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } if (x1 > x0) M.parisB = [x0, y0, x1, y1]; }
-  // centroids of arrondissements for labels
+  // centre des arrondissements, pour leurs numéros
   M.arrC = {};
   for (const q of M.quartiers) { const r = q.rings[0]; let x = 0, y = 0; for (const [la, lo] of r) { const p = E.toXY(la, lo); x += p[0]; y += p[1]; } const c = M.arrC[q.ar] || [0, 0, 0]; c[0] += x / r.length; c[1] += y / r.length; c[2]++; M.arrC[q.ar] = c; }
 }
@@ -2419,7 +2647,7 @@ function zonesChanged() {
   renderAvoid(); markStale(); draw();
 }
 function renderPlaces() { renderAvoid(); markStale(); }
-// one place for every exclusion: whole arrondissements, single quartiers, places (+ radius)
+// toutes les exclusions au même endroit : arrondissements entiers, quartiers, lieux (+ rayon)
 function renderAvoid() {
   const box = $('#avoid-list'); box.innerHTML = '';
   const mk = (label, onX, extra) => {
@@ -2453,7 +2681,7 @@ function setPoint(which, p) {
   S[which] = p; $(`#${which}-name`).textContent = p.name; draw(); if (which === 'start') renderHome();
   if (MPHR && ((MCUR === 'dep' && which === 'start') || (MCUR === 'arr' && which === 'end'))) mClose(); if (MPHR) msync();
 }
-// ---------- « Chez moi » (stored only in this browser) ----------
+// ---------- « Chez moi » (gardé seulement sur cet appareil) ----------
 function getHome() { try { const h = JSON.parse(localStorage.getItem('runparis-home') || 'null'); return h && isFinite(h.lat) && isFinite(h.lon) ? h : null; } catch (e) { return null; } }
 function renderHome() {
   const h = getHome(), go = $('#home-go'), save = $('#home-save');
@@ -2464,7 +2692,7 @@ function renderHome() {
   go.hidden = !h || isHome;
 }
 
-// ---------- map rendering ----------
+// ---------- dessin de la carte ----------
 const cv = $('#map'), ctx = cv.getContext('2d');
 let V = { s: 0.05, tx: 0, ty: 0 }, W = 0, H = 0, dpr = 1;
 let MAPROT = 0, MAPROT_ON = false; // course : rotation de la carte (degrés), canvas agrandi pour tourner
@@ -2489,7 +2717,7 @@ function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, MAPROT_ON ? 2 : 4); W = cv.offsetWidth; H = cv.offsetHeight;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); draw();
 }
-// ---------- mobile bottom sheet ----------
+// ---------- feuille mobile ----------
 const MOB = matchMedia('(max-width: 860px)');
 let sheet = 'half';
 function sheetPx() { return MOB.matches ? $('.panel').getBoundingClientRect().height : 0; }
@@ -2571,7 +2799,7 @@ function setSheet(st, refit) {
 function raceBounds() { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of routePts(S.route)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return [x0, y0, x1, y1]; }
 function fit(bounds) {
   const r = cv.getBoundingClientRect(); W = r.width || 800; H = r.height || 600;
-  const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // on phones, fit into the map area left visible above the sheet
+  const Hv = Math.max(160, H - sheetPx()), top = MOB.matches ? 50 : 40; // sur téléphone, cadrer dans la partie de la carte visible au-dessus de la feuille
   const [x0, y0, x1, y1] = bounds || M.parisB || [0, 0, G.maxX, G.maxY];
   const pad = MOB.matches ? 18 : 30; V.s = Math.min((W - 2 * pad - (MOB.matches ? 50 : 0)) / (x1 - x0 || 1), (Hv - 2 * pad - top) / (y1 - y0 || 1));
   V.tx = (W - (MOB.matches ? 50 : 0)) / 2 - (x0 + x1) / 2 * V.s; V.ty = (Hv + top) / 2 - (y0 + y1) / 2 * V.s; draw();
@@ -2587,7 +2815,7 @@ function drawMetro(hiOnly) {
       const hi = st === endSt; if (hiOnly ? !hi : !S.showMetro || (V.s < 0.04 && !hi) || (st.tram && !big && !hi && !METRO.onlyTram)) continue; const r = hi ? 9 : big ? 6.5 : 3;
       ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fillStyle = colors.metroBg; ctx.fill(); ctx.lineWidth = hi ? 2.5 : big ? 1.6 : 1.2; ctx.strokeStyle = hi ? colors.route : colors.metroInk; ctx.stroke();
       if (big || hi) { ctx.fillStyle = colors.metroInk; ctx.font = `800 ${hi ? 11 : 8.5}px ${css('--f-cond')}`; ctx.fillText(st.tram ? 'T' : 'M', sx, sy + 0.5); }
-      if (badges || hi) { // line badges + name
+      if (badges || hi) { // pastilles de lignes + nom
         let bx = sx + r + 4; ctx.textAlign = 'left';
         for (const l of st.ls) { const lab = l.replace(/^M/, '').replace('RER ', '').replace(/^T([A-Z])$/, '$1'), w = Math.max(14, ctx.measureText(lab).width + 6); const c = METRO.lines[l] || '#888';
           ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, sy - 7, w, 14, 7) : ctx.rect(bx, sy - 7, w, 14); ctx.fill(); // pastille ronde (LineBadge)
@@ -2610,30 +2838,30 @@ function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
   ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr);
   const px = v => v / V.s;
-  // background: green spaces, water, cemeteries
+  // fond : espaces verts, eau, cimetières
   if (M.greenPath) { ctx.fillStyle = colors.green; ctx.fill(M.greenPath, 'evenodd'); }
   if (M.cemPath) { ctx.fillStyle = colors.cem; ctx.fill(M.cemPath, 'evenodd'); }
   if (M.waterPath) { ctx.fillStyle = colors.water; ctx.fill(M.waterPath, 'evenodd'); }
-  // excluded quartiers
+  // quartiers évités
   if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.fillStyle = colors.avoidFill; ctx.fill(q.path); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(q.path); } }
   if (M.stationPath) { ctx.fillStyle = colors.stationFill; ctx.fill(M.stationPath, 'nonzero'); }
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const z = V.s; // px per metre
+  const z = V.s; // px par mètre
   ctx.strokeStyle = colors.street; ctx.lineWidth = px(z > 0.25 ? 1.6 : z > 0.1 ? 0.9 : 0.5); ctx.stroke(paths.minor);
   ctx.strokeStyle = colors.path; ctx.setLineDash([px(3), px(2)]); ctx.lineWidth = px(z > 0.25 ? 1.4 : 0.7); ctx.stroke(paths.path); ctx.setLineDash([]);
   ctx.strokeStyle = colors.major; ctx.lineWidth = px(z > 0.25 ? 2 : 1); ctx.stroke(paths.c1);
   ctx.lineWidth = px(z > 0.25 ? 3 : 1.5); ctx.stroke(paths.c2);
   ctx.lineWidth = px(z > 0.25 ? 4 : 2); ctx.stroke(paths.c3);
-  // quartier & arr borders
+  // limites des quartiers et des arrondissements
   ctx.strokeStyle = colors.quart; ctx.lineWidth = px(1); ctx.setLineDash([px(5), px(4)]);
   for (const q of M.quartiers) ctx.stroke(q.path);
   ctx.setLineDash([]);
   if (S.tab !== 'race') for (const q of M.quartiers) if (S.exclQ.has(q.id)) { ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(q.path); }
-  // avoided places
+  // lieux évités
   if (S.tab !== 'race') for (const p of S.places) { const [x, y] = E.toXY(p.lat, p.lon); ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fillStyle = colors.avoidFill; ctx.fill(); if (colors.hatch) { ctx.fillStyle = colors.hatch; ctx.fill(); } ctx.strokeStyle = colors.avoid; ctx.lineWidth = px(2.4); ctx.stroke(); }
-  // signals
+  // feux
   if (S.showSig) { ctx.fillStyle = colors.sig; const h = px(z > 0.2 ? 3 : 1.8); ctx.beginPath(); for (const s of G.SIG) ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); }
-  // all street trees, as small dots (a density map when zoomed out)
+  // tous les arbres, en petits points (une carte de densité quand on dézoome)
   if (S.showTrees && TREES) {
     const x0 = -V.tx / V.s, y0 = -V.ty / V.s, x1 = (W - V.tx) / V.s, y1 = (H - V.ty) / V.s, r = px(z > 0.4 ? 2.4 : z > 0.15 ? 1.6 : 1);
     ctx.save(); ctx.globalAlpha = z > 0.15 ? 0.75 : 0.45; ctx.fillStyle = colors.tree; ctx.beginPath();
@@ -2654,7 +2882,7 @@ function render() {
   if (S.showTrack && V.s < 0.25) for (const t of TRACKS) { const sx = t.x * V.s + V.tx, sy = t.y * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
     const rw = V.s > 0.08 ? 8 : 5.5; ctx.beginPath(); ctx.ellipse(sx, sy, rw, rw * 0.6, 0, 0, 7); ctx.lineWidth = V.s > 0.08 ? 3 : 2.2; ctx.strokeStyle = colors.track; ctx.stroke(); }
   ctx.restore();
-  // route
+  // tracé
   const R = NAV.on && NAV.r ? NAV.r : S.route;
   if (R && S.alts && S.alts.length > 1 && !NAV.on) {
     ctx.save(); ctx.globalAlpha = 0.45; ctx.strokeStyle = colors.route; ctx.lineWidth = px(2.5); ctx.setLineDash([px(6), px(5)]);
@@ -2662,38 +2890,38 @@ function render() {
       for (const [e, fromA] of a.edges) { const pts = E.edgePts(e); if (!fromA) pts.reverse(); pts.forEach(([x, y], i) => { if (f) { p.moveTo(x, y); f = false; } else if (i) p.lineTo(x, y); }); }
       ctx.stroke(p); }
     ctx.restore();
-    // number each proposal at its midpoint
+    // numéro de chaque proposition, au milieu de son tracé
     S.alts.forEach((a, i) => { if (a === R) return; const v = a.nodes[Math.floor(a.nodes.length * 0.55)]; a._label = [G.NX[v], G.NY[v], i + 1]; });
   }
   if (R) {
-    // each pass over the same street gets its own lane (to the right of its direction of travel)
+    // chaque passage dans une même rue a sa voie (à droite de son sens de marche)
     const LI = laneInfo(R), U = 3 / V.s;
     const OP = LI.any ? LI.pts.map(([x, y], i) => [x - LI.ty[i] * LI.lane[i] * U, y + LI.tx[i] * LI.lane[i] * U]) : LI.pts;
     const stroke = (a, b, col) => { const p = new Path2D(); for (let i = a; i <= b; i++) i === a ? p.moveTo(OP[i][0], OP[i][1]) : p.lineTo(OP[i][0], OP[i][1]);
       ctx.strokeStyle = colors.casing; ctx.lineWidth = px(LI.any ? 7 : 8); ctx.stroke(p); ctx.strokeStyle = col; ctx.lineWidth = px(LI.any ? 4 : 4.5); if (col === colors.route2) { ctx.lineCap = 'butt'; ctx.setLineDash([px(7), px(5)]); } ctx.stroke(p); ctx.setLineDash([]); ctx.lineCap = 'round'; };
-    // trees along the route, like the feux: small dots drawn UNDER the line, at street zoom only,
-    // thinned to one dot per ~8 px so a tree-lined avenue reads as a green fringe, not noise
+    // arbres le long du tracé, comme les feux : petits points dessinés SOUS la ligne, au zoom rue seulement,
+    // au plus un point tous les ~8 px : une avenue arborée se lit comme une frange verte, pas comme du bruit
     const rt = z > 0.22 && !S.showTrees ? routeTrees(R) : null;
     if (rt && rt.length) { const seen = new Set(), rr = px(2.2); ctx.fillStyle = colors.tree; ctx.beginPath();
       for (const i of rt) { const k = Math.floor(TREES[i] * z / 8) + ',' + Math.floor(TREES[i + 1] * z / 8); if (seen.has(k)) continue; seen.add(k); ctx.moveTo(TREES[i] + rr, TREES[i + 1]); ctx.arc(TREES[i], TREES[i + 1], rr, 0, 7); }
       ctx.fill(); }
     if (!LI.any) stroke(0, OP.length - 1, colors.route);
-    else for (let a = 0; a < OP.length - 1;) { // short chunks so later passes are drawn over earlier ones; 2nd pass in its own colour
+    else for (let a = 0; a < OP.length - 1;) { // petits morceaux pour que les passages suivants recouvrent les précédents ; 2e passage dans sa couleur
       let b = a + 1; while (b < OP.length - 1 && b - a < 24 && LI.pass[b] === LI.pass[a]) b++;
       stroke(a, b, LI.pass[a] % 2 ? colors.route2 : colors.route); a = b; }
     navDrawDone(px);
-    // feux on route
+    // feux sur le tracé
     const ids = new Set(S.tab === 'race' ? [] : R.clusterIds); ctx.fillStyle = colors.sig; ctx.strokeStyle = colors.casing; ctx.lineWidth = px(1.5);
     for (const s of G.SIG) if (ids.has(s.id)) { const h = px(4.5); ctx.beginPath(); ctx.rect(s.x - h, s.y - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // direction chevrons every ~70 px along the line
+    // chevrons de sens tous les ~70 px le long du tracé
     if (V.s >= 0.09) { const P = LI.pts; let run = 35; ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (let i = 1; i < P.length; i++) { run += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]) * V.s;
         if (run < 70 || i < 2 || i > P.length - 3) continue; run = 0;
         const sx = OP[i][0] * V.s + V.tx, sy = OP[i][1] * V.s + V.ty; if (sx < -10 || sy < -10 || sx > W + 10 || sy > H + 10) continue;
         const dx = LI.tx[i], dy = LI.ty[i], k = 2.6;
         ctx.beginPath(); ctx.moveTo(sx - dx * k - dy * k, sy - dy * k + dx * k); ctx.lineTo(sx + dx * k, sy + dy * k); ctx.lineTo(sx - dx * k + dy * k, sy - dy * k - dx * k); ctx.stroke(); } }
-    // km markers, placed on the lane of the pass they belong to
+    // bornes km, posées sur la voie du passage auquel elles appartiennent
     const kmOff = NAV.on && NAV.r && NAV.r !== S.route ? NAV.base : 0; let acc = 0, next = 1000 - kmOff % 1000;
     ctx.font = `800 11px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     {
@@ -2715,7 +2943,7 @@ function render() {
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (M.stationPath) { ctx.save(); ctx.setTransform(V.s * dpr, 0, 0, V.s * dpr, V.tx * dpr, V.ty * dpr); ctx.strokeStyle = colors.station; ctx.lineWidth = 1.2 / V.s; ctx.setLineDash([4 / V.s, 3 / V.s]); ctx.stroke(M.stationPath); ctx.restore(); }
-  // arrondissement numbers when zoomed out
+  // numéros des arrondissements quand on dézoome
   if (V.s < 0.12 && M.arrC) {
     ctx.font = `800 ${V.s < 0.07 ? 14 : 17}px ${css('--f-display')}`; if ('fontStretch' in ctx) ctx.fontStretch = 'condensed'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = colors.muted; ctx.globalAlpha = .75;
     for (const a in M.arrC) { const c = M.arrC[a]; const x = c[0] / c[2] * V.s + V.tx, y = c[1] / c[2] * V.s + V.ty; if (+a >= 50) { if (V.s < 0.045) continue; ctx.save(); ctx.font = `500 ${V.s < 0.07 ? 11 : 12}px ${css('--f-display')}`; ctx.fillText(M.quartiers.find(q => q.ar === +a)?.name || '', x, y); ctx.restore(); } else ctx.fillText(a === '1' ? '1er' : a + 'e', x, y); }
@@ -2724,7 +2952,7 @@ function render() {
   drawMetro(true);
   if (S.route && V.s >= 0.05) { const rf = routeFountains(S.route); if (rf) for (const { f } of rf.list) drawDrop(f.x * V.s + V.tx, f.y * V.s + V.ty, V.s > 0.15 ? 8 : 6.5, true); }
   drawRouteNames();
-  // pins
+  // épingles
   // lieux (connus ou de passage) : losange magenta (D-69), pour ne pas se confondre avec les arbres
   const dia = (p, label, r) => { if (!p) return; const [x, y] = E.toXY(p.lat, p.lon); const sx = x * V.s + V.tx, sy = y * V.s + V.ty; ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy); ctx.closePath(); ctx.fillStyle = colors.poi; ctx.fill(); ctx.strokeStyle = colors.casing; ctx.lineWidth = 2; ctx.stroke(); if (label) { ctx.fillStyle = colors.accentInk === '#0B0B0C' ? '#0B0B0C' : '#FFFFFF'; ctx.font = `800 12px ${css('--f-body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy + 1); } };
   // départ et arrivée (D-105) : épingle qui pointe le point exact, avec une ombre ; D plein (ink), A en creux (panel cerclé d'ink).
@@ -2747,7 +2975,7 @@ function render() {
     ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - 11, sy - 10, 22, 20, 6) : ctx.rect(sx - 11, sy - 10, 22, 20); ctx.fillStyle = colors.panel; ctx.fill(); ctx.strokeStyle = colors.route; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = colors.route; ctx.font = `700 12px ${css('--f-display')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), sx, sy + 1);
   }
-  // famous places passed by the selected route
+  // lieux connus croisés par le parcours choisi
   if (R && R.sightsN) {
     ctx.font = `700 12px ${css('--f-body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     for (const nm of R.sights) { const sg = SIGHTS.find(x => x.name === nm); if (!sg) continue; const sx = sg.x * V.s + V.tx, sy = sg.y * V.s + V.ty;
@@ -2765,7 +2993,7 @@ function render() {
   navDrawMe();
 }
 
-// ---------- street names ----------
+// ---------- noms des rues ----------
 let labelOrder = null;
 function drawLabels() {
   if (V.s < 0.22) return;
@@ -2802,7 +3030,7 @@ function drawLabels() {
   }
 }
 
-// ---------- theme ----------
+// ---------- thème ----------
 function applyTheme(t) {
   const root = document.documentElement;
   if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
@@ -2815,7 +3043,7 @@ $('#theme-btn').onclick = e => { e.stopPropagation(); const p = $('#themepop'); 
 document.addEventListener('click', e => { const p = $('#themepop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#theme-btn').setAttribute('aria-expanded', false); } });
 try { const t = localStorage.getItem('runparis-theme'); if (t && t !== 'auto') applyTheme(t); } catch (e) {}
 
-// ---------- map interaction ----------
+// ---------- gestes sur la carte ----------
 const ptrs = new Map(); let drag = null, pinch = null, pinchRot = null;
 const ptrC = new Map();
 cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (er) {} ptrs.set(e.pointerId, [e.offsetX, e.offsetY]); ptrC.set(e.pointerId, [e.clientX, e.clientY]); if (ptrC.size === 2) { const [a, b] = [...ptrC.values()]; pinchRot = { a0: Math.atan2(b[1] - a[1], b[0] - a[0]), r0: MAPROT, on: false }; } if (ptrs.size === 1) drag = { x: e.offsetX, y: e.offsetY, tx: V.tx, ty: V.ty, moved: false }; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s: V.s, tx: V.tx, ty: V.ty, cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2 }; drag = null; } });
@@ -2911,7 +3139,7 @@ $('#home-save').onclick = () => {
 $('#pick-end').onclick = () => setTool('end');
 let tt; function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, ms); }
 
-// ---------- controls ----------
+// ---------- réglages ----------
 function seg(ids, onPick) { ids.forEach(id => $('#' + id).onclick = () => { ids.forEach(j => $('#' + j).setAttribute('aria-pressed', j === id)); onPick(id); }); }
 // Arrivée : En boucle / Jusqu'à un lieu / N'importe où (mêmes mots que l'accueil)
 function setArrival(k) {
@@ -3010,7 +3238,7 @@ $('#pace').addEventListener('change', () => { if (!parsePace($('#pace').value)) 
 $('#km').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 $('#again').onclick = () => { S.seed++; generate(true); };
 $('#recalc').onclick = () => generate(true);
-// legend: open by default on large screens, closed on phones; remembered on this device
+// légende : ouverte par défaut sur grand écran, fermée sur téléphone ; choix gardé sur l'appareil
 $('#legend').open = false; // légende intégrée (D-65) : le « ? » ouvre la liste complète
 document.addEventListener('click', e => { const lg = $('#legend'); if (lg.open && !lg.contains(e.target)) lg.open = false; });
 $('#edit').onclick = e => { e.stopPropagation(); showView('set'); };
@@ -3023,7 +3251,7 @@ function showView(v) {
   else { $('#stale').hidden = true; $('#view-set').scrollTop = 0; if (MOB.matches) setSheet(MPHR ? 'half' : 'full'); }
 }
 
-// bring the map into view after a calculation (useful when the page is narrow and the map sits above the panel)
+// ramener la carte à l'écran après un calcul (utile quand la page est étroite et la carte au-dessus du panneau)
 function scrollToMap() {
   if (MOB.matches) { setSheet('half', true); return; }
   const r = $('#mapwrap').getBoundingClientRect();
@@ -3056,10 +3284,10 @@ function lastApply() {
   lastSet(Object.assign({}, LAST_DEF, o.g), (o.c || {})[CITY]); $('#last-line').hidden = false; return o.g;
 }
 $('#last-reset').onclick = () => { try { localStorage.removeItem(LAST_K); } catch (e) {} if (LAST_DEF) lastSet(LAST_DEF, null); $('#last-line').hidden = true; toast('Réglages remis à zéro.'); };
-// ---------- type of route ----------
+// ---------- type de parcours ----------
 const KHINT = { green: 'Passe au maximum par les parcs, jardins, quais et rues bordées d’arbres (≈ 160 000 arbres recensés dans OpenStreetMap), quitte à faire quelques détours.', discover: 'Passe devant des monuments et lieux connus à portée de ta distance. Tu peux aussi choisir tes lieux avec « Passer par un lieu ».' };
 ['classic', 'green', 'discover'].forEach(k => $('#k-' + k).onclick = () => { S.kind = k; ['classic', 'green', 'discover'].forEach(j => $('#k-' + j).setAttribute('aria-pressed', j === k)); $('#k-hint').hidden = k === 'classic'; $('#k-hint').textContent = KHINT[k] || ''; });
-// ---------- places to pass by ----------
+// ---------- lieux par où passer ----------
 function addVia(p) {
   if (S.vias.length >= 5) return toast('5 lieux au maximum.');
   S.vias.push(p); renderVias(); markStale(); draw();
@@ -3081,7 +3309,7 @@ function renderVias() {
   box.appendChild(add); msync();
   $('#via-track').hidden = !TRACKS.length || S.mode !== 'loop' || S.vias.some(v => v.track);
 }
-// « Passer par » : la piste d'athlé la plus proche du départ, sans la chercher sur la carte (retour du 26/10)
+// « Passer par » : la piste d'athlé la plus proche du départ, sans la chercher sur la carte (D-116)
 $('#via-track').onclick = () => {
   if (!S.start) return toast('Choisis d’abord ton départ.');
   const [sx, sy] = E.toXY(S.start.lat, S.start.lon); let best = null, bd = 1e9;
@@ -3092,7 +3320,7 @@ $('#via-track').onclick = () => {
   toast(`${name} · piste d’environ ${best.lap} m, à ${bd < 1000 ? Math.round(bd / 50) * 50 + ' m' : fmt(bd / 1000, 1) + ' km'} du départ.`, 4000);
 };
 searchBox($('#via-q'), $('#via-res'), h => { addVia({ lat: h.lat, lon: h.lon, name: h.name }); });
-// ---------- official races ----------
+// ---------- parcours mythiques ----------
 function setTab(t) {
   const prev = S.tab;
   S.tab = t; $('#tab-gen').setAttribute('aria-selected', t === 'gen'); $('#tab-race').setAttribute('aria-selected', t === 'race'); $('#tab-mine').setAttribute('aria-selected', t === 'mine');
@@ -3117,7 +3345,7 @@ function setTab(t) {
 }
 $('#tab-gen').onclick = () => S.tab !== 'gen' && setTab('gen');
 $('#tab-race').onclick = () => S.tab !== 'race' && setTab('race');
-// ---- overlapping passes: resample the route, find where it runs over itself, and give each pass its own lane
+// ---- passages superposés : rééchantillonner le tracé, trouver où il repasse sur lui-même et donner une voie à chaque passage
 function laneInfo(R) {
   if (R._lanes) return R._lanes;
   const src = routePts(R), step = 8, pts = [];
@@ -3136,25 +3364,25 @@ function laneInfo(R) {
     const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C); const js = [];
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || [])
       if (i - j >= 10 && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) js.push(j);
-    if (js.length) { // one earlier pass = a run of consecutive samples; count the passes going the same way
+    if (js.length) { // un passage antérieur = une suite d'échantillons consécutifs ; on compte les passages dans le même sens
       js.sort((a, b) => a - b); let same = 0, tot = 0, prev = -99;
       for (const j of js) { if (j - prev > 6) { tot++; if (tx[i] * tx[j] + ty[i] * ty[j] > 0) same++; } prev = j; }
       lane[i] = 1 + 2 * Math.min(same, 3); pass[i] = Math.min(tot, 3); any = true;
     }
     const k = key(x, y); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i);
   }
-  // the first pass also moves to its own lane wherever a later pass comes back over it
+  // le premier passage prend lui aussi sa voie là où un passage suivant revient sur lui
   if (any) for (let i = 0; i < n; i++) if (lane[i]) {
     const [x, y] = pts[i]; const cx = Math.floor(x / C), cy = Math.floor(y / C);
     for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) for (const j of grid.get(gx + ',' + gy) || []) if (j < i - 10 && !lane[j] && Math.hypot(pts[j][0] - x, pts[j][1] - y) <= 12) lane[j] = 1;
   }
-  // smooth lane changes over ~40 m so the line glides from one lane to the other
+  // changements de voie lissés sur ~40 m : la ligne glisse d'une voie à l'autre
   const sm = new Float32Array(n); for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = -5; k <= 5; k++) { const j = i + k; if (j >= 0 && j < n) { s += lane[j]; c++; } } sm[i] = s / c; }
-  // a pass shorter than ~50 m is noise (crossing, corner): keep it in the colour of what surrounds it
+  // un passage de moins de ~50 m est du bruit (traversée, coin) : il garde la couleur de ce qui l'entoure
   for (let i = 0; i < n;) { let j = i; while (j < n && pass[j] === pass[i]) j++; if (j - i < 6 && i > 0) for (let k = i; k < j; k++) pass[k] = pass[i - 1]; i = j; }
   return (R._lanes = { pts, tx, ty, lane: sm, pass, any });
 }
-// polyline of a route in map metres: from street edges, or from a GPX geometry (official races)
+// ligne d'un parcours en mètres de carte : depuis les tronçons de rue, ou depuis un tracé GPX (parcours mythiques)
 // point de départ, d'arrivée ou de passage : jamais au bout d'un petit passage sans nom (porche, cour) — on se place au carrefour (D-80)
 function snapNode(x, y) {
   let v = E.nearest(x, y); if (v < 0) return v;
@@ -3168,7 +3396,7 @@ function routePts(r) {
   for (const [e, fromA] of r.edges) { const p = E.edgePts(e); if (!fromA) p.reverse(); p.forEach((q, i) => { if (first || i) pts.push(q); first = false; }); }
   return (r._pts = pts);
 }
-// route object from a polyline (x, y in metres): length, smoothed D+, feux crossed, streets and quartiers
+// parcours à partir d'une ligne (x, y en mètres) : longueur, D+ lissé, feux traversés, rues et quartiers
 function geomRoute(xy) {
   let len = 0; const prof = [], nodes = [], names = new Map(), quart = new Map(), clusters = new Set();
   const step = 15; let acc = 0, next = 0;
@@ -3182,7 +3410,7 @@ function geomRoute(xy) {
     }
   }
   for (const s of G.SIG) { for (let i = 0; i < xy.length; i += 1) { if (Math.abs(xy[i][0] - s.x) < 20 && Math.abs(xy[i][1] - s.y) < 20) { clusters.add(s.id); break; } } }
-  let gl = 0; // green share from nearest street edge
+  let gl = 0; // part de vert d'après le tronçon de rue le plus proche
   return { geom: xy, len, prof, nodes, names, quart, up: E.smoothClimb(prof), feux: clusters.size, clusterIds: [...clusters], edges: [], green: null, kind: 'course' };
 }
 function sliceGeom(xy, a, b) {
@@ -3219,7 +3447,7 @@ function renderRaces() {
     b.querySelector('.s').textContent = `${fmt(race.official, race.official % 1 ? 1 : 0)} km · ${Math.round(st.up)} m D+`;
     b.onclick = () => { S.race = race; showRace(race); renderRaces(); track('course', race.name); if (MOB.matches) { const c = $('.race[aria-pressed="true"]'); if (c) $('#view-race').scrollTop += c.getBoundingClientRect().top - $('#view-race').getBoundingClientRect().top - 8; } };
     box.appendChild(b);
-    if (S.race === race) box.appendChild(det); // the detail opens right under the chosen race
+    if (S.race === race) box.appendChild(det); // le détail s'ouvre juste sous le parcours choisi
   }
 }
 function showRace(race, from, to) {
@@ -3240,7 +3468,7 @@ function showRace(race, from, to) {
   $('#p-from').value = Math.round(from * 10) / 10; $('#p-to').value = Math.round(to * 10) / 10; $('#p-to').max = $('#p-from').max = (Math.round(L / 100) / 10);
   const chips = $('#portion-chips'); chips.innerHTML = '';
   const Lk = L / 1000, opts = [['En entier', 0, Lk], ['5 premiers km', 0, 5], ['10 premiers km', 0, 10], ['5 derniers km', Lk - 5, Lk], ['La moitié', 0, Lk / 2]];
-  // steepest 3 km window
+  // les 3 km les plus pentus
   let best = null; const P = full.prof; for (let i = 0; i < P.length; i++) { let up = 0; for (let j = i + 1; j < P.length && P[j][0] - P[i][0] <= 3000; j++) up += Math.max(0, P[j][1] - P[j - 1][1]); if (!best || up > best[1]) best = [P[i][0], up]; }
   if (best && Lk > 6) opts.push(['3 km les plus vallonnés', best[0] / 1000, best[0] / 1000 + 3]);
   for (const [lab, a, b] of opts) { if (b > Lk + 0.01 || a < 0) continue; const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = lab; btn.setAttribute('aria-pressed', Math.abs(a - from) < 0.05 && Math.abs(b - to) < 0.05); btn.onclick = () => showRace(race, a, b); chips.appendChild(btn); }
@@ -3254,7 +3482,7 @@ function showRace(race, from, to) {
 }
 $('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($('#p-from').value).replace(',', '.')) || 0, parseFloat(String($('#p-to').value).replace(',', '.')) || 0); };
 
-// summary of the settings used for the results on screen
+// résumé des réglages utilisés pour les résultats affichés
 function renderSummary() {
   const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
   const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
@@ -3272,9 +3500,9 @@ new MutationObserver(draw).observe(document.documentElement, { attributes: true,
 
 
 
-// ---------- generate ----------
+// ---------- générer ----------
 let busy = false;
-// ---------- input validation ----------
+// ---------- vérification des réglages ----------
 function readKm() {
   if (S.unit === 'min') {
     const v = parseFloat(String($('#dur').value).trim().replace(',', '.'));
@@ -3305,7 +3533,7 @@ function readDplus() {
   return { dplus: Math.round(v) };
 }
 
-// ---------- generate ----------
+// ---------- générer ----------
 function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
 async function generate(isAgain) {
   if ($('#done')) $('#done').setAttribute('aria-pressed', false);
@@ -3330,14 +3558,14 @@ async function generate(isAgain) {
     const dep = departure(), runMin = Math.round(km * pace() / 60), closed = PARKS.length ? closedParks(dep, runMin) : [];
     S.lastDep = { dep, closed, now: S.depNow !== false, night: runInDark(dep, runMin), sun: sunTimes(dep) };
     E.setConstraints(S.exclQ, S.places, { avoidCemeteries: true, closedEdges: closed.flatMap(p => p.e) });
-    const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m of D+ per km on an average Paris loop (smoothed D+)
+    const tpk = dplus != null ? dplus / km : 0, nat = 5; // ~5 m de D+ par km sur une boucle moyenne à Paris (D+ lissé)
     const climb = S.dmode === 'flat' ? 30 : dplus == null ? 0 : tpk > nat ? -Math.min(30, 4 + (tpk - nat) * 3) : (nat - tpk) * 2;
     const allowRepeat = $('#allow-repeat').checked;
     const green = S.kind === 'green';
     E.setWeights({ climb, ...PRIO[S.prio || 'eq'].w, path: $('#prefer-paths').checked || green ? -0.3 : 0, reuse: allowRepeat ? 1 : 4, green: green ? 0.7 : 0, road: green ? [0, 0.3, 0.6, 0.9] : S.prio === 'turn' ? PRIO.turn.w.road : [0, 0.15, 0.35, 0.6] , dark: S.lastDep.night ? 2.5 : 0, crowd: $('#avoid-crowd').checked ? crowdAt(dep) : 0 });
     const opt = { seed: S.seed * 7919 + 13, sigScore: PRIO[S.prio || 'eq'].score, dplus, flat: S.dmode === 'flat', hill: dplus != null && tpk > nat, allowRepeat, green, simple: S.prio === 'turn' };
     opt.night = S.lastDep.night; S.lastOpt = opt;
-    if ($('#water-on').checked && FONT.length) { // street nodes right next to a fountain (allowed zones only)
+    if ($('#water-on').checked && FONT.length) { // carrefours tout près d'une fontaine (zones autorisées seulement)
       const set = new Set(), pts = []; for (const f of FONT) { const n = E.nearest(f.x, f.y); if (n >= 0 && Math.hypot(G.NX[n] - f.x, G.NY[n] - f.y) <= 30 && !set.has(n)) { set.add(n); pts.push({ n, x: G.NX[n], y: G.NY[n] }); } }
       opt.water = { set, pts, every: 3000 };
     }
@@ -3349,7 +3577,7 @@ async function generate(isAgain) {
       const snapD = Math.hypot(G.NX[s] - sx, G.NY[s] - sy);
       if (snapD > 250) notes.push(`${ab ? 'A est' : 'Ton départ est'} dans une zone évitée : le parcours part de la rue autorisée la plus proche (${Math.round(snapD)} m).`);
       const prog = f => bar.style.width = (5 + f * 95) + '%';
-      // places to pass by, or discovery of famous places
+      // lieux par où passer, ou découverte de lieux connus
       let endN = null;
       if (ab && !S.endFree) {
         const [ex, ey] = E.toXY(S.end.lat, S.end.lon); endN = snapNode(ex, ey);
@@ -3357,7 +3585,7 @@ async function generate(isAgain) {
         else if (endN === s || Math.hypot(ex - sx, ey - sy) < 30) errs.push('Le départ et l’arrivée sont au même endroit. Choisis « En boucle » ou « N’importe où ».');
       }
       const endArg = !ab ? s : S.endFree ? 'free' : endN;
-      if (errs.length) { /* reported below */ }
+      if (errs.length) { /* signalé plus bas */ }
       else if (S.vias.length) {
         const vn = [];
         for (const v of S.vias) { const [vx, vy] = E.toXY(v.lat, v.lon); const n = snapNode(vx, vy); if (n < 0 || Math.hypot(G.NX[n] - vx, G.NY[n] - vy) > 400) { errs.push(`« ${v.name} » est dans une zone évitée ou inaccessible : retire-le ou réautorise sa zone.`); } else vn.push(n); }
@@ -3374,7 +3602,7 @@ async function generate(isAgain) {
         r = await E.loop(s, target, opt, prog);
         if (!r) errs.push("Aucune boucle trouvée avec ces réglages : les zones évitées isolent le départ. Réautorise un quartier ou change la distance.");
       } else if (S.endFree) {
-        if ($('#end-metro').checked && METRO.st.length) { // finish at a station: their nearest allowed street node
+        if ($('#end-metro').checked && METRO.st.length) { // finir à une station : le carrefour autorisé le plus proche de chacune
           opt.endNodes = []; for (const st of METRO.st) { const n = E.nearest(st.x, st.y); if (n >= 0 && Math.hypot(G.NX[n] - st.x, G.NY[n] - st.y) < 120) opt.endNodes.push({ n, x: st.x, y: st.y }); }
         }
         r = await E.oneWay(s, target, opt, prog);
@@ -3431,7 +3659,7 @@ function routeNotes(r) {
   if (r.kind === 'aller-retour') notes.push('Aller-retour : tu reviens par le même chemin.');
   if (r.cemLen > 50) notes.push(`Le parcours traverse un cimetière sur ${Math.round(r.cemLen)} m : horaires d'ouverture limités et lieu de recueillement.`);
   const ld = S.lastDep;
-  if (ld && ld.closed.length && S.tab !== 'race') { // closed parks the route goes around
+  if (ld && ld.closed.length && S.tab !== 'race') { // parcs fermés que le parcours contourne
     const P = routePts(r); const near = ld.closed.filter(p => P.some(([x, y], i) => i % 6 === 0 && Math.abs(x - p.c[0]) < 350 && Math.abs(y - p.c[1]) < 350)).sort((a, b) => b.e.length - a.e.length);
     if (near.length) notes.push(`Fermé${near.length > 1 ? 's' : ''} à l'heure de ta sortie (départ ${hhmm(ld.dep)}), donc contourné${near.length > 1 ? 's' : ''} : ${near.slice(0, 3).map(p => p.n).join(', ')}${near.length > 3 ? '…' : '.'}`);
   }
@@ -3513,7 +3741,7 @@ function showRoute(r, notes) {
   if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));
   const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
   $('#via').appendChild(sp);
-  // drinking water along the way
+  // points d'eau sur le parcours
   const rf = routeFountains(r);
   if (rf) { const box = document.createElement('div'); box.className = 'water-box';
     const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Points d’eau'; box.appendChild(l);
@@ -3522,13 +3750,13 @@ function showRoute(r, notes) {
     else { t.innerHTML = `<strong></strong> · km ${rf.stops.slice(0, 10).map(a => fmt(a / 1000)).join(' · ')}${rf.stops.length > 10 ? '…' : ''}`; t.querySelector('strong').textContent = `${rf.list.length} fontaine${rf.list.length > 1 ? 's' : ''}, ${rf.stops.length} point${rf.stops.length > 1 ? 's' : ''} d’eau`;
       if (r.len > 4000) { const g = document.createElement('small'); g.textContent = `Plus long passage sans eau : ${fmt(rf.gap / 1000)} km. Certaines fontaines sont coupées en hiver.`; t.appendChild(g); } }
     box.appendChild(t); $('#via').appendChild(box); }
-  // one-way routes: nearest metro / RER at the arrival, to get back home
+  // parcours qui ne reviennent pas au départ : métro ou RER le plus proche de l'arrivée, pour rentrer
   const P = routePts(r), a = P[0], b = P[P.length - 1]; r._metroEnd = null;
   if (METRO.st.length && Math.hypot(b[0] - a[0], b[1] - a[1]) > 300) {
     const ns = nearestStation(b[0], b[1]); r._metroEnd = ns;
     const box = document.createElement('div'); box.className = 'metro-end';
     const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Pour rentrer'; box.appendChild(l);
-    const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // walking ≈ 1.25 × straight line
+    const t = document.createElement('span'); const d = Math.round(ns.d * 1.25 / 10) * 10; // à pied ≈ 1,25 × la distance à vol d'oiseau
     t.innerHTML = `<strong></strong> à ${d < 30 ? 'l’arrivée' : '~' + d + ' m à pied'}`; t.querySelector('strong').textContent = (ns.d > 1500 ? 'Pas de station proche · la plus proche : ' : ns.s.ls.every(x => x.startsWith('RER')) ? 'RER ' : ns.s.tram ? 'Tram ' : 'Métro ') + ns.s.n;
     box.appendChild(t); for (const ln of ns.s.ls) box.appendChild(lineBadge(ln));
     $('#via').appendChild(box);
@@ -3536,7 +3764,7 @@ function showRoute(r, notes) {
   drawProfile(r);
 }
 
-// ---------- profile ----------
+// ---------- profil ----------
 function drawProfile(r) {
   const c = $('#prof'), b = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
   if (!b.width) return;
@@ -3556,7 +3784,7 @@ function drawProfile(r) {
   x.beginPath(); x.moveTo(X(0), Y(lo)); for (const [s, z] of P) x.lineTo(X(s), Y(z)); x.lineTo(X(L), Y(lo)); x.closePath();
   x.globalAlpha = .18; x.fillStyle = col; x.fill(); x.globalAlpha = 1;
   x.beginPath(); P.forEach(([s, z], i) => i ? x.lineTo(X(s), Y(z)) : x.moveTo(X(s), Y(z))); x.strokeStyle = col; x.lineWidth = 1.8; x.stroke();
-  // highest point
+  // point le plus haut
   let im = 0; P.forEach((p, i) => { if (p[1] > P[im][1]) im = i; });
   x.beginPath(); x.arc(X(P[im][0]), Y(P[im][1]), 3.5, 0, 7); x.fillStyle = col; x.fill();
 }
@@ -3576,7 +3804,7 @@ $('#gpx').onclick = async () => {
   try {
     const fn = `runparis-${Math.round(S.route.len / 100) / 10}km`; track('gpx', S.tab === 'race' && S.race ? 'GPX parcours mythique ' + S.race.name : 'GPX parcours');
     if (NATIVE) { await nativeShareFile(fn + '.gpx', g); return; } // application : menu de partage (Strava, Garmin, Fichiers…)
-    if (!window.claude) { // public site: a real .gpx file
+    if (!window.claude) { // site : un vrai fichier .gpx
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([g], { type: 'application/gpx+xml' })); a.download = fn + '.gpx';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       return toast('GPX téléchargé : importe-le dans ta montre ou Strava.', 4000);
@@ -3618,14 +3846,15 @@ function shOpen(secs, doneM) {
   $('#shx-name-l').hidden = !d.solo;
   $('#shx-lede').textContent = d.solo ? `${fmt(d.km, 1)} km ${d.loop ? 'en boucle autour de ' + d.dep : 'de ' + d.dep + ' à ' + d.arr}, mesurés pendant ta course. Ton tracé est gardé dans « Mes parcours » : tu pourras le refaire ou l’envoyer.` : `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
-  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined };
+  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined, pk: !d.solo && !d.race && S.vias.some(v => v.track) ? 1 : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
   mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true; if (d.solo) $('#shx-name').value = entry.t;
+  badgeAnnounce(badgeSync());
   track('fait', d.race ? 'Fait parcours mythique ' + d.dep : 'Fait parcours ' + Math.round(d.km) + ' km');
 }
 function shClose() {
   $('#shx').hidden = true; SH.photo = null; sbSync();
-  // sortie qui vient d'être enregistrée : on la montre dans « Mes parcours », avec ou sans photo (retour de course test, 8/10)
+  // sortie qui vient d'être enregistrée : on la montre dans « Mes parcours », avec ou sans photo
   if (SH.fresh && APPF) { SH.fresh = false; const i = mineLoad().findIndex(x => x.id === SH.entryId); if (i >= 0) { setTab('mine'); mineOpen(i); toast('Sortie enregistrée dans «\u00a0Mes parcours\u00a0».', 3000); } }
 }
 function shOut() {
@@ -3732,7 +3961,7 @@ if (document.fonts && document.fonts.load) { document.fonts.load('800 100px Arch
 
 // ---------- mode course : suivre le tracé en direct, sans montre (mobile) ----------
 // Le téléphone compare sa position au tracé : prochain virage, km faits / restants, hors tracé, arrivée.
-// Tout reste dans le téléphone. Limite d'un site : rien ne se passe écran verrouillé, d'où l'écran gardé allumé.
+// Tout reste dans le téléphone. Sur le site, rien ne se passe écran verrouillé ; dans l'application, la position continue (D-100).
 const NAV = { on: false };
 const RUN_IC = {
   right: '<path d="M7 21V12h10"/><path d="M13 8l4 4-4 4"/>', left: '<path d="M17 21V12H7"/><path d="M11 8l-4 4 4 4"/>',
@@ -3785,7 +4014,7 @@ function navBuild(r) {
       if (jx && jx.j > i + 1 || jx && jx.complex || jx && Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10) {
         const jog = Math.abs(jx.a) < 30 && Math.abs(jx.lat) >= 10 && jx.br.some(b => b.maj && !b.out && Math.abs(Math.abs(b.a) - 90) < 45);
         const name = nmAfter(jx.j);
-        // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (retour testeur 26/10)
+        // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (D-114)
         if (!jog && name && segs[jx.k][2] === name && (Math.abs(jx.a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(name) && Math.abs(turn((segs[jx.k][1] + segs[jx.j][0]) / 2, 60)) < 45)) { i = jx.j - 1; continue; }
         if (jog) man.push({ d: dd, a: jx.lat > 0 ? 1 : -1, jog: Math.abs(jx.lat), lat: jx.lat, name, jx, cross: (jx.br.find(b => b.maj && !b.out) || {}).name || '' });
         else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: Math.abs(jx.a) < 20 });
@@ -3799,7 +4028,7 @@ function navBuild(r) {
         const dv = dev(hin, hdg(q[0], q[j])); if (Math.abs(dv) < 30) straight = true; if (Math.abs(dv) < 60 && Math.sign(dv) !== Math.sign(a)) fork = true; }
       let keep = false;
       if (Math.abs(a) < 35) { if (fork && Math.abs(a) >= 12) keep = true; else continue; } // petit angle sans fourche : on continue, rien à dire
-      else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // « légèrement » supprimé (course test du 8/10)
+      else if (Math.abs(a) < 60) { if (straight) keep = false; else if (fork) keep = true; else continue; } // pas de « légèrement » : jugé confus en course
       let nm = ''; for (let j = i + 1; j < segs.length && segs[j][0] < dd + 60; j++) if (segs[j][2]) { nm = segs[j][2]; break; }
       if (nm && segs[i][2] === nm && (Math.abs(a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(nm) && Math.abs(turn(dd, 60)) < 45)) continue; // même rue qui tourne un peu (ou trottoir qui contourne un coin) : on continue
       man.push({ d: dd, a, name: nm, keep, jx });
@@ -3810,9 +4039,9 @@ function navBuild(r) {
     for (let d = 30; d < L - 30; d += 10) { const a = turn(d, 25); if (Math.abs(a) >= 45) { if (!best || Math.abs(a) > Math.abs(best.a)) best = { d, a }; } else if (best) { man.push({ d: best.d, a: best.a, name: nameNear(best.d + 30) }); best = null; } }
   }
   man = man.filter((m, i) => !(i && m.d - man[i - 1].d < 12 && Math.abs(m.a) <= Math.abs(man[i - 1].a)));
-  // même consigne répétée à quelques mètres sur la même rue (trottoirs qui se croisent au carrefour) : une seule (retour testeur 26/10)
+  // même consigne répétée à quelques mètres sur la même rue (trottoirs qui se croisent au carrefour) : une seule (D-114)
   man = man.filter((m, i) => !(i && m.name && m.name === man[i - 1].name && m.d - man[i - 1].d < 50 && Math.sign(m.a) === Math.sign(man[i - 1].a) && !m.jog && !man[i - 1].jog));
-  // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (build 4)
+  // rue qui reprend en face, décalée, après un grand axe : « Traverse puis en face » (D-93)
   for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (m.jog || q.jog || m.straight || q.straight) continue;
     if (q.d - m.d <= 45 && Math.abs(m.a) >= 50 && Math.abs(m.a) <= 130 && Math.abs(q.a) >= 50 && Math.abs(q.a) <= 130 && Math.sign(m.a) !== Math.sign(q.a) && Math.abs(m.a + q.a) < 35) {
       const sg = r.edges ? (() => { let d0 = 0; for (const [e] of r.edges) { const l = G.LEN[e]; if (d0 + l > m.d + 2) return e; d0 += l; } return -1; })() : -1;
@@ -4024,7 +4253,7 @@ function soloFinish(tr, dist, secs, up) {
   const st = soloRoute(tr);
   if (!st) { // hors de la carte : km et temps gardés, sans tracé
     const L = mineLoad(); L.unshift({ id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(dist / 100) / 10, up: Math.round(up), dep: 'Course libre', loop: true, t: 'Course libre', g: '', secs: Math.round(secs), meas: true, solo: 1 }); mineSave(L);
-    setTab('mine'); mineOpen(0); toast('Course gardée sans son tracé : elle est hors de la carte.', 4000); return;
+    const nb = badgeSync(); setTab('mine'); mineOpen(0); toast(nb.length ? `Course gardée sans son tracé. Nouveau trophée : ${nb.map(b => b.name).join(', ')}.` : 'Course gardée sans son tracé : elle est hors de la carte.', 4000); return;
   }
   st.up = up; S.route = st; S.alts = [st]; S.recv = null; SH.extra = null; draw();
   shOpen(secs, dist);
@@ -4039,7 +4268,7 @@ function streetAt(x, y) {
   return best;
 }
 // mv : sens dans lequel le coureur avance ; un passage du tracé parcouru dans l'autre sens est ignoré
-// (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, retour testeur 26/10)
+// (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, D-114)
 function navProject(x, y, d0, d1, mv, strict) {
   const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
   for (let i = i0; i <= i1; i++) { const [ax, ay] = n.pts[i], [bx, by] = n.pts[i + 1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1e-9;
@@ -4229,7 +4458,7 @@ function navDrawMe() {
   ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = colors.panel; ctx.stroke(); ctx.fillStyle = colors.ink; ctx.fill(); ctx.restore();
 }
 
-// ---------- course : hors parcours, deux choix (retours course test, build 3) ----------
+// ---------- course : hors parcours, deux choix (D-90) ----------
 function navOffMsg(d) {
   const n = $('#run-msg'), txt = `Le tracé est à ${navDistTxt(d)}${NAV.proj && NAV.n ? '' : ''}.`;
   if (NAV.ask && !NAV.busy) {
@@ -4275,7 +4504,7 @@ async function navReroute(kind, auto) {
   track('hors-parcours', (kind === 'back' ? 'Me ramener' : 'Continuer par ici') + (auto ? ' (auto)' : ''));
   navUI();
 }
-// ---------- course : carte qui suit ta direction (retours course test, build 3) ----------
+// ---------- course : carte qui suit ta direction (D-90) ----------
 const navHeadPref = () => { try { return localStorage.getItem('runparis-headup') !== '0'; } catch (e) { return true; } };
 function uprightAng(ang) { const r = MAPROT * Math.PI / 180; let a = ang + r; while (a > Math.PI / 2) a -= Math.PI; while (a < -Math.PI / 2) a += Math.PI; return a - r; }
 { // textes toujours droits à l'écran quand la carte tourne
@@ -4391,7 +4620,8 @@ function mineThumb(code) {
 const mineDate = (iso, o) => new Date(iso).toLocaleDateString('fr-FR', o || { weekday: 'long', day: 'numeric', month: 'short' }).replace(/^./, c => c.toUpperCase());
 function renderMine() {
   const L = mineLoad(), items = $('#mine-items'); items.innerHTML = '';
-  $('#mine-detail').hidden = true; $('#mine-list').hidden = false;
+  $('#mine-detail').hidden = true; $('#mine-list').hidden = false; $('#mine-seg').hidden = false; $('#mine-badges').hidden = true;
+  mineView(S.mineView || 'runs', true);
   $('#mine-empty').hidden = !!L.length; $('#mine-tot').hidden = !L.length;
   const km = L.reduce((t, e) => t + (e.km || 0), 0), secs = L.reduce((t, e) => t + (e.secs || 0), 0);
   const h = Math.floor(secs / 3600), mn = Math.round(secs % 3600 / 60);
@@ -4415,7 +4645,7 @@ function renderMine() {
 function mineOpen(i) {
   const e = mineLoad()[i]; if (!e) return renderMine();
   S.mineCur = e.id || e.d;
-  $('#mine-list').hidden = true; $('#mine-detail').hidden = false; $('#view-mine').scrollTop = 0;
+  $('#mine-list').hidden = true; $('#mine-badges').hidden = true; $('#mine-seg').hidden = true; $('#mine-detail').hidden = false; $('#view-mine').scrollTop = 0;
   $('#md-t').textContent = e.t || mineTitle(e);
   $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
   $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
@@ -4445,9 +4675,9 @@ function mineDel(id) {
   u.onclick = () => { const M2 = mineLoad(); M2.splice(Math.min(i, M2.length), 0, gone); mineSave(M2); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 }
-// glisser une sortie vers la gauche : bouton « Supprimer » (app, retour du 26/10)
+// glisser une sortie vers la gauche : bouton « Supprimer » (application, D-115)
 const MINE_SW = 104; // bouton 96 px + 8 px d'écart
-function mineSwipe(row, card, id) {
+function mineSwipe(row, card, id, del = mineDel) { // aussi pour Mes villes (del = mvDel)
   let x0 = 0, y0 = 0, dx = 0, on = false, lock = 0;
   const set = (v, anim) => { card.style.transition = anim ? 'transform .18s ease' : 'none'; card.style.transform = v ? `translateX(${v}px)` : ''; row.classList.toggle('open', v <= -MINE_SW / 2); };
   card.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = row.classList.contains('open') ? -MINE_SW : 0; on = true; lock = 0;
@@ -4456,10 +4686,134 @@ function mineSwipe(row, card, id) {
     if (!lock) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; lock = Math.abs(mx) > Math.abs(my) ? 1 : 2; }
     if (lock !== 1) return; e.preventDefault(); const base = row.classList.contains('open') ? -MINE_SW : 0; dx = Math.max(-MINE_SW * 1.4, Math.min(0, base + mx)); set(dx); }, { passive: false });
   card.addEventListener('touchend', () => { if (!on) return; on = false; if (lock === 1) { set(dx < -MINE_SW / 2 ? -MINE_SW : 0, true); card.dataset.sw = '1'; setTimeout(() => delete card.dataset.sw, 60); } });
-  row.querySelector('.mine-del').onclick = () => mineDel(id);
+  row.querySelector('.mine-del').onclick = () => del(id);
 }
+// ---------- badges, appelés « Trophées » dans l'app (RP-85) : calculés sur l'appareil à partir des sorties, jamais retirés ----------
+// Les compteurs sont gardés à part (runparis-badges) : supprimer une sortie ou dépasser 200 sorties ne fait rien perdre.
+// Distance : celle réellement courue en mode course, sinon celle du parcours. Application seulement (onglet Mes parcours).
+const BADGE_K = 'runparis-badges';
+const B_ICO = {
+  distance: '<path d="M5 21 9.5 3M19 21 14.5 3M12 5v2M12 11v2M12 17v2"/>',
+  sorties: '<path d="M2.5 15.5h15a4 4 0 0 0 4-4c0-1.3-.9-2.2-2.2-2.5L14 8l-2-4H8.8l.5 3.2H6l-3.5 3.8z"/><path d="M2.5 19h19"/>',
+  regularite: '<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4"/>',
+  exploration: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>',
+  ville: '<path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5z"/><path d="M9.5 10a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0"/>',
+  mythique: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  piste: '<path d="M8 6.5h8a5.5 5.5 0 0 1 0 11H8a5.5 5.5 0 0 1 0-11zM8.5 9.5h7a2.5 2.5 0 0 1 0 5h-7a2.5 2.5 0 0 1 0-5z"/>',
+  dplus: '<path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/>',
+};
+const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
+const B_TIER = { depart: 'Départ', bronze: 'Bronze', argent: 'Argent', or: 'Or', special: 'Spécial' };
+// fam, icône, valeur et unité écrites dans l'écusson (null : icône seule ou nom de ville), palier, nom, compteur, objectif
+const BADGES = (() => {
+  const L = [], add = (id, fam, ico, val, unit, tier, name, key, goal) => L.push({ id, fam, ico, val, unit, tier, name, key, goal });
+  [[10, 'depart'], [50, 'bronze'], [100, 'argent'], [250, 'or'], [500, 'special']].forEach(([n, t]) => add('km' + n, 'dist', 'distance', String(n), 'km', t, n + ' km', 'km', n));
+  [[1, 'depart'], [10, 'bronze'], [25, 'argent'], [50, 'or']].forEach(([n, t]) => add('n' + n, 'n', 'sorties', n === 1 ? '1re' : String(n), n === 1 ? 'sortie' : 'sorties', t, n === 1 ? '1re sortie' : n + ' sorties', 'n', n));
+  [[2, 'bronze'], [4, 'argent'], [8, 'or']].forEach(([n, t]) => add('sem' + n, 'reg', 'regularite', String(n), 'sem.', t, n + ' semaines', 'streak', n));
+  [[5, 'bronze'], [10, 'argent'], [20, 'or']].forEach(([n, t]) => add('zone' + n, 'expl', 'exploration', String(n), 'arr.', t, n + ' arrondissements', 'zones', n));
+  for (const k in CITIES) add('ville-' + k, 'ville', 'ville', null, null, 'ville', CITIES[k].name, 'city:' + k, 1);
+  add('mythique', 'defi', 'mythique', null, null, 'special', 'Parcours mythique', 'myth', 1);
+  add('piste', 'defi', 'piste', null, null, 'special', 'Séance sur piste', 'piste', 1);
+  add('dplus1000', 'defi', 'dplus', '1 000', 'm D+', 'special', '1 000 m de D+', 'up', 1000);
+  return L;
+})();
+function bLoad() { try { const s = JSON.parse(localStorage.getItem(BADGE_K) || 'null'); if (s && s.v === 1) return s; } catch (e) {} return { v: 1, got: {}, seen: {}, geo: {}, km: 0, n: 0, up: 0, weeks: [], zones: [], cities: [], myth: 0, piste: 0 }; }
+function bSave(s) { try { localStorage.setItem(BADGE_K, JSON.stringify(s)); } catch (e) {} }
+// semaine du lundi au dimanche, en heure locale
+const bWeek = iso => { const d = new Date(iso); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+// plus longue suite de semaines d'affilée avec au moins une sortie
+function bStreak(weeks) {
+  const t = [...new Set(weeks)].map(w => new Date(w + 'T12:00:00').getTime()).sort((a, b) => a - b); let best = 0, run = 0;
+  for (let i = 0; i < t.length; i++) { run = i && Math.round((t[i] - t[i - 1]) / 864e5) === 7 ? run + 1 : 1; best = Math.max(best, run); }
+  return best;
+}
+// arrondissements ou quartiers traversés (au moins 150 m dans chacun) et tours de piste d'athlé : seulement pour la ville chargée
+function bGeo(e) {
+  const ll = decPoly(e.g || ''); if (ll.length < 2) return { z: [], p: 0 };
+  const xy = ll.map(([la, lo]) => E.toXY(la, lo)), st = geomRoute(xy), per = new Map();
+  for (const [qi, len] of st.quart) { const q = M.quartiers[qi - 1]; if (q && q.ar < 100) per.set(q.ar, (per.get(q.ar) || 0) + len); }
+  const z = [...per].filter(([, len]) => len >= 150).map(([ar]) => CITY + ':' + ar);
+  // course libre : au moins 150 m courus à moins de 15 m de l'anneau d'une piste
+  let p = 0; if (TRACKS.length) {
+    const pts = []; for (let i = 1; i < xy.length; i++) { const [ax, ay] = xy[i - 1], [bx, by] = xy[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 10)); for (let k = 0; k < n; k++) pts.push([ax + (bx - ax) * k / n, ay + (by - ay) * k / n]); }
+    const dSeg = (x, y, [ax, ay], [bx, by]) => { const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1, t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)); return Math.hypot(x - ax - vx * t, y - ay - vy * t); };
+    for (const t of TRACKS) { let on = 0; for (const [x, y] of pts) { if (Math.abs(x - t.x) > 300 || Math.abs(y - t.y) > 300) continue; for (let i = 0; i < t.ring.length; i++) if (dSeg(x, y, t.ring[i], t.ring[(i + 1) % t.ring.length]) < 15) { on++; break; } }
+      if (on >= 15) { p = 1; break; } }
+  }
+  return { z, p };
+}
+function bStats(s) { return { km: s.km, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities }; }
+const bVal = (b, st) => b.key.startsWith('city:') ? (st.cities.includes(b.key.slice(5)) ? 1 : 0) : st[b.key] || 0;
+// met les compteurs à jour avec les sorties pas encore comptées ; renvoie les badges qui viennent d'être obtenus
+function badgeSync(quiet) {
+  if (!APPF) return [];
+  const s = bLoad(), L = mineLoad(), geo = !!(M && G);
+  for (const e of L) {
+    const id = String(e.id || e.d), c = e.city || 'paris';
+    if (!s.seen[id]) { s.seen[id] = 1; s.km += e.km || 0; s.n++; s.up += e.up || 0; const w = bWeek(e.d); if (!s.weeks.includes(w)) s.weeks.push(w); if (!s.cities.includes(c)) s.cities.push(c); if (e.race) s.myth = 1; if (e.pk) s.piste = 1; }
+    if (!s.geo[id] && geo && c === CITY && e.g) { s.geo[id] = 1; const g = bGeo(e); for (const z of g.z) if (!s.zones.includes(z)) s.zones.push(z); if (g.p) s.piste = 1; }
+  }
+  const st = bStats(s), fresh = [];
+  for (const b of BADGES) if (!s.got[b.id] && bVal(b, st) >= b.goal) { s.got[b.id] = new Date().toISOString(); fresh.push(b); }
+  const first = !s.init; s.init = 1; bSave(s); // première fois : les sorties déjà faites comptent, sans annonce
+  if (quiet || first) return [];
+  fresh.forEach(b => track('badge-' + b.id, 'Trophée ' + b.name));
+  return fresh;
+}
+// taille de police qui fait tenir un texte dans la largeur utile de l'écusson
+const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
+function badgeHTML(b, size, got, note) {
+  const sh = Math.round(size * 1.12); let inner = '', name = b.tier === 'ville' ? '1re sortie' : b.fam === 'defi' ? b.name : B_TIER[b.tier], sub = note || '';
+  if (b.tier === 'ville') {
+    const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
+    inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
+    if (fs < 11) name = b.name;
+  } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
+  else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
+  if (b.fam === 'defi' && b.val != null) { name = 'Dénivelé'; }
+  const label = `${b.fam === 'ville' ? 'Trophée ' + b.name : b.fam === 'defi' ? 'Défi ' + b.name : 'Trophée ' + b.name + ', palier ' + B_TIER[b.tier]}${got ? '' : ', à débloquer'}`;
+  return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
+}
+// après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long passe sous l'écusson
+function bFitDom(root) {
+  root.querySelectorAll('.bdg-s .v, .bdg-s .u').forEach(el => {
+    const max = el.parentNode.clientWidth * (el.classList.contains('nm') ? 0.68 : 0.64); if (!max) return; let fs = parseFloat(el.style.fontSize) || 12;
+    while (el.getBoundingClientRect().width > max && fs > 11) { fs--; el.style.fontSize = fs + 'px'; }
+    if (el.getBoundingClientRect().width > max && el.classList.contains('nm')) { const c = el.closest('.bdg').querySelector('.bdg-c b'); if (c) c.textContent = el.textContent; el.remove(); }
+  });
+}
+// prochain palier non obtenu de la même famille (pas pour les villes ni les défis à une étape)
+function badgeNext(b, s, st) { const n = BADGES.find(x => x.fam === b.fam && x.goal > b.goal && !s.got[x.id] && x.goal > 1); if (!n) return ''; const left = n.goal - bVal(n, st); return `Prochain : ${n.name}, encore ${n.key === 'km' ? fmt(Math.max(0.1, left), 1) + ' km' : n.key === 'up' ? Math.round(left) + ' m' : Math.ceil(left)}.`; }
+const B_LEFT = (b, v) => { const l = b.goal - v; return b.key === 'km' ? 'encore ' + fmt(Math.max(0.1, l), 1) + ' km' : b.key === 'up' ? 'encore ' + Math.round(l) + ' m' : 'encore ' + Math.ceil(l); };
+function renderBadges() {
+  badgeSync(true);
+  const s = bLoad(), st = bStats(s), got = BADGES.filter(b => s.got[b.id]), off = BADGES.filter(b => !s.got[b.id]);
+  $('#bdg-n').textContent = got.length; $('#bdg-of').textContent = `trophée${got.length > 1 ? 's' : ''} sur ${BADGES.length}`;
+  const near = off.filter(b => b.goal > 1).map(b => ({ b, v: bVal(b, st) })).sort((x, y) => y.v / y.b.goal - x.v / x.b.goal).slice(0, 3);
+  $('#bdg-near-w').hidden = !near.length;
+  $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.fam === 'n' || b.fam === 'reg' ? b.name : b.fam === 'expl' ? b.goal + ' arrondissements ou quartiers' : b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
+  $('#bdg-got-w').hidden = !got.length; $('#bdg-got').innerHTML = got.map(b => badgeHTML(b, 72, true)).join('');
+  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') : '')).join('');
+  $('#bdg-off-w').hidden = !off.length; bFitDom($('#mine-badges'));
+}
+function mineView(v, silent) {
+  S.mineView = v; document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.setAttribute('aria-pressed', x.dataset.mv === v));
+  $('#mine-list').hidden = v !== 'runs'; $('#mine-badges').hidden = v !== 'badges';
+  if (v === 'badges') { renderBadges(); if (!silent) track('badges-vue', 'Trophées ouverts'); }
+}
+document.querySelectorAll('#mine-seg [data-mv]').forEach(x => x.onclick = () => mineView(x.dataset.mv));
+// « Bravo ! » : le ou les badges qui viennent d'être obtenus, avec le prochain palier
+function badgeAnnounce(fresh) {
+  const box = $('#shx-badge'); if (!box) return; box.hidden = !fresh.length; if (!fresh.length) return;
+  const s = bLoad(), st = bStats(s), one = fresh.length === 1;
+  $('#shx-badge-k').textContent = one ? 'Nouveau trophée' : `${fresh.length} nouveaux trophées`;
+  $('#shx-badge-l').innerHTML = fresh.map(b => badgeHTML(b, one ? 104 : 72, true)).join('');
+  bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
+  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : fresh.map(b => b.name).join(' · ');
+}
+$('#shx-badge-go').onclick = () => { S.mineView = 'badges'; SH.fresh = false; shClose(); setTab('mine'); };
 $('#send').onclick = () => { if (!S.route) return; const d = shareData(); sendLink(routeCode(S.route), d ? mineTitle(d) : '', S.route.len / 1000); };
-// ---------- audience (public site only): GoatCounter, anonymous, no cookie ----------
+// ---------- mesure d'audience (site en production seulement) : GoatCounter, anonyme, sans cookie ----------
 const GC = 'runparis'; // code du compte GoatCounter (https://runparis.goatcounter.com)
 const PUBLIC = !window.claude && (/netlify\.app$|runparis|perfectrun/i.test(location.hostname) || /[?&]test-public\b/.test(location.search));
 const STATS = PUBLIC && PROD; // pas de stats sur staging ni en local
@@ -4489,11 +4843,12 @@ const ABOUT = {
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
+  villes: ['Mes villes', () => '<div id="mv"></div>'],
   erase: ['Effacer mes données\u00a0?', () => { const n = mineLoad().length, h = getHome();
     return ap('Ces données sont seulement sur ce téléphone. Elles seront effacées :') + ul([`Mes parcours : ${n} sortie${n > 1 ? 's' : ''}`].concat(h ? ['Ton départ « Chez moi »'] : [], ['Tes réglages et ton thème'])) +
       '<div class="note warn"><b>Une sortie effacée ne peut pas être récupérée</b> après les 5 secondes du bouton « Annuler ».</div>'; }]
 };
-// lien reçu : erreur de lien incomplet (D-88) ; l'invitation à l'app sur le site est retirée (12/10)
+// lien reçu : erreur de lien incomplet (D-88) ; pas d'invitation à l'app sur le site
 function linkErr(on) { $('#lnk-err').hidden = !on; }
 $('#lnk-err-x').onclick = () => linkErr(false);
 function aboutOpen(k) {
@@ -4502,13 +4857,14 @@ function aboutOpen(k) {
   if (k === 'aide') { if (NATIVE) window.open('https://perfectrun.fr/aide', '_blank'); else location.href = 'aide.html'; return; } // page publique Aide et contact (D-112)
   const [t, f] = ABOUT[k]; $('#about-t').textContent = t; $('#about-b').innerHTML = f(); $('#about-b').scrollTop = 0;
   $('#about-f').hidden = k !== 'erase'; $('#about').hidden = false; track('a-propos', t);
+  if (k === 'villes') { mvRender(); if (!DLX.idx) dlIndex().then(i => { DLX.idx = i; mvRender(); }).catch(() => {}); }
 }
 document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stopPropagation(); aboutOpen(b.dataset.about); });
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
 $('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
-  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-')) { bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
+  const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-') && k !== DL_K) { /* les villes téléchargées restent : ce ne sont pas des données personnelles */ bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
@@ -4539,7 +4895,7 @@ $('#fb-form').onsubmit = async ev => {
   finally { $('#fb-send').disabled = false; }
 };
 
-// public site: the logo leads back to the welcome page
+// site : le logo ramène à l'accueil
 if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'Perfect Run, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
 // Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.
@@ -4607,6 +4963,199 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClo
 const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); const sec = APPF && MOB.matches; /* « Suivre le parcours » est le principal seulement dans l'application */ $('#gpx').classList.toggle('primary', !sec); $('#gpx').classList.toggle('ghost', sec); };
 MOB.addEventListener('change', mApply);
 
+// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, C'est prêt ----------
+// Montré une seule fois (runparis-onb), aussi aux utilisateurs déjà installés à la mise à jour (« Choisis tes villes »).
+// Les villes choisies se téléchargent dès l'écran 2 et pendant l'écran 3. Sur le site : seulement avec ?onb=1, pour la recette (téléchargement simulé).
+const ONB_K = 'runparis-onb';
+const ONB_DEMO = !NATIVE && APPF && /[?&]onb=1\b/.test(location.search);
+const onbDone = () => { try { return localStorage.getItem(ONB_K) === '1'; } catch (e) { return false; } };
+// utilisateur déjà installé : il a des sorties, des réglages gardés ou une ville choisie avant cette version
+const ONB_OLD = (() => { try { return !!(localStorage.getItem('runparis-done') || localStorage.getItem('runparis-last') || CITY_STORED); } catch (e) { return false; } })();
+const ONB = { step: 1, pick: new Set(), idx: null, prog: {}, err: new Set(), done: new Set(), queue: null, resolve: null };
+const onbCities = () => Object.keys(CITIES);
+const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round(b / 1e3)) + '\u00a0Ko'; // espace insécable : « 4,0 Mo » ne se coupe pas
+function onbShow(n) {
+  ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
+  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  // retour : pas sur le premier écran ; de « C'est prêt », retour au choix des villes
+  document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
+  $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
+  if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
+  if (n === 2) onbCityList(); if (n >= 3) onbProgress();
+}
+// écran 2 : la liste des villes, avec leur poids
+function onbCityList() {
+  const box = $('#onb-cities'); box.innerHTML = '';
+  for (const k of onbCities()) {
+    const c = CITIES[k], on = ONB.pick.has(k), b = ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0;
+    const l = document.createElement('label'); l.className = 'onb-city' + (on ? ' on' : '');
+    l.innerHTML = `<input type="checkbox"${on ? ' checked' : ''}><span class="onb-box" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="onb-ct"><b></b><span></span></span>${ONB.near === k ? '<span class="onb-tag">Près de toi</span>' : ''}`;
+    l.querySelector('b').textContent = c.name; l.querySelector('.onb-ct span').textContent = c.sub + (b ? ' · ' + mo(b) : '');
+    l.querySelector('input').onchange = e => { e.target.checked ? ONB.pick.add(k) : ONB.pick.delete(k); onbCityList(); };
+    box.appendChild(l);
+  }
+  for (const n of CITY_SOON) { const d = document.createElement('div'); d.className = 'onb-city off'; d.innerHTML = '<span class="onb-box" aria-hidden="true"></span><span class="onb-ct"><b></b></span><span class="onb-soon">Bientôt</span>'; d.querySelector('b').textContent = n; box.appendChild(d); }
+  const n = ONB.pick.size, tot = [...ONB.pick].reduce((t, k) => t + (ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0), 0);
+  $('#onb-dl').disabled = !n; $('#onb-dl').textContent = n ? `Télécharger ${n} ville${n > 1 ? 's' : ''}` : 'Choisis au moins une ville';
+  $('#onb-dl-note').textContent = (tot ? mo(tot) + ' · ' : '') + 'Menu › Mes villes pour en ajouter plus tard';
+}
+// téléchargement des villes choisies, l'une après l'autre (la ville affichée d'abord)
+// une ville ratée n'arrête pas les autres ; elle pourra être reprise (Réessayer, ou plus tard à l'ouverture de la ville)
+const onbList = () => [...ONB.pick].sort((a, b) => (b === CITY) - (a === CITY));
+async function onbDownload() {
+  if (ONB.busy) return; ONB.busy = true; ONB.err.clear(); onbProgress();
+  for (const k of onbList()) {
+    if (ONB.done.has(k)) continue;
+    try {
+      if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { ONB.prog[k] = p; onbProgress(); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: 'demo', bytes: ONB.idx && ONB.idx.cities[k] ? ONB.idx.cities[k].bytes : 0, at: new Date().toISOString() }; dlSave(s); }
+      else await cityDownload(k, p => { ONB.prog[k] = p; onbProgress(); }, ONB.idx);
+      ONB.done.add(k); ONB.prog[k] = 1;
+    } catch (e) { ONB.err.add(k); track('ville-echec', 'Téléchargement de ville raté'); }
+    onbProgress();
+  }
+  ONB.busy = false; onbProgress();
+}
+function onbProgress() {
+  const list = onbList(), html = list.map(k => {
+    const ok = ONB.done.has(k), p = Math.round((ONB.prog[k] || 0) * 100), err = ONB.err.has(k);
+    return `<div class="onb-prog${err ? ' err' : ''}"><div class="onb-pr"><b>${CITIES[k].name}</b>${ok ? '<span class="ok">Prête</span>' : err ? '<span>Interrompu</span>' : `<span>${p} %</span>`}</div>${ok ? '' : `<span class="onb-bar" role="progressbar" aria-label="Téléchargement de ${CITIES[k].name}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><i style="width:${p}%"></i></span>`}</div>`; }).join('');
+  document.querySelectorAll('#onb .onb-progs').forEach(b => b.innerHTML = html);
+  // on peut partir dès que la première ville est prête ; les autres finissent derrière
+  const first = list.find(k => ONB.done.has(k)), ready = !!first && (ONB.done.has(list[0]) || !ONB.busy);
+  document.querySelectorAll('#onb .onb-neterr').forEach(e => e.hidden = !ONB.err.size || ONB.busy);
+  // rien de prêt et téléchargement arrêté sur une erreur : le bouton principal devient « Réessayer »
+  const retry = !ready && ONB.err.size && !ONB.busy, go = $('#onb-go'); ONB.ready = ready;
+  if (go) { go.disabled = !ready && !retry; go.textContent = ready ? 'Créer mon premier parcours' : retry ? 'Réessayer' : 'Téléchargement…'; }
+  // écran 4 selon la situation : en cours, prêt, impossible (sans réseau), ou prêt avec une ville ratée
+  const t4 = $('#onb-t4'), p4 = $('#onb-p4'), part = $('#onb-part'); if (!t4) return;
+  const names = ks => ks.map(k => CITIES[k].name).join(', '), failed = list.filter(k => ONB.err.has(k));
+  if (ready) { t4.textContent = 'C’est prêt'; p4.textContent = 'Il ne te reste qu’à créer ton premier parcours !'; }
+  else if (retry) { t4.textContent = 'Pas de connexion'; p4.textContent = 'Il faut internet une première fois pour télécharger les rues de ' + names(failed) + '. Ensuite, l’app marche sans réseau. Reconnecte-toi, puis réessaie.'; }
+  else { t4.textContent = 'Presque prêt'; p4.textContent = 'Les rues de ' + names(list.filter(k => !ONB.done.has(k))) + ' se téléchargent. Quelques secondes…'; }
+  part.hidden = !(ready && failed.length && !ONB.busy);
+  if (!part.hidden) part.innerHTML = `<b>${names(failed)} n’a pas pu se télécharger.</b> Tu pourras ${failed.length > 1 ? 'les' : 'la'} reprendre dans Menu › Mes villes.`;
+}
+// à la fin : la ville affichée doit être sur le téléphone, sinon on passe sur la première ville choisie
+function onbFinish() {
+  try { localStorage.setItem(ONB_K, '1'); } catch (e) {}
+  S.onbJust = true; track('onb-fin', 'Onboarding terminé');
+  const keep = ONB.done.has(CITY) || dlState()[CITY] ? CITY : onbList().find(k => ONB.done.has(k)) || CITY;
+  if (keep !== CITY) { setCity(keep); return; }
+  $('#onb').hidden = true; sbSync(); ONB.resolve && ONB.resolve(true);
+}
+async function onboarding() {
+  const o = $('#onb'); o.hidden = false; splashDone();
+  o.classList.toggle('old', ONB_OLD);
+  // villes pré-cochées : celle où l'on est si la position est déjà autorisée ; un ancien utilisateur garde sa ville et celles de ses sorties
+  if (ONB_OLD) { ONB.pick.add(CITY); for (const e of mineLoad()) if (e.city && CITIES[e.city]) ONB.pick.add(e.city); }
+  const near = await new Promise(res => {
+    const go = () => navigator.geolocation.getCurrentPosition(p => res(cityAt(p.coords.latitude, p.coords.longitude)), () => res(null), { maximumAge: 600000, timeout: 4000 });
+    if (NATIVE) NP.geo.checkPermissions().then(r => r && r.location === 'granted' ? go() : res(null)).catch(() => res(null)); else res(null);
+  });
+  if (near) { ONB.near = near; if (!ONB_OLD) ONB.pick.add(near); }
+  ONB.posOk = !!near;
+  dlIndex().then(i => { ONB.idx = i; if (ONB.step === 2) onbCityList(); }).catch(() => {});
+  onbShow(ONB_OLD ? 2 : 1);
+  return new Promise(r => { ONB.resolve = r; });
+}
+$('#onb-start').onclick = () => onbShow(2);
+document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 2 : ONB.step - 1));
+// « Plus tard » : on sort à tout moment ; sans ville sur le téléphone, l'app propose de la choisir au lieu de bloquer
+document.querySelectorAll('#onb .onb-exit').forEach(b => b.onclick = () => { track('onb-plus-tard', 'Onboarding · Plus tard · écran ' + ONB.step); onbFinish(); });
+$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
+$('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
+$('#onb-later').onclick = () => onbShow(4);
+document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
+$('#onb-go').onclick = () => ONB.ready ? onbFinish() : onbDownload();
+// au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone
+async function onbGate() {
+  if ((NATIVE || ONB_DEMO) && (!onbDone() || ONB_DEMO)) { if (NATIVE) await dlRoot(); await onboarding(); }
+  return NATIVE ? dlReady() : true;
+}
+// ---------- Menu › Mes villes : villes sur le téléphone, mises à jour, suppression, ajout (application) ----------
+const DLX = { idx: null, busy: {} };
+const DL_SEEN = 'runparis-villes-vu'; // empreintes des mises à jour déjà signalées (une seule annonce par mise à jour)
+const dlUpdates = () => { const st = dlState(), i = DLX.idx; return i ? Object.keys(st).filter(k => i.cities[k] && i.cities[k].h !== st[k].h) : []; };
+// au lancement, en silence : y a-t-il de nouvelles données pour une ville du téléphone ? (pas de mise à jour automatique en v1)
+async function dlCheck() {
+  if (!NATIVE && !ONB_DEMO) return;
+  try { DLX.idx = await dlIndex(); } catch (e) { return; }
+  const up = dlUpdates(); $('#m-villes').classList.toggle('dot', !!up.length);
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem(DL_SEEN) || '{}'); } catch (e) {}
+  const fresh = up.filter(k => seen[k] !== DLX.idx.cities[k].h); if (!fresh.length) return;
+  for (const k of fresh) seen[k] = DLX.idx.cities[k].h; try { localStorage.setItem(DL_SEEN, JSON.stringify(seen)); } catch (e) {}
+  const t = $('#toast'); t.innerHTML = ''; t.append(`Nouvelles données pour ${fresh.map(k => CITIES[k].name).join(', ')}`);
+  const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Voir'; u.onclick = () => { t.hidden = true; aboutOpen('villes'); };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 6000);
+}
+function mvRender() {
+  const b = $('#mv'); if (!b) return; const st = dlState(), i = DLX.idx, have = Object.keys(CITIES).filter(k => st[k]), miss = Object.keys(CITIES).filter(k => !st[k]);
+  b.innerHTML = `<p class="mv-p">Les rues de ces villes sont sur ton téléphone : l’app marche sans réseau.${have.length > 1 ? ' Glisse une ville vers la gauche pour la supprimer.' : ''}</p><div class="mv-list" id="mv-have"></div>` +
+    (miss.length || CITY_SOON.length ? '<div class="lbl mv-h">Ajouter une ville</div><div class="mv-list" id="mv-miss"></div>' : '');
+  for (const k of have) {
+    const up = i && i.cities[k] && i.cities[k].h !== st[k].h, busy = DLX.busy[k];
+    const row = document.createElement('div'); row.className = 'mine-row mv-row';
+    row.innerHTML = `<div class="mv-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5z"/><path d="M9.5 10a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0"/></svg><span class="mv-t"><b></b><span></span></span><span class="mv-s"></span></div><button type="button" class="mine-del" tabindex="-1">Supprimer</button>`;
+    row.querySelector('b').textContent = CITIES[k].name + (k === CITY ? ' · affichée' : '');
+    row.querySelector('.mv-t span').textContent = mo(st[k].bytes || 0);
+    const s = row.querySelector('.mv-s');
+    if (busy != null) s.innerHTML = `<span class="mv-pc">${Math.round(busy * 100)} %</span>`;
+    else if (up) { const u = document.createElement('button'); u.type = 'button'; u.className = 'btn ghost mv-up'; u.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Mettre à jour'; u.setAttribute('aria-label', 'Mettre à jour ' + CITIES[k].name); u.onclick = () => mvGet(k, true); s.appendChild(u); }
+    else s.innerHTML = '<span class="mv-ok">À jour</span>';
+    if (have.length > 1) mineSwipe(row, row.firstChild, k, mvDel); else row.querySelector('.mine-del').remove();
+    $('#mv-have').appendChild(row);
+  }
+  for (const k of miss) {
+    const c = i && i.cities[k], busy = DLX.busy[k], r = document.createElement('button'); r.type = 'button'; r.className = 'mv-add';
+    r.innerHTML = `<span class="mv-t"><b></b><span></span></span>${busy != null ? `<span class="mv-pc">${Math.round(busy * 100)} %</span>` : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>'}`;
+    r.querySelector('b').textContent = CITIES[k].name; r.querySelector('.mv-t span').textContent = CITIES[k].sub + (c ? ' · ' + mo(c.bytes) : '');
+    r.setAttribute('aria-label', 'Télécharger ' + CITIES[k].name); r.disabled = busy != null; r.onclick = () => mvGet(k, false);
+    $('#mv-miss').appendChild(r);
+  }
+  for (const n of CITY_SOON) { const d = document.createElement('div'); d.className = 'mv-add off'; d.innerHTML = '<span class="mv-t"><b></b></span><span class="mv-soon">Bientôt</span>'; d.querySelector('b').textContent = n; $('#mv-miss').appendChild(d); }
+}
+// télécharger ou mettre à jour une ville depuis Mes villes
+async function mvGet(k, update) {
+  if (DLX.busy[k] != null) return; DLX.busy[k] = 0; mvRender();
+  try {
+    if (!DLX.idx) DLX.idx = await dlIndex();
+    if (ONB_DEMO) { for (let p = 0; p <= 1; p += 0.25) { DLX.busy[k] = p; mvRender(); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: DLX.idx.cities[k].h, bytes: DLX.idx.cities[k].bytes, at: new Date().toISOString() }; dlSave(s); }
+    else await cityDownload(k, p => { DLX.busy[k] = p; mvRender(); }, DLX.idx);
+    delete DLX.busy[k]; mvRender(); $('#m-villes').classList.toggle('dot', !!dlUpdates().length);
+    if (update) track('ville-maj-' + k, 'Ville mise à jour ' + CITIES[k].name);
+    if (update && k === CITY) { toast(`${CITIES[k].name} à jour : la carte se recharge.`, 2000); setTimeout(() => setCity(k, null, true), 1200); }
+    else toast(update ? `${CITIES[k].name} à jour.` : `${CITIES[k].name} est sur ton téléphone.`);
+  } catch (e) { delete DLX.busy[k]; mvRender(); track('ville-echec', 'Téléchargement de ville raté'); toast('Téléchargement interrompu : vérifie ta connexion et réessaie.', 3500); }
+}
+// supprimer une ville : « Annuler » pendant 5 s, puis les fichiers sont effacés ; la dernière ville ne peut pas l'être
+function mvDel(k) {
+  const st = dlState(); if (Object.keys(st).length < 2) return toast('Garde au moins une ville.');
+  const gone = st[k]; delete st[k]; dlSave(st); mvRender(); track('ville-supprimee-' + k, 'Ville supprimée ' + CITIES[k].name);
+  const t = $('#toast'); t.innerHTML = ''; t.append(`${CITIES[k].name} supprimée`); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
+  let undone = false; u.onclick = () => { undone = true; const s = dlState(); s[k] = gone; dlSave(s); mvRender(); t.hidden = true; };
+  t.appendChild(u); t.hidden = false; clearTimeout(tt);
+  tt = setTimeout(() => { t.hidden = true; if (undone) return;
+    if (NATIVE) NP.fs.rmdir({ path: 'villes/' + k, directory: 'DATA', recursive: true }).catch(() => {});
+    if (k === CITY) setCity(Object.keys(dlState())[0], null, true); }, 5000);
+}
+// passer sur une ville absente du téléphone : on propose de la télécharger d'abord
+async function cityAsk(k, extra) {
+  const c = CITIES[k]; $('#about-t').textContent = `Télécharger ${c.name} ?`; $('#about-f').hidden = true; $('#about').hidden = false;
+  const b = $('#about-b'); b.innerHTML = `<div class="mv-ask"><p></p><div class="onb-progs" id="ask-prog"></div><button type="button" class="btn primary" id="ask-go">Télécharger</button><button type="button" class="textbtn" id="ask-no">Annuler</button></div>`;
+  const p = b.querySelector('p'); p.textContent = `Les rues de ${c.name} et de ses communes voisines. Ensuite, ${c.name} marche sans réseau.`;
+  $('#ask-no').onclick = () => { $('#about').hidden = true; };
+  try { if (!DLX.idx) DLX.idx = await dlIndex(); p.textContent = `Les rues de ${c.name} et de ses communes voisines : ${mo(DLX.idx.cities[k].bytes)}. Ensuite, ${c.name} marche sans réseau.`; } catch (e) {}
+  $('#ask-go').onclick = async () => {
+    const go = $('#ask-go'); go.disabled = true; go.textContent = 'Téléchargement…';
+    const show = q => { $('#ask-prog').innerHTML = `<div class="onb-prog"><div class="onb-pr"><b>${c.name}</b><span>${Math.round(q * 100)} %</span></div><span class="onb-bar" role="progressbar" aria-label="Téléchargement de ${c.name}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(q * 100)}"><i style="width:${Math.round(q * 100)}%"></i></span></div>`; };
+    try {
+      if (ONB_DEMO) { for (let q = 0; q <= 1; q += 0.25) { show(q); await new Promise(r => setTimeout(r, 120)); } const s = dlState(); s[k] = { h: 'demo', bytes: 0, at: new Date().toISOString() }; dlSave(s); }
+      else { if (!DLX.idx) DLX.idx = await dlIndex(); await cityDownload(k, show, DLX.idx); }
+      setCity(k, extra, true);
+    } catch (e) { go.disabled = false; go.textContent = 'Réessayer'; $('#ask-prog').innerHTML = '<div class="note err" role="alert"><b>Téléchargement interrompu</b> Vérifie ta connexion, puis réessaie.</div>'; track('ville-echec', 'Téléchargement de ville raté'); }
+  };
+}
+if (NATIVE || ONB_DEMO) { $('#m-villes').hidden = false; setTimeout(dlCheck, 4000); }
 boot();
 })();
 </script>
