@@ -506,6 +506,7 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .onb-dots{flex:1;justify-content:center}
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
+.onb-bdg{margin:24px 0}
 .onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
 .onb-dots span.past{background:var(--accent)}
 .onb-dots span.on{width:24px;background:var(--accent)}
@@ -1242,7 +1243,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     <section data-step="1" class="onb-s">
       <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
       <div class="onb-in">
-        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
         <h2 class="onb-h">Des parcours<br>sur mesure</h2>
         <ul class="onb-pts">
@@ -1255,7 +1256,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </section>
     <section data-step="2" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 2 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 2 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <h2 class="onb-h"><span class="onb-new">Où cours-tu ?</span><span class="onb-oldt">Choisis tes villes</span></h2>
         <p class="onb-p"><span class="onb-new">On télécharge seulement ce que tu sélectionnes.<br>Tu pourras ajouter d’autres villes plus tard.</span><span class="onb-oldt">Nouveau : tu ne gardes que les villes qui te servent. L’app reste légère.</span></p>
         <div class="onb-cities" id="onb-cities"></div>
@@ -1264,7 +1265,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </section>
     <section data-step="3" class="onb-s" hidden>
       <div class="onb-in">
-        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <div class="onb-progs"></div>
         <div class="note err onb-neterr" role="alert" hidden><b>Téléchargement interrompu</b> Vérifie ta connexion. Il faut internet une première fois pour télécharger les rues d’une ville ; ensuite, l’app marche sans réseau. <button type="button" class="textbtn onb-retry">Réessayer</button></div>
         <h2 class="onb-h">Ta position</h2>
@@ -1272,10 +1273,24 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-pos">Autoriser ma position</button><button type="button" class="textbtn" id="onb-later">Pas maintenant</button></div>
     </section>
+    <section data-step="5" class="onb-s" hidden>
+      <div class="onb-in">
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 4 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-progs"></div>
+        <h2 class="onb-h">Gagne des<br>trophées</h2>
+        <div class="bdg-grid onb-bdg" id="onb-bdg" aria-hidden="true"></div>
+        <ul class="onb-pts">
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2.5 4L16 12H5"/></svg>Ta première sortie, tes kilomètres, ta plus longue course.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"/></svg>De nouveaux quartiers, de nouvelles villes, des semaines d’affilée.</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-5-4-5 4z"/></svg>Seules comptent les sorties vraiment courues, suivies avec l’app.</li>
+        </ul>
+      </div>
+      <div class="onb-f"><button type="button" class="btn primary" id="onb-bdg-go">Suivant</button></div>
+    </section>
     <section data-step="4" class="onb-s" hidden>
       <div class="onb-map" aria-hidden="true"></div>
       <div class="onb-in">
-        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 3 sur 3"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
+        <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 5 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <h2 class="onb-h" id="onb-t4">C’est prêt</h2>
         <div class="onb-progs"></div>
         <div class="note warn" id="onb-part" role="status" hidden></div>
@@ -4983,7 +4998,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && MCUR) mClo
 const mApply = () => { if (MOB.matches) mMount(); else mUnmount(); const sec = APPF && MOB.matches; /* « Suivre le parcours » est le principal seulement dans l'application */ $('#gpx').classList.toggle('primary', !sec); $('#gpx').classList.toggle('ghost', sec); };
 MOB.addEventListener('change', mApply);
 
-// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, C'est prêt ----------
+// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, Trophées, C'est prêt ----------
+// écrans dans l'ordre : 1, 2, 3, 5 (trophées, ajouté le 30/10), 4 ; les points suivent cet ordre
+const ONB_POS = { 1: 1, 2: 2, 3: 3, 5: 4, 4: 5 };
 // Montré une seule fois (runparis-onb), aussi aux utilisateurs déjà installés à la mise à jour (« Choisis tes villes »).
 // Les villes choisies se téléchargent dès l'écran 2 et pendant l'écran 3. Sur le site : seulement avec ?onb=1, pour la recette (téléchargement simulé).
 const ONB_K = 'runparis-onb';
@@ -4996,11 +5013,12 @@ const onbCities = () => Object.keys(CITIES);
 const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round(b / 1e3)) + '\u00a0Ko'; // espace insécable : « 4,0 Mo » ne se coupe pas
 function onbShow(n) {
   ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
-  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="${i === ONB_POS[n] ? 'on' : i < ONB_POS[n] ? 'past' : ''}"></span>`).join(''));
   // retour : pas sur le premier écran ; de « C'est prêt », retour au choix des villes
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY)].map(b => badgeHTML(b, 72, true)).join(''); bFitDom($('#onb-bdg')); }
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids
@@ -5079,12 +5097,13 @@ async function onboarding() {
   return new Promise(r => { ONB.resolve = r; });
 }
 $('#onb-start').onclick = () => onbShow(2);
-document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 2 : ONB.step - 1));
+document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 5 : ONB.step === 5 ? 2 : ONB.step - 1));
 // « Plus tard » : on sort à tout moment ; sans ville sur le téléphone, l'app propose de la choisir au lieu de bloquer
 document.querySelectorAll('#onb .onb-exit').forEach(b => b.onclick = () => { track('onb-plus-tard', 'Onboarding · Plus tard · écran ' + ONB.step); onbFinish(); });
-$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
-$('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
-$('#onb-later').onclick = () => onbShow(4);
+$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 5 : 3); };
+$('#onb-pos').onclick = () => { const next = () => onbShow(5); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
+$('#onb-later').onclick = () => onbShow(5);
+$('#onb-bdg-go').onclick = () => onbShow(4);
 document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
 $('#onb-go').onclick = () => ONB.ready ? onbFinish() : onbDownload();
 // au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone

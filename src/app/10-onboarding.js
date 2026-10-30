@@ -1,4 +1,6 @@
-// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, C'est prêt ----------
+// ---------- onboarding (application) : Bienvenue, Où cours-tu ?, Ta position, Trophées, C'est prêt ----------
+// écrans dans l'ordre : 1, 2, 3, 5 (trophées, ajouté le 30/10), 4 ; les points suivent cet ordre
+const ONB_POS = { 1: 1, 2: 2, 3: 3, 5: 4, 4: 5 };
 // Montré une seule fois (runparis-onb), aussi aux utilisateurs déjà installés à la mise à jour (« Choisis tes villes »).
 // Les villes choisies se téléchargent dès l'écran 2 et pendant l'écran 3. Sur le site : seulement avec ?onb=1, pour la recette (téléchargement simulé).
 const ONB_K = 'runparis-onb';
@@ -11,11 +13,12 @@ const onbCities = () => Object.keys(CITIES);
 const mo = b => b >= 1e6 ? fmt(b / 1e6, 1) + '\u00a0Mo' : Math.max(1, Math.round(b / 1e3)) + '\u00a0Ko'; // espace insécable : « 4,0 Mo » ne se coupe pas
 function onbShow(n) {
   ONB.step = n; document.querySelectorAll('#onb [data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
-  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3].map(i => `<span class="${i === Math.min(n, 3) ? 'on' : i < n ? 'past' : ''}"></span>`).join(''));
+  document.querySelectorAll('#onb .onb-dots').forEach(d => d.innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="${i === ONB_POS[n] ? 'on' : i < ONB_POS[n] ? 'past' : ''}"></span>`).join(''));
   // retour : pas sur le premier écran ; de « C'est prêt », retour au choix des villes
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY)].map(b => badgeHTML(b, 72, true)).join(''); bFitDom($('#onb-bdg')); }
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids
@@ -94,12 +97,13 @@ async function onboarding() {
   return new Promise(r => { ONB.resolve = r; });
 }
 $('#onb-start').onclick = () => onbShow(2);
-document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 2 : ONB.step - 1));
+document.querySelectorAll('#onb .onb-back').forEach(b => b.onclick = () => onbShow(ONB.step === 4 ? 5 : ONB.step === 5 ? 2 : ONB.step - 1));
 // « Plus tard » : on sort à tout moment ; sans ville sur le téléphone, l'app propose de la choisir au lieu de bloquer
 document.querySelectorAll('#onb .onb-exit').forEach(b => b.onclick = () => { track('onb-plus-tard', 'Onboarding · Plus tard · écran ' + ONB.step); onbFinish(); });
-$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 4 : 3); };
-$('#onb-pos').onclick = () => { const next = () => onbShow(4); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
-$('#onb-later').onclick = () => onbShow(4);
+$('#onb-dl').onclick = () => { if (!ONB.pick.size) return; onbDownload(); onbShow(ONB.posOk ? 5 : 3); };
+$('#onb-pos').onclick = () => { const next = () => onbShow(5); if (NATIVE) NP.geo.requestPermissions({ permissions: ['location'] }).then(next, next); else next(); };
+$('#onb-later').onclick = () => onbShow(5);
+$('#onb-bdg-go').onclick = () => onbShow(4);
 document.querySelectorAll('#onb .onb-retry').forEach(b => b.onclick = () => onbDownload());
 $('#onb-go').onclick = () => ONB.ready ? onbFinish() : onbDownload();
 // au lancement : onboarding si besoin, puis la ville affichée doit être sur le téléphone
