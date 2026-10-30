@@ -135,7 +135,7 @@ function navMsg(kind, title, text, ms) {
 // position bloquée : on dit où l'autoriser (message bloquant du design system)
 function navDenied(n) {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
-  const how = NATIVE ? 'Réglages → Perfect Run → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
+  const how = NATIVE ? 'Réglages → PerfectRun → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
     : ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
     : and ? 'Touche le cadenas à gauche de l’adresse → Autorisations → Position : autoriser, et vérifie que la localisation du téléphone est activée. Recharge ensuite la page.'
     : 'Autorise la position pour ce site dans les réglages du navigateur, puis recharge la page.';
@@ -198,7 +198,7 @@ function runStart() {
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
   if (NATIVE) { // application : la position continue écran verrouillé
-    NP.bg.addWatcher({ backgroundTitle: solo ? 'Perfect Run enregistre ta course' : 'Perfect Run suit ton parcours', backgroundMessage: solo ? 'Ta trace est enregistrée écran verrouillé.' : 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
+    NP.bg.addWatcher({ backgroundTitle: solo ? 'PerfectRun enregistre ta course' : 'PerfectRun suit ton parcours', backgroundMessage: solo ? 'Ta trace est enregistrée écran verrouillé.' : 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
       if (err) { if (err.code === 'NOT_AUTHORIZED') { runStop(); runPrep(); navDenied($('#runp-far')); } return; }
       navFix({ coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() });
     }).then(id => { if (NAV.on) NAV.bgId = id; else NP.bg.removeWatcher({ id }); });

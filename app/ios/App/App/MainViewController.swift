@@ -1,4 +1,4 @@
-// Perfect Run · contrôleur principal : enregistre les plugins propres à l'app (D-100).
+// PerfectRun · contrôleur principal : enregistre les plugins propres à l'app (D-100).
 import UIKit
 import Capacitor
 

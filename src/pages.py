@@ -28,11 +28,11 @@ def build_pages(a, root):
     foot = re.sub(r'// les bornes km apparaissent[\s\S]*?\}\)\(\);\n', '', foot)
     head = head.replace('</style>', PAGE_CSS + '</style>', 1)
     def page(slug, title, body):
-        h = re.sub(r'<title>[^<]*</title>', f'<title>Perfect Run · {title}</title>', head, count=1)
+        h = re.sub(r'<title>[^<]*</title>', f'<title>PerfectRun · {title}</title>', head, count=1)
         h = h.replace('href="#fonctions"', 'href="a-propos.html#fonctions"').replace('href="#comment"', 'href="a-propos.html#comment"')
         (root / 'site' / f'{slug}.html').write_text(h + '<main class="page">\n' + body + '\n' + foot, encoding='utf-8')
     page('confidentialite', 'Confidentialité', """<h1>Confidentialité</h1>
-<p class="lead">Perfect Run n’a pas de compte et ne garde rien sur un serveur. Cette page vaut pour le site perfectrun.fr et l’application iPhone. Mise à jour : 16 octobre 2026.</p>
+<p class="lead">PerfectRun n’a pas de compte et ne garde rien sur un serveur. Cette page vaut pour le site perfectrun.fr et l’application iPhone. Mise à jour : 16 octobre 2026.</p>
 <h2>Ce qui reste sur ton téléphone</h2>
 <ul><li>Ta position, utilisée pour partir de là où tu es et pendant le suivi d’un parcours. Elle n’est jamais envoyée.</li><li>Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages.</li><li>Tes photos : l’image de ta sortie est créée dans le téléphone.</li></ul>
 <h2>Ce qui quitte ton téléphone</h2>
@@ -44,10 +44,10 @@ def build_pages(a, root):
 <h2>Éditeur</h2>
 <p>Antoine Mariotti, particulier. Site hébergé par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis.</p>""")
     page('aide', 'Aide et contact', """<h1>Aide et contact</h1>
-<p class="lead">Une question, un passage impossible, une idée ? Écris ici : le message arrive directement à Antoine, l’auteur de Perfect Run.</p>
+<p class="lead">Une question, un passage impossible, une idée ? Écris ici : le message arrive directement à Antoine, l’auteur de PerfectRun.</p>
 <h2>Questions fréquentes</h2>
 <ul><li><b>Quelles villes ?</b> Paris, Lyon, Bordeaux, Nantes, Toulouse, Dijon et Lille, avec leurs communes voisines.</li><li><b>Faut-il un compte ?</b> Non. Tout reste sur ton téléphone.</li><li><b>Le guidage marche-t-il écran verrouillé ?</b> Oui, dans l’application, si tu autorises la position « Toujours » pendant la course.</li><li><b>Un parcours passe par un endroit fermé ?</b> Les parcours sont indicatifs : respecte la signalisation et dis-le-nous ci-dessous, avec le kilomètre.</li><li><b>Effacer mes données ?</b> Menu, À propos, « Effacer mes données », ou supprime l’app. Voir aussi la page <a href="confidentialite.html">Confidentialité</a>.</li></ul>
-<h2>Écrire à Perfect Run</h2>
+<h2>Écrire à PerfectRun</h2>
 <form id="contact">
 <label>Sujet<select name="type" required><option value="" disabled selected>Choisis un sujet</option><option>Question</option><option>Passage impossible ou dangereux</option><option>Problème d’affichage ou bug</option><option>Idée d’amélioration</option><option>Autre</option></select></label>
 <label>Message<textarea name="message" rows="5" required minlength="10" placeholder="Ex. : au km 3,2 la grille du parc était fermée"></textarea></label>

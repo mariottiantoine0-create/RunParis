@@ -1,4 +1,4 @@
-// Perfect Run · carte de l'écran verrouillé et Dynamic Island (D-100), composant LiveActivity du design system.
+// PerfectRun · carte de l'écran verrouillé et Dynamic Island (D-100), composant LiveActivity du design system.
 // Toujours en thème Sombre : fond panel, texte ink, libellés muted, chiffres Archivo étroite 800 (title 30 px, stat-num 28 px),
 // bouton principal 48 px (accent, texte accent-ink, radius-sm 4 px), barre de progression accent sur field.
 import ActivityKit

@@ -448,9 +448,9 @@ function gpx() {
   const r = S.route; if (!r) return null;
   const pts = routePts(r);
   const esc = s => s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
-  const name = S.tab === 'race' && S.race ? `${S.race.name} – Perfect Run, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `Perfect Run ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
+  const name = S.tab === 'race' && S.race ? `${S.race.name} – PerfectRun, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `PerfectRun ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
   const body = pts.map(([x, y]) => { const [la, lo] = E.toLL(x, y); return `<trkpt lat="${la.toFixed(6)}" lon="${lo.toFixed(6)}"></trkpt>`; }).join('\n      ');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Perfect Run" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="PerfectRun" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
 }
 $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");

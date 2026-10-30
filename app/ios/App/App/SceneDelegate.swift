@@ -15,14 +15,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         window = UIWindow(windowScene: windowScene)
         window?.backgroundColor = mapBg
-        window?.rootViewController = MainViewController() // Perfect Run : enregistre le plugin de l’Activité en direct (D-100)
+        window?.rootViewController = MainViewController() // PerfectRun : enregistre le plugin de l’Activité en direct (D-100)
         window?.makeKeyAndVisible()
         if let webView = (window?.rootViewController as? CAPBridgeViewController)?.webView {
             webView.backgroundColor = mapBg
             webView.scrollView.backgroundColor = mapBg
         }
 
-        // Perfect Run (retour du 29/10) : capture d'écran pendant qu'une sortie est affichée, la page propose l'image à partager
+        // PerfectRun (retour du 29/10) : capture d'écran pendant qu'une sortie est affichée, la page propose l'image à partager
         NotificationCenter.default.addObserver(forName: UIApplication.userDidTakeScreenshotNotification, object: nil, queue: .main) { [weak self] _ in
             (self?.window?.rootViewController as? CAPBridgeViewController)?.webView?.evaluateJavaScript("window.prShot && window.prShot()", completionHandler: nil)
         }
@@ -30,7 +30,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
-    // Perfect Run (retour du 26/10) : la feuille de partage reste ouverte quand on part dans Instagram, WhatsApp…
+    // PerfectRun (retour du 26/10) : la feuille de partage reste ouverte quand on part dans Instagram, WhatsApp…
     // Si on a quitté l'app pendant qu'elle était affichée, on la ferme au retour et on prévient la page.
     private var sharedAway = false
     private func topController() -> UIViewController? {

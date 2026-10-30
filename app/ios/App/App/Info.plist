@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>fr</string>
 	<key>CFBundleDisplayName</key>
-	<string>Perfect Run</string>
+	<string>PerfectRun</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -29,9 +29,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Pour prendre une photo de ta sortie et créer l’image à partager.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Pour continuer à te guider quand l’écran est verrouillé, Perfect Run a besoin de ta position pendant la course. Elle ne quitte jamais ton téléphone.</string>
+	<string>Pour continuer à te guider quand l’écran est verrouillé, PerfectRun a besoin de ta position pendant la course. Elle ne quitte jamais ton téléphone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Perfect Run utilise ta position pour partir de là où tu es et te guider sur ton parcours.</string>
+	<string>PerfectRun utilise ta position pour partir de là où tu es et te guider sur ton parcours.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pour enregistrer l’image de ta sortie dans ta galerie.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

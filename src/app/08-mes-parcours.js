@@ -23,8 +23,8 @@ function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
   const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '') + (CITY !== 'paris' ? '&ville=' + CITY : '');
   track('envoi', 'Parcours envoyé');
-  if (NATIVE) { NP.share.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
-  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (NATIVE) { NP.share.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
@@ -290,7 +290,7 @@ function badgeAnnounce(fresh) {
   $('#shx-badge-k').textContent = one ? 'Nouveau trophée' : `${fresh.length} nouveaux trophées`;
   $('#shx-badge-l').innerHTML = fresh.map(b => badgeHTML(b, one ? 104 : 72, true)).join('');
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
-  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
+  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec PerfectRun.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
   $('#shx-badge-t').hidden = !one; // plusieurs trophées : leurs noms sont déjà sous les écussons
 }
 // « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite

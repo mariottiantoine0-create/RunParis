@@ -12,11 +12,11 @@ function track(ev, title) { try { const cv = CITY !== 'paris' ? '-' + CITY : '',
 // ---------- feedback : « Signaler un problème » envoie un email via le Worker Cloudflare (worker.js, /api/signalement) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
-const APP_VER = '1.0.2';
+const APP_VER = '1.0.3';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('Perfect Run n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 15 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('PerfectRun n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 15 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
     '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La recherche d’une adresse avec numéro (« 12 rue … ») : le texte tapé est envoyé au service d’adresses de l’IGN, sans ta position ni identifiant ; sans numéro, la recherche reste dans l’app', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
     '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
@@ -24,7 +24,7 @@ const ABOUT = {
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
     '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
-    '<h3>Application</h3>' + ap('Application iPhone Perfect Run, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : <a href="https://perfectrun.fr/confidentialite" target="_blank" rel="noopener">perfectrun.fr/confidentialite</a> et <a href="https://perfectrun.fr/aide" target="_blank" rel="noopener">perfectrun.fr/aide</a>.') +
+    '<h3>Application</h3>' + ap('Application iPhone PerfectRun, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : <a href="https://perfectrun.fr/confidentialite" target="_blank" rel="noopener">perfectrun.fr/confidentialite</a> et <a href="https://perfectrun.fr/aide" target="_blank" rel="noopener">perfectrun.fr/aide</a>.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
@@ -48,14 +48,14 @@ document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stop
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
-$('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
+$('#erase-go').onclick = () => { // tout ce que PerfectRun garde sur l'appareil commence par « runparis- »
   const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-') && k !== DL_K) { /* les villes téléchargées restent : ce ne sont pas des données personnelles */ bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 };
-if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `Perfect Run ${APP_VER}`; gcHit('/app', `Application ${APP_VER}`, false); }
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `PerfectRun ${APP_VER}`; gcHit('/app', `Application ${APP_VER}`, false); }
 { const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
 
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
@@ -81,7 +81,7 @@ $('#fb-form').onsubmit = async ev => {
 };
 
 // site : le logo ramène à l'accueil
-if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'Perfect Run, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
+if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'PerfectRun, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
 // Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.
 var MPHR = false, MCUR = null, MHOLD = {};

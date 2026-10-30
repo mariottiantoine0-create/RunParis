@@ -97,7 +97,7 @@ function shDraw() {
     lieux.forEach(([a, b]) => { NARF(800, 58 * lk); const w = g.measureText(a).width; g.fillText(a, x, y); BODY(700, 32); g.fillText(b, x, y + 40); x += w + 66 * lk; });
     BODY(600, 32); g.globalAlpha = .8; g.fillText(url, L, Hd - 60); g.globalAlpha = 1;
   } else if (SH.ly === 'pills') {
-    const rows = [['Perfect Run', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
+    const rows = [['PerfectRun', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
     let y = 110; BODY(700, 36); g.shadowBlur = 0;
     rows.forEach(r => { const ws = r.map(t => g.measureText(t).width + 60), tot = ws.reduce((a, b) => a + b, 0) + 18 * (r.length - 1); let x = (Wd - tot) / 2;
       r.forEach((t, i) => { g.lineWidth = 4; g.strokeStyle = onMap ? INK : 'rgba(255,255,255,.9)'; if (onMap) { g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.fill(); } g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.stroke(); g.fillStyle = fg; g.textBaseline = 'middle'; g.fillText(t, x + 30, y + 40); x += ws[i] + 18; });
@@ -116,8 +116,8 @@ function shBlob() { return new Promise(res => $('#shx-cv').toBlob(b => res(b), '
 async function shShare() {
   const b = await shBlob(); if (!b) return; const f = new File([b], `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, { type: 'image/jpeg' });
   track('partage', 'Image partagée ' + SH.bg + ' ' + SH.ly);
-  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec Perfect Run · perfectrun.fr'); return; }
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec Perfect Run · perfectrun.fr' }); } catch (e) {} return; }
+  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec PerfectRun · perfectrun.fr'); return; }
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec PerfectRun · perfectrun.fr' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
 // retour dans l'app après un partage vers une autre app : la feuille de partage a été fermée côté iOS (SceneDelegate)

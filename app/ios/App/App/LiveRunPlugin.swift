@@ -1,4 +1,4 @@
-// Perfect Run · Activité en direct (D-100) : la page web démarre, met à jour et termine la carte de l'écran verrouillé.
+// PerfectRun · Activité en direct (D-100) : la page web démarre, met à jour et termine la carte de l'écran verrouillé.
 // JS : LiveRun.start(état), LiveRun.update(état), LiveRun.end(), LiveRun.watch({}, cb) → { action: "pause" | "resume" }.
 import Foundation
 import Capacitor

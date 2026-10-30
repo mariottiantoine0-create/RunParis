@@ -1,4 +1,4 @@
-// Perfect Run · Activité en direct (D-100) : données et action partagées par l'app et l'extension PerfectRunLive.
+// PerfectRun · Activité en direct (D-100) : données et action partagées par l'app et l'extension PerfectRunLive.
 // Ce fichier existe en deux copies identiques : App/LiveRunShared.swift et PerfectRunLive/LiveRunShared.swift.
 import Foundation
 import ActivityKit

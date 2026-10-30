@@ -1,4 +1,4 @@
-// Moteur de parcours Perfect Run : tourne dans le navigateur et dans Node
+// Moteur de parcours PerfectRun : tourne dans le navigateur et dans Node
 const Engine = (() => {
   let M, G = {};
   const DEG = Math.PI / 180;

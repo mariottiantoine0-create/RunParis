@@ -1,4 +1,4 @@
-// Perfect Run · extension « PerfectRunLive » : seulement l'Activité en direct de la course (D-100).
+// PerfectRun · extension « PerfectRunLive » : seulement l'Activité en direct de la course (D-100).
 import WidgetKit
 import SwiftUI
 
