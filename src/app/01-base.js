@@ -59,7 +59,7 @@ const CITIES = {
   dijon: { name: 'Dijon', dir: 'dijon/', sub: 'et 15 communes voisines', ll: [47.322, 5.0415], bb: [47.25, 47.41, 4.89, 5.18], end: ['Parc de la Colombière', 47.3045, 5.0485],
     hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Le grand parcours de course de Dijon, pour s’entraîner dessus en entier ou en partie.', od: '' },
   lille: { name: 'Lille', dir: 'lille/', sub: 'et 18 communes voisines', ll: [50.6368, 3.0636], bb: [50.565, 50.715, 2.885, 3.215], end: ['Parc de la Citadelle', 50.6395, 3.047],
-    hill: 'Lille est très plate : de 15 m (Deûle) à 60 m au plus haut des communes voisines.', zones: '12 quartiers et 18 communes', avoidEx: 'Un lieu : Grand’Place, Wazemmes, un marché…', races: 'Les parcours mythiques de Lille (marathon, semi, 10 km) arrivent bientôt.', od: '' }
+    hill: 'Lille est très plate : de 15 m (Deûle) à 60 m au plus haut des communes voisines.', zones: '12 quartiers et 18 communes', avoidEx: 'Un lieu : Grand’Place, Wazemmes, un marché…', races: 'Les parcours mythiques de Lille arrivent bientôt.', od: '' }
 };
 const CITY_SOON = [];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
