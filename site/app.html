@@ -507,6 +507,8 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-bdg{margin:24px 0}
+.onb-bdg-note{margin-top:16px;color:var(--muted)}
+#onb-bdg-pts svg{flex:none;margin-top:1px}
 .onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
 .onb-dots span.past{background:var(--accent)}
 .onb-dots span.on{width:24px;background:var(--accent)}
@@ -1279,11 +1281,12 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <div class="onb-progs"></div>
         <h2 class="onb-h">Gagne des<br>trophées</h2>
         <div class="bdg-grid onb-bdg" id="onb-bdg" aria-hidden="true"></div>
-        <ul class="onb-pts">
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2.5 4L16 12H5"/></svg>Ta première sortie, tes kilomètres, ta plus longue course.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"/></svg>De nouveaux quartiers, de nouvelles villes, des semaines d’affilée.</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-5-4-5 4z"/></svg>Seules comptent les sorties vraiment courues, suivies avec l’app.</li>
+        <ul class="onb-pts" id="onb-bdg-pts">
+          <li data-ico="sorties">Tes sorties : la première, puis 10, 25, 50.</li>
+          <li data-ico="distance">Tes kilomètres, au total et d’un coup, jusqu’au marathon.</li>
+          <li data-ico="exploration">De nouveaux quartiers et de nouvelles villes.</li>
         </ul>
+        <p class="onb-p onb-bdg-note">Seules comptent les sorties vraiment courues, suivies avec l’app.</p>
       </div>
       <div class="onb-f"><button type="button" class="btn primary" id="onb-bdg-go">Suivant</button></div>
     </section>
@@ -5018,7 +5021,7 @@ function onbShow(n) {
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
-  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY)].map(b => badgeHTML(b, 72, true)).join(''); bFitDom($('#onb-bdg')); }
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY)].map(b => badgeHTML(b, 72, true)).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids
