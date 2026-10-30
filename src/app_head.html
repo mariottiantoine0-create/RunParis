@@ -500,6 +500,8 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-bdg{margin:24px 0;row-gap:12px}
+.onb-bdg .bdg.off{--bdg-bg:var(--accent);--bdg-ink:var(--accent-ink)}
+.onb-bdg .bdg.off .bdg-c b{color:var(--ink)}
 .onb-h1{font-size:clamp(30px,9.4vw,44px);white-space:nowrap}
 .onb-bdg-note{margin-top:16px;color:var(--muted)}
 #onb-bdg-pts svg{flex:none;margin-top:1px}
@@ -1279,6 +1281,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <li data-ico="sorties">Tes sorties : la première, puis 10, 25, 50.</li>
           <li data-ico="distance">Tes kilomètres, au total et d’un coup, jusqu’au marathon.</li>
           <li data-ico="exploration">De nouveaux quartiers et de nouvelles villes.</li>
+          <li data-ico="mystere">Et des trophées mystères, à découvrir en courant.</li>
         </ul>
         <p class="onb-p onb-bdg-note">Seules comptent les sorties vraiment courues, suivies avec l’app.</p>
       </div>
