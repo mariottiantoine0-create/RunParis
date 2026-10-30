@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="fr"><script>window.PR_DL_BASE="https://prochaine-perfectrun.mariottiantoine0.workers.dev/"</script><script>try{var t=localStorage.getItem("runparis-theme");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <meta charset="utf-8">
-<meta name="description" content="Perfect Run génère des parcours de course dans les grandes villes de France et leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
+<meta name="description" content="PerfectRun génère des parcours de course dans les grandes villes de France et leurs communes voisines : distance, dénivelé, feux rouges, quartiers à éviter, parcs, métro pour rentrer, parcours mythiques à courir en entier ou en partie.">
 <meta name="theme-color" content="#F4F4F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%274%27 fill=%27%231F4FE0%27/%3E%3Cpath d=%27M7 24c4-1 4-7 9-8s6-6 9-9%27 fill=%27none%27 stroke=%27%23FFFFFF%27 stroke-width=%273.2%27 stroke-linecap=%27square%27/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Perfect Run</title>
+<title>PerfectRun</title>
 <style>
 @font-face{font-family:'Archivo';src:url(fonts/archivo-latin-wdth-normal.woff2) format('woff2');font-weight:100 900;font-stretch:62% 125%;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:'Archivo';src:url(fonts/archivo-latin-ext-wdth-normal.woff2) format('woff2');font-weight:100 900;font-stretch:62% 125%;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
@@ -508,8 +508,6 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-bdg{margin:24px 0;row-gap:12px}
-.onb-bdg .bdg.off{--bdg-bg:var(--accent);--bdg-ink:var(--accent-ink)}
-.onb-bdg .bdg.off .bdg-c b{color:var(--ink)}
 .onb-h1{font-size:clamp(30px,9.4vw,44px);white-space:nowrap}
 .onb-bdg-note{margin-top:16px;color:var(--muted)}
 #onb-bdg-pts svg{flex:none;margin-top:1px}
@@ -762,6 +760,12 @@ button,a,label{-webkit-tap-highlight-color:transparent}
 .t-special{--bdg-bg:var(--accent);--bdg-ink:var(--accent-ink)}
 .bdg.off{--bdg-bg:var(--disabled-bg);--bdg-ink:var(--disabled-ink)}
 .bdg.off .bdg-c b{color:var(--muted)}
+.bdg.myst .bdg-s{position:relative}
+.bdg.myst .bdg-s>*{position:relative;z-index:1}
+.bdg.myst .bdg-s>.bdg-ol{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.bdg.myst.off{--bdg-bg:transparent;--bdg-ink:var(--ink)}
+.bdg.myst:not(.off){--bdg-bg:var(--ink);--bdg-ink:var(--panel)}
+.onb-bdg .bdg.myst .bdg-c b{color:var(--ink)}
 .bdg-foot{font-size:13px;color:var(--muted);margin:20px 0 0}
 .bdg-new{border:1px solid var(--line);border-radius:8px;padding:16px 12px 8px;margin:0 0 16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .bdg-new[hidden]{display:none}
@@ -902,7 +906,7 @@ html.running .panel,html.running .tools,html.running .layers,html.running .zoom,
 .shx-f .btn.ghost{border:2px solid var(--ink);color:var(--ink);background:none}
 .shx-f .ico{width:20px;height:20px}
 
-/* lien reçu sur le site (D-88) : titre du message, invitation à l'app, feuille « L'app Perfect Run », lien incomplet */
+/* lien reçu sur le site (D-88) : titre du message, invitation à l'app, feuille « L'app PerfectRun », lien incomplet */
 .note b.nt{display:block;font-size:15px;margin-bottom:2px}
 .lnk-err{position:absolute;top:16px;left:16px;width:min(440px,calc(100% - 32px));box-sizing:border-box;z-index:9;box-shadow:var(--shadow-pop);padding-right:52px}
 .lnk-err[hidden]{display:none}
@@ -947,7 +951,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   <aside class="panel" aria-label="Réglages et résultats">
     <button class="grab" id="grab" type="button" aria-label="Agrandir ou réduire le panneau"><span></span></button>
     <div class="phead">
-      <div class="lgrp"><a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a><button type="button" class="citybtn" id="city-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Ville : Paris. Changer de ville"><span id="city-name">Paris</span><svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M6 9l6 6 6-6"/></svg></button></div>
+      <div class="lgrp"><a class="logo" href="./" aria-label="PerfectRun, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a><button type="button" class="citybtn" id="city-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Ville : Paris. Changer de ville"><span id="city-name">Paris</span><svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M6 9l6 6 6-6"/></svg></button></div>
       <button class="iconbtn" id="theme-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
     </div>
     <div class="themepop" id="themepop" hidden>
@@ -961,7 +965,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <button id="t-dark" aria-pressed="false">Sombre</button>
       </div>
       <p class="hint">Auto suit le réglage de ton appareil.</p>
-      <p class="hint mver" id="mver">Perfect Run · site</p>
+      <p class="hint mver" id="mver">PerfectRun · site</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Mode">
@@ -1234,7 +1238,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
   <div class="msheet" id="citysheet" hidden role="dialog" aria-labelledby="citysheet-t">
   <div class="msheet-grab" aria-hidden="true"></div>
   <div class="msheet-h"><h2 id="citysheet-t">Ta ville</h2><button type="button" class="iconbtn" id="city-x" aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
-  <div class="msheet-b"><div class="cities" id="city-list" role="group" aria-label="Villes"></div><p class="cityhint">À l’ouverture, Perfect Run choisit la ville où tu es. Les parcours mythiques et la recherche de départ suivent la ville choisie.</p></div>
+  <div class="msheet-b"><div class="cities" id="city-list" role="group" aria-label="Villes"></div><p class="cityhint">À l’ouverture, PerfectRun choisit la ville où tu es. Les parcours mythiques et la recherche de départ suivent la ville choisie.</p></div>
 </div>
 <div class="msheet" id="msheet" hidden role="dialog" aria-modal="true" aria-labelledby="msheet-t">
     <div class="msheet-grab" aria-hidden="true"></div>
@@ -1245,12 +1249,12 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 
   <!-- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) -->
   <!-- onboarding (application) : 4 écrans au premier lancement, et une fois à la mise à jour (« Choisis tes villes ») -->
-  <div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Bienvenue sur Perfect Run">
+  <div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Bienvenue sur PerfectRun">
     <section data-step="1" class="onb-s">
       <div class="onb-map" aria-hidden="true"><svg viewBox="0 0 390 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="390" height="300" fill="var(--map-bg)"/><path d="M-10 250C80 230 160 280 400 220L400 300L-10 320z" fill="var(--water)"/><rect x="250" y="40" width="110" height="90" fill="var(--green)"/><g stroke="var(--street)" stroke-width="6"><path d="M0 70h390M0 150h390M0 200h390M60 0v300M150 0v300M230 0v300M320 0v300"/></g><g stroke="var(--street-major)" stroke-width="10"><path d="M0 110L390 60M110 0L190 300"/></g><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route-casing)" stroke-width="12" stroke-linejoin="round"/><path d="M150 200L150 150L230 150L250 110L320 110L320 200L230 200Z" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round"/><circle cx="150" cy="200" r="12" fill="var(--pin-a)" stroke="var(--route-casing)" stroke-width="3"/></svg></div>
       <div class="onb-in">
         <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 1 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
-        <a class="logo" href="./" aria-label="Perfect Run, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
+        <a class="logo" href="./" aria-label="PerfectRun, retour à l’accueil" title="Retour à l’accueil">PERFECT<span>RUN</span></a>
         <h2 class="onb-h">Des parcours<br>sur mesure</h2>
         <ul class="onb-pts">
           <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v3"/><path d="M14 17h7M18 14l3 3-3 3"/></svg>La distance que tu veux, en boucle, jusqu’à un lieu ou n’importe où.</li>
@@ -1438,9 +1442,9 @@ SOFTWARE.
       <div class="shx-b perm-b">
         <div class="perm-ill" aria-hidden="true"><span><svg class="ico" viewBox="0 0 24 24"><path d="M5 11h14v10H5z"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span><svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span></div>
         <h2 class="perm-t" id="runperm-t">Garde ton téléphone<br>en poche</h2>
-        <p class="perm-p">Pour te guider écran éteint, Perfect Run a besoin de ta position pendant la course. L’iPhone va te demander l’autorisation :</p>
+        <p class="perm-p">Pour te guider écran éteint, PerfectRun a besoin de ta position pendant la course. L’iPhone va te demander l’autorisation :</p>
         <div class="perm-step"><b>1</b><span>Choisis <strong>« Autoriser lorsque l’app est active »</strong>. C’est suffisant, même écran verrouillé.</span></div>
-        <div class="perm-step"><b>2</b><span>Pendant la course, une pastille bleue en haut de l’écran indique que Perfect Run suit ta position.</span></div>
+        <div class="perm-step"><b>2</b><span>Pendant la course, une pastille bleue en haut de l’écran indique que PerfectRun suit ta position.</span></div>
         <p class="run-priv"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>Ta position ne quitte jamais ton téléphone et ne sert que pendant le suivi.</p>
       </div>
       <div class="msheet-f perm-f"><button type="button" class="btn primary" id="runperm-go">Continuer</button><button type="button" class="textbtn" id="runperm-later">Pas maintenant</button></div>
@@ -1530,7 +1534,7 @@ SOFTWARE.
   <dialog class="fb" id="fb" aria-labelledby="fb-t">
     <form method="dialog" id="fb-form">
       <h2 id="fb-t">Signaler un problème</h2>
-      <p class="hint">Ton message aide à améliorer Perfect Run. Il est lu par Antoine, l'auteur de l'app.</p>
+      <p class="hint">Ton message aide à améliorer PerfectRun. Il est lu par Antoine, l'auteur de l'app.</p>
       <label class="fl">Type
         <select name="type" id="fb-type">
           <option value="" disabled selected>Choisis un sujet</option>
@@ -1551,7 +1555,7 @@ SOFTWARE.
 </div>
 
 <script>
-// Moteur de parcours Perfect Run : tourne dans le navigateur et dans Node
+// Moteur de parcours PerfectRun : tourne dans le navigateur et dans Node
 const Engine = (() => {
   let M, G = {};
   const DEG = Math.PI / 180;
@@ -2270,7 +2274,7 @@ const CITIES = {
   dijon: { name: 'Dijon', dir: 'dijon/', sub: 'et 15 communes voisines', ll: [47.322, 5.0415], bb: [47.25, 47.41, 4.89, 5.18], end: ['Parc de la Colombière', 47.3045, 5.0485],
     hill: 'Dijon va de 220 m à 300 m ; à l’ouest, les combes et Corcelles-les-Monts montent à 600 m.', zones: '13 quartiers et 15 communes', avoidEx: 'Un lieu : place de la Libération, les Halles, un marché…', races: 'Le grand parcours de course de Dijon, pour s’entraîner dessus en entier ou en partie.', od: '' },
   lille: { name: 'Lille', dir: 'lille/', sub: 'et 18 communes voisines', ll: [50.6368, 3.0636], bb: [50.565, 50.715, 2.885, 3.215], end: ['Parc de la Citadelle', 50.6395, 3.047],
-    hill: 'Lille est très plate : de 15 m (Deûle) à 60 m au plus haut des communes voisines.', zones: '12 quartiers et 18 communes', avoidEx: 'Un lieu : Grand’Place, Wazemmes, un marché…', races: 'Les parcours mythiques de Lille (marathon, semi, 10 km) arrivent bientôt.', od: '' }
+    hill: 'Lille est très plate : de 15 m (Deûle) à 60 m au plus haut des communes voisines.', zones: '12 quartiers et 18 communes', avoidEx: 'Un lieu : Grand’Place, Wazemmes, un marché…', races: 'Les parcours mythiques de Lille arrivent bientôt.', od: '' }
 };
 const CITY_SOON = [];
 const cityAt = (la, lo) => Object.keys(CITIES).find(k => { const b = CITIES[k].bb; return la >= b[0] && la <= b[1] && lo >= b[2] && lo <= b[3]; }) || null;
@@ -3824,9 +3828,9 @@ function gpx() {
   const r = S.route; if (!r) return null;
   const pts = routePts(r);
   const esc = s => s.replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
-  const name = S.tab === 'race' && S.race ? `${S.race.name} – Perfect Run, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `Perfect Run ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
+  const name = S.tab === 'race' && S.race ? `${S.race.name} – PerfectRun, km ${fmt(S.raceFrom)} à ${fmt(S.raceTo)}` : `PerfectRun ${fmt(r.len / 1000)} km – départ ${S.start.name}`;
   const body = pts.map(([x, y]) => { const [la, lo] = E.toLL(x, y); return `<trkpt lat="${la.toFixed(6)}" lon="${lo.toFixed(6)}"></trkpt>`; }).join('\n      ');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Perfect Run" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="PerfectRun" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata><name>${esc(name)}</name></metadata>\n  <trk><name>${esc(name)}</name><type>running</type><trkseg>\n      ${body}\n  </trkseg></trk>\n</gpx>\n`;
 }
 $('#gpx').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
@@ -3948,7 +3952,7 @@ function shDraw() {
     lieux.forEach(([a, b]) => { NARF(800, 58 * lk); const w = g.measureText(a).width; g.fillText(a, x, y); BODY(700, 32); g.fillText(b, x, y + 40); x += w + 66 * lk; });
     BODY(600, 32); g.globalAlpha = .8; g.fillText(url, L, Hd - 60); g.globalAlpha = 1;
   } else if (SH.ly === 'pills') {
-    const rows = [['Perfect Run', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
+    const rows = [['PerfectRun', D.date], ['Distance ' + km + ' km', 'Temps ' + time], ['D+ ' + D.up + ' m', 'Allure ' + pc + ' /km'], lieux.map(l => l[0]).length > 1 ? [lieux[0][0] + ' → ' + lieux[1][0]] : [lieux[0][0]]];
     let y = 110; BODY(700, 36); g.shadowBlur = 0;
     rows.forEach(r => { const ws = r.map(t => g.measureText(t).width + 60), tot = ws.reduce((a, b) => a + b, 0) + 18 * (r.length - 1); let x = (Wd - tot) / 2;
       r.forEach((t, i) => { g.lineWidth = 4; g.strokeStyle = onMap ? INK : 'rgba(255,255,255,.9)'; if (onMap) { g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.fill(); } g.beginPath(); g.roundRect(x, y, ws[i], 76, 12); g.stroke(); g.fillStyle = fg; g.textBaseline = 'middle'; g.fillText(t, x + 30, y + 40); x += ws[i] + 18; });
@@ -3967,8 +3971,8 @@ function shBlob() { return new Promise(res => $('#shx-cv').toBlob(b => res(b), '
 async function shShare() {
   const b = await shBlob(); if (!b) return; const f = new File([b], `runparis-${Math.round(SH.data.km * 10) / 10}km.jpg`, { type: 'image/jpeg' });
   track('partage', 'Image partagée ' + SH.bg + ' ' + SH.ly);
-  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec Perfect Run · perfectrun.fr'); return; }
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec Perfect Run · perfectrun.fr' }); } catch (e) {} return; }
+  if (NATIVE) { await nativeShareFile(f.name, b, 'Ma sortie avec PerfectRun · perfectrun.fr'); return; }
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: 'Ma sortie avec PerfectRun · perfectrun.fr' }); } catch (e) {} return; }
   shSave(b); toast('Partage direct indisponible ici : l’image est enregistrée.', 3500);
 }
 // retour dans l'app après un partage vers une autre app : la feuille de partage a été fermée côté iOS (SceneDelegate)
@@ -4133,7 +4137,7 @@ function navMsg(kind, title, text, ms) {
 // position bloquée : on dit où l'autoriser (message bloquant du design system)
 function navDenied(n) {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
-  const how = NATIVE ? 'Réglages → Perfect Run → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
+  const how = NATIVE ? 'Réglages → PerfectRun → Position : choisis « Toujours » (pour le suivi écran verrouillé) et active « Position exacte ». Reviens ensuite dans l’app.'
     : ios ? 'Réglages → Confidentialité et sécurité → Service de localisation : active-le, puis « Sites web Safari » → « Lorsque l’app est active » et « Position exacte ». Recharge ensuite la page.'
     : and ? 'Touche le cadenas à gauche de l’adresse → Autorisations → Position : autoriser, et vérifie que la localisation du téléphone est activée. Recharge ensuite la page.'
     : 'Autorise la position pour ce site dans les réglages du navigateur, puis recharge la page.';
@@ -4196,7 +4200,7 @@ function runStart() {
   navWake(); resize();
   V.s = Math.max(V.s, 0.9); navUI();
   if (NATIVE) { // application : la position continue écran verrouillé
-    NP.bg.addWatcher({ backgroundTitle: solo ? 'Perfect Run enregistre ta course' : 'Perfect Run suit ton parcours', backgroundMessage: solo ? 'Ta trace est enregistrée écran verrouillé.' : 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
+    NP.bg.addWatcher({ backgroundTitle: solo ? 'PerfectRun enregistre ta course' : 'PerfectRun suit ton parcours', backgroundMessage: solo ? 'Ta trace est enregistrée écran verrouillé.' : 'Le guidage continue écran verrouillé.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, err) => {
       if (err) { if (err.code === 'NOT_AUTHORIZED') { runStop(); runPrep(); navDenied($('#runp-far')); } return; }
       navFix({ coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() });
     }).then(id => { if (NAV.on) NAV.bgId = id; else NP.bg.removeWatcher({ id }); });
@@ -4631,8 +4635,8 @@ function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
   const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '') + (CITY !== 'paris' ? '&ville=' + CITY : '');
   track('envoi', 'Parcours envoyé');
-  if (NATIVE) { NP.share.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
-  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours Perfect Run', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (NATIVE) { NP.share.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
+  if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
@@ -4748,6 +4752,25 @@ const B_ICO = {
   nuit: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
   weekend: '<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4M7 14h4v4H7zM13 14h4v4h-4z"/>',
   annee: '<path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2z"/>',
+  // icônes des trophées mystères du catalogue Notion « 09 · Trophées mystères », prêtes pour les prochains (30/10)
+  pile: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M7.5 12a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0M11 12h2"/>',
+  bis: '<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/>',
+  suite: '<path d="M3 6.5l5.5 5.5L3 17.5M9.5 6.5l5.5 5.5-5.5 5.5M16 6.5l5.5 5.5-5.5 5.5"/>',
+  boucle: '<path d="M4 12a8 8 0 1 0 16 0a8 8 0 1 0-16 0M10 4a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/>',
+  noel: '<path d="M12 2.5l5 7h-3l4.5 6.5h-13L10 9.5H7zM12 16v5"/>',
+  solstice: '<path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  dej: '<path d="M6 3v6a2 2 0 0 0 4 0V3M8 3v18M17 21V3c-2.2 1.2-3.5 4-3.5 8.5H17"/>',
+  horloge: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 7v5l3.5 2"/>',
+  zerofeu: '<path d="M8 3h8v18H8zM11 7.5h2M11 12h2M11 16.5h2M3.5 3.5l17 17"/>',
+  ponts: '<path d="M2 8h20M4 8v12M20 8v12M4 20c2-6 5-8.5 8-8.5s6 2.5 8 8.5M8 8v4.5M12 8v3.5M16 8v4.5"/>',
+  soif: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  grimpeur: '<path d="M2.5 20.5 9 9.5l4 6 2.5-3.5 6 8.5zM15.5 12V3.5l4.5 1.8-4.5 1.8"/>',
+  collection: '<path d="M12 2.5l1.6 3.4 3.7.5-2.7 2.6.6 3.7L12 11l-3.2 1.7.6-3.7-2.7-2.6 3.7-.5zM6 14l1.1 2.3 2.5.4-1.8 1.7.4 2.5L6 19.7l-2.2 1.2.4-2.5-1.8-1.7 2.5-.4zM18 14l1.1 2.3 2.5.4-1.8 1.7.4 2.5-2.2-1.2-2.2 1.2.4-2.5-1.8-1.7 2.5-.4z"/>',
+  partage: '<path d="M12 3v12M7 8l5-5 5 5M5 13v8h14v-8"/>',
+  vendredi: '<path d="M12 12a3.3 3.3 0 1 1 0-6.6a3.3 3.3 0 1 1 0 6.6zM12 12a3.3 3.3 0 1 1 6.6 0a3.3 3.3 0 1 1-6.6 0zM12 12a3.3 3.3 0 1 1 0 6.6a3.3 3.3 0 1 1 0-6.6zM12 12a3.3 3.3 0 1 1-6.6 0a3.3 3.3 0 1 1 6.6 0zM14.5 17.5 16 22"/>',
+  bissextile: '<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4M12 12.5v6M9 15.5h6"/>',
+  nordsud: '<path d="M12 5.5v13M8 7l4-4 4 4M8 17l4 4 4-4"/>',
+  accro: '<path d="M3 7h12.5M13 3.5l3.5 3.5-3.5 3.5M21 17H8.5M11 13.5 7.5 17l3.5 3.5"/>',
   mystere: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
   globe: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9M12 3c-2.5 2.5-3.8 5.5-3.8 9s1.3 6.5 3.8 9"/>',
 };
@@ -4832,6 +4855,8 @@ function badgeSync(quiet) {
 const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
 function badgeHTML(b, size, got, note) {
   const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.fam === 'myst' && !got ? 'Trophée mystère' : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
+  // trophée mystère (piste C « Secret », 30/10) : contour en pointillés tant qu'il est caché, double bord or une fois découvert
+  const ring = b.fam !== 'myst' ? '' : got ? '<svg class="bdg-ol" viewBox="0 0 100 112" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,9 85,31 85,81 50,103 15,81 15,31" fill="none" stroke="var(--badge-or)" stroke-width="3.5"/></svg>' : '<svg class="bdg-ol" viewBox="0 0 100 112" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,2 92,29 92,83 50,110 8,83 8,29" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-dasharray="6 5"/></svg>';
   if (b.fam === 'myst' && !got) inner = `<span class="v" style="font-size:${Math.round(size * 0.42)}px">?</span>`;
   else if (b.tier === 'ville') {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
@@ -4839,7 +4864,7 @@ function badgeHTML(b, size, got, note) {
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
   else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${Math.max(11, bFit(b.unit, size * 0.15, size * 0.62, 0.5))}px">${b.unit}</span>`;
   const label = b.fam === 'myst' && !got ? 'Trophée mystère, à découvrir' : `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
-  return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
+  return `<div class="bdg t-${b.tier}${b.fam === 'myst' ? ' myst' : ''}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${ring}${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
 // après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long est retiré de l'écusson (il est déjà dessous)
 function bFitDom(root) {
@@ -4877,7 +4902,7 @@ function badgeAnnounce(fresh) {
   $('#shx-badge-k').textContent = one ? 'Nouveau trophée' : `${fresh.length} nouveaux trophées`;
   $('#shx-badge-l').innerHTML = fresh.map(b => badgeHTML(b, one ? 104 : 72, true)).join('');
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
-  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
+  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec PerfectRun.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
   $('#shx-badge-t').hidden = !one; // plusieurs trophées : leurs noms sont déjà sous les écussons
 }
 // « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite
@@ -4898,11 +4923,11 @@ function track(ev, title) { try { const cv = CITY !== 'paris' ? '-' + CITY : '',
 // ---------- feedback : « Signaler un problème » envoie un email via le Worker Cloudflare (worker.js, /api/signalement) ----------
 if (PUBLIC) $('#fb-open').hidden = false;
 // ---------- À propos : confidentialité, mentions légales, sources et licences, effacer mes données (D-87) ----------
-const APP_VER = '1.0.2';
+const APP_VER = '1.0.3';
 const ul = a => '<ul class="about-ul">' + a.map(x => '<li><span>' + x + '</span></li>').join('') + '</ul>';
 const ap = t => '<p class="about-p">' + t + '</p>';
 const ABOUT = {
-  conf: ['Confidentialité', () => ap('Perfect Run n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 15 octobre 2026.') +
+  conf: ['Confidentialité', () => ap('PerfectRun n’a pas de compte et ne garde rien sur un serveur. Mise à jour : 15 octobre 2026.') +
     '<h3>Ce qui reste sur ton téléphone</h3>' + ul(['Ta position, utilisée pour partir de là où tu es et pendant le suivi', 'Tes sorties (« Mes parcours »), ton départ « Chez moi » et tes réglages', 'Tes photos : l’image de ta sortie est créée dans le téléphone']) +
     '<h3>Ce qui quitte ton téléphone</h3>' + ul(['« Signaler un problème » : ton message, ton email si tu le donnes, et le parcours si tu le joins (envoyés par email à l’éditeur, via Cloudflare)', '« Envoyer le parcours » : le lien contient le tracé, rien d’autre', 'La recherche d’une adresse avec numéro (« 12 rue … ») : le texte tapé est envoyé au service d’adresses de l’IGN, sans ta position ni identifiant ; sans numéro, la recherche reste dans l’app', 'La mesure d’audience : des compteurs anonymes (voir ci-dessous)']) +
     '<h3>Mesure d’audience</h3>' + ap('GoatCounter compte les visites et les actions (export, suivi, envoi…) sur le site et dans l’application, sans cookie, sans compte et sans te suivre d’un site ou d’une app à l’autre. Ta position, tes parcours et tes photos n’y sont jamais envoyés.') +
@@ -4910,7 +4935,7 @@ const ABOUT = {
   ml: ['Mentions légales', () => '<h3>Éditeur</h3>' + ap('Antoine Mariotti, particulier. Contact : « Signaler un problème », dans le menu.') +
     '<h3>Directeur de la publication</h3>' + ap('Antoine Mariotti') +
     '<h3>Hébergeur du site</h3>' + ap('Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com') +
-    '<h3>Application</h3>' + ap('Application iPhone Perfect Run, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : <a href="https://perfectrun.fr/confidentialite" target="_blank" rel="noopener">perfectrun.fr/confidentialite</a> et <a href="https://perfectrun.fr/aide" target="_blank" rel="noopener">perfectrun.fr/aide</a>.') +
+    '<h3>Application</h3>' + ap('Application iPhone PerfectRun, sur l’App Store ; elle fonctionne sans serveur. Confidentialité et contact : <a href="https://perfectrun.fr/confidentialite" target="_blank" rel="noopener">perfectrun.fr/confidentialite</a> et <a href="https://perfectrun.fr/aide" target="_blank" rel="noopener">perfectrun.fr/aide</a>.') +
     '<h3>Responsabilité</h3>' + ap('Les parcours sont calculés automatiquement à partir de données ouvertes et donnés à titre indicatif : respecte le code de la route, la signalisation et les horaires des parcs.')],
   src: ['Sources et licences', () => '<h3>Données</h3>' + ul(['Rues, arbres, métro, parcs : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>, licence ODbL', 'Altitudes : IGN, RGE ALTI', 'Adresses : Base Adresse Nationale, service de géocodage de l’IGN (Géoplateforme)', (CITY === 'paris' ? 'Quartiers : Paris Open Data' : 'Arrondissements et communes : OpenStreetMap'), 'Parcours mythiques : tracés issus de fichiers GPX et de cartes publics']) +
     '<h3>Logiciels et police</h3>' + ul(['Police Archivo, © The Archivo Project Authors, licence SIL Open Font License 1.1 <button type="button" class="textbtn" data-lic="ofl">Lire la licence</button>', 'Capacitor et ses modules (application), licence MIT <button type="button" class="textbtn" data-lic="mit">Lire la licence</button>'])],
@@ -4934,14 +4959,14 @@ document.querySelectorAll('[data-about]').forEach(b => b.onclick = e => { e.stop
 $('#about-b').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (!b) return; $('#about-t').textContent = b.dataset.lic === 'ofl' ? 'Licence de la police Archivo' : 'Licence MIT'; $('#about-b').innerHTML = $('#lic-' + b.dataset.lic).innerHTML; $('#about-b').scrollTop = 0; });
 $('#about-x').onclick = $('#about-back').onclick = $('#erase-keep').onclick = () => { $('#about').hidden = true; };
 $('#attrib-more').onclick = () => aboutOpen('src');
-$('#erase-go').onclick = () => { // tout ce que Perfect Run garde sur l'appareil commence par « runparis- »
+$('#erase-go').onclick = () => { // tout ce que PerfectRun garde sur l'appareil commence par « runparis- »
   const bak = {}; try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith('runparis-') && k !== DL_K) { /* les villes téléchargées restent : ce ne sont pas des données personnelles */ bak[k] = localStorage.getItem(k); localStorage.removeItem(k); } } } catch (e) {}
   $('#about').hidden = true; applyTheme('auto'); renderHome(); if (S.tab === 'mine') renderMine(); track('effacer', 'Données effacées');
   const t = $('#toast'); t.innerHTML = ''; t.append('Données effacées'); const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = 'Annuler';
   u.onclick = () => { try { for (const k in bak) localStorage.setItem(k, bak[k]); } catch (e) {} applyTheme(bak['runparis-theme'] || 'auto'); renderHome(); if (S.tab === 'mine') renderMine(); t.hidden = true; };
   t.appendChild(u); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000);
 };
-if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `Perfect Run ${APP_VER}`; gcHit('/app', `Application ${APP_VER}`, false); }
+if (NATIVE) { $('#m-erase').hidden = false; $('#mver').textContent = `PerfectRun ${APP_VER}`; gcHit('/app', `Application ${APP_VER}`, false); }
 { const k = new URLSearchParams(location.search).get('about'); if (ABOUT[k] && k !== 'erase') aboutOpen(k); } // liens de l'accueil et de « Comment ça marche »
 
 $('#fb-open').onclick = () => { $('#fb-err').hidden = true; $('#fb-route').checked = !!S.route; $('#fb-route').disabled = !S.route; $('#fb').showModal(); $('#fb-msg').focus(); };
@@ -4967,7 +4992,7 @@ $('#fb-form').onsubmit = async ev => {
 };
 
 // site : le logo ramène à l'accueil
-if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'Perfect Run, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
+if (!window.claude && /app\.html$/.test(location.pathname)) { const l = $('.logo'); const a = document.createElement('a'); a.href = './'; a.className = 'logo'; a.setAttribute('aria-label', 'PerfectRun, accueil'); a.innerHTML = l.innerHTML; l.replaceWith(a); }
 // ---------- mobile : réglages en phrase + feuilles (D-74) ----------
 // Sur téléphone, les contrôles existants sont déplacés dans des feuilles ; sur ordinateur, rien ne change.
 var MPHR = false, MCUR = null, MHOLD = {};
