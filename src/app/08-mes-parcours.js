@@ -229,7 +229,7 @@ function badgeHTML(b, size, got, note) {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
     inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
-  else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
+  else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${Math.max(11, bFit(b.unit, size * 0.15, size * 0.62, 0.5))}px">${b.unit}</span>`;
   const label = b.fam === 'myst' && !got ? 'Trophée mystère, à découvrir' : `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
   return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }

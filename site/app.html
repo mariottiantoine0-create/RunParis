@@ -95,7 +95,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .pin.d{background:var(--good);color:#06131C} .pin.a{background:var(--pin-b)}
 .startcard .txt{flex:1;min-width:0;display:flex;flex-direction:column}
 .startcard .name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.startcard small{color:var(--muted);font-size:12.5px}
+.startcard small{color:var(--muted);font-size:13px}
 .search{position:relative}
 .results{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:20;max-height:260px;overflow:auto}
 .results button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 12px}
@@ -4830,7 +4830,7 @@ function badgeHTML(b, size, got, note) {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
     inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
-  else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
+  else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${Math.max(11, bFit(b.unit, size * 0.15, size * 0.62, 0.5))}px">${b.unit}</span>`;
   const label = b.fam === 'myst' && !got ? 'Trophée mystère, à découvrir' : `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
   return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
@@ -5047,7 +5047,7 @@ function onbShow(n) {
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
-  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('ville-' + CITY), B('myst-leve'), B('km50'), B('sem4'), B('zone20')].map(b => badgeHTML(b, 64, b.fam !== 'myst')).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('ville-' + CITY), B('myst-leve'), B('km50'), B('sem4'), B('zone20')].map(b => badgeHTML(b, 72, b.fam !== 'myst')).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids

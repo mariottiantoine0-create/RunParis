@@ -508,6 +508,8 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
 .onb-bdg{margin:24px 0;row-gap:12px}
+.onb-bdg .bdg.off{--bdg-bg:var(--accent);--bdg-ink:var(--accent-ink)}
+.onb-bdg .bdg.off .bdg-c b{color:var(--ink)}
 .onb-h1{font-size:clamp(30px,9.4vw,44px);white-space:nowrap}
 .onb-bdg-note{margin-top:16px;color:var(--muted)}
 #onb-bdg-pts svg{flex:none;margin-top:1px}
@@ -1287,6 +1289,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <li data-ico="sorties">Tes sorties : la première, puis 10, 25, 50.</li>
           <li data-ico="distance">Tes kilomètres, au total et d’un coup, jusqu’au marathon.</li>
           <li data-ico="exploration">De nouveaux quartiers et de nouvelles villes.</li>
+          <li data-ico="mystere">Et des trophées mystères, à découvrir en courant.</li>
         </ul>
         <p class="onb-p onb-bdg-note">Seules comptent les sorties vraiment courues, suivies avec l’app.</p>
       </div>
@@ -4739,6 +4742,7 @@ const B_ICO = {
   nuit: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
   weekend: '<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4M7 14h4v4H7zM13 14h4v4h-4z"/>',
   annee: '<path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2z"/>',
+  mystere: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
   globe: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9M12 3c-2.5 2.5-3.8 5.5-3.8 9s1.3 6.5 3.8 9"/>',
 };
 const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
@@ -5044,7 +5048,7 @@ function onbShow(n) {
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
-  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY), B('km50'), B('sem4'), B('zone20')].map(b => badgeHTML(b, 64, true)).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('ville-' + CITY), B('myst-leve'), B('km50'), B('sem4'), B('zone20')].map(b => badgeHTML(b, 64, b.fam !== 'myst')).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids
