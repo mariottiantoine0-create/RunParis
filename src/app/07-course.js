@@ -55,8 +55,9 @@ function navBuild(r) {
         const name = nmAfter(jx.j);
         // on reste sur la même rue (trottoir qui contourne un coin, chaussée qui se dédouble) : rien à annoncer (D-114)
         if (!jog && name && segs[jx.k][2] === name && (Math.abs(jx.a) < 60 || !/^(Place|Rond-Point|Carrefour|Square)\b/i.test(name) && Math.abs(turn((segs[jx.k][1] + segs[jx.j][0]) / 2, 60)) < 45)) { i = jx.j - 1; continue; }
+        if (!jog && jx.straight && !jx.complex) { i = jx.j - 1; continue; } // on continue tout droit, sans rue plus droite : rien à dire
         if (jog) man.push({ d: dd, a: jx.lat > 0 ? 1 : -1, jog: Math.abs(jx.lat), lat: jx.lat, name, jx, cross: (jx.br.find(b => b.maj && !b.out) || {}).name || '' });
-        else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: Math.abs(jx.a) < 20 });
+        else if (Math.abs(jx.a) >= 35 || jx.complex && (Math.abs(jx.a) >= 20 || jx.br.some(b => !b.out && Math.abs(b.a - jx.a) < 30))) man.push({ d: dd, a: jx.a, name, jx, cx: jx.complex, straight: jx.straight });
         i = jx.j - 1; continue;
       }
       const a = turn(dd, 18), ein = segs[i][3], eout = segs[i + 1][3], v = segs[i][4] ? G.eb[ein] : G.ea[ein];
@@ -309,12 +310,13 @@ function streetAt(x, y) {
 }
 // mv : sens dans lequel le coureur avance ; un passage du tracé parcouru dans l'autre sens est ignoré
 // (rue empruntée à l'aller et au retour : on ne saute pas au retour en changeant de trottoir, D-114)
-function navProject(x, y, d0, d1, mv, strict) {
+function navProject(x, y, d0, d1, mv, strict, pen) {
   const n = NAV.n, i0 = Math.max(0, n.idx(Math.max(0, d0))), i1 = Math.min(n.pts.length - 2, n.idx(Math.min(n.L, d1)) + 1); let best = null;
   for (let i = i0; i <= i1; i++) { const [ax, ay] = n.pts[i], [bx, by] = n.pts[i + 1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1e-9;
     if (mv && (vx * mv[0] + vy * mv[1]) < (strict ? 0.5 : -0.5) * Math.sqrt(l2)) continue; // strict : seulement un bout pris dans le même sens
     const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)), px = ax + vx * t, py = ay + vy * t, dd = Math.hypot(x - px, y - py);
-    if (!best || dd < best.dd) best = { dd, d: n.cum[i] + t * Math.sqrt(l2), px, py }; }
+    const d = n.cum[i] + t * Math.sqrt(l2), sc = dd + (pen || 0) * Math.max(0, d - NAV.prog - 30); // pen : un bout plus loin sur le parcours doit être nettement plus proche pour l'emporter
+    if (!best || sc < best.sc) best = { dd, d, px, py, sc }; }
   return best;
 }
 function navFix(p) {
@@ -345,11 +347,13 @@ function navFix(p) {
   for (let k = NAV.trail.length - 1; k >= 0; k--) { const q = NAV.trail[k], dx = x - q[0], dy = y - q[1], l = Math.hypot(dx, dy); if (l >= 12) { mv = [dx / l, dy / l]; break; } }
   NAV.trail.push([x, y, now]);
   // on ne peut pas avoir avancé plus vite qu'un coureur depuis la dernière position sur le parcours
-  const dt = NAV.okT ? (now - NAV.okT) / 1000 : 60, ahead = Math.min(NAV.reacq ? 2500 : 400, 60 + 8 * dt);
-  let b = navProject(x, y, NAV.prog - 60, NAV.prog + ahead, mv);
+  const dt = NAV.okT ? (now - NAV.okT) / 1000 : 60, ahead = Math.min(NAV.reacq ? 2500 : 400, 40 + 6.5 * dt); // 6,5 m/s : plus vite qu'un coureur (retour du 30/10 : saut entre deux rues proches)
+  let b = navProject(x, y, NAV.prog - 60, NAV.prog + ahead, mv, false, 0.15);
   if (b && b.dd > tol && NAV.off >= 2 && mv) { const w = navProject(x, y, NAV.prog - 200, NAV.prog + 3000, mv, true); if (w && w.dd < b.dd && (w.d - NAV.prog <= ahead || NAV.off >= 3)) b = w; } // on a pu couper ou sauter un bout
   NAV.reacq = false;
   if (!b) return;
+  // trottoir d'en face ou autre chaussée du même boulevard : parallèle au tracé, dans le même sens, à moins de 65 m (retour du 30/10)
+  if (b.dd > tol && b.dd <= 65 && mv) { const p0 = n.at(b.d - 8), p1 = n.at(b.d + 8), l = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) || 1; if (((p1[0] - p0[0]) * mv[0] + (p1[1] - p0[1]) * mv[1]) / l > 0.95) b = Object.assign({}, b, { dd: Math.min(b.dd, 10), side: true }); }
   if (b.dd > tol) {
     NAV.off++; NAV.proj = b;
     if (NAV.offOn && prevPos) { const st = Math.hypot(x - prevPos[0], y - prevPos[1]); if (st < 150) { NAV.offRun += st; NAV.offTrack.push([x, y]); } }

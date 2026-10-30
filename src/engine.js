@@ -318,7 +318,9 @@ const Engine = (() => {
     const near = fwd.some(b => !b.out && Math.abs(b.a - ex.a) < (Math.abs(ex.a) < 20 ? 30 : 50) && (Math.abs(ex.a) < 20 || Math.sign(b.a) === Math.sign(ex.a)));
     const complex = fwd.length >= 5 || near;
     const side = fwd.filter(b => Math.abs(b.a) >= 20 && Math.sign(b.a) === Math.sign(ex.a)).sort((p, q) => Math.abs(p.a) - Math.abs(q.a));
-    return { i, k, j, cx, cy, br: out, ex, a: ex.a, lat, complex, ord: Math.abs(ex.a) >= 20 ? side.indexOf(ex) + 1 : 0, nSide: side.length, nodes: C };
+    // tout droit : sortie à moins de 20°, ou à moins de 40° sans aucune rue plus droite devant (deux boulevards qui se croisent un peu de biais, retour du 30/10)
+    const straight = Math.abs(ex.a) < 20 || Math.abs(ex.a) < 40 && !fwd.some(b => !b.out && Math.abs(b.a) < Math.abs(ex.a));
+    return { i, k, j, cx, cy, br: out, ex, a: ex.a, lat, complex, straight, ord: straight ? 0 : side.indexOf(ex) + 1, nSide: side.length, nodes: C };
   }
   // virages, carrefours compliqués et zigzags d'un parcours (pour le choix entre parcours)
   function turnStats(edges) {
