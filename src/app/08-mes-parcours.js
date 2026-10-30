@@ -224,6 +224,8 @@ function badgeSync(quiet) {
 const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
 function badgeHTML(b, size, got, note) {
   const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.fam === 'myst' && !got ? 'Trophée mystère' : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
+  // trophée mystère (piste C « Secret », 30/10) : contour en pointillés tant qu'il est caché, double bord or une fois découvert
+  const ring = b.fam !== 'myst' ? '' : got ? '<svg class="bdg-ol" viewBox="0 0 100 112" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,9 85,31 85,81 50,103 15,81 15,31" fill="none" stroke="var(--badge-or)" stroke-width="3.5"/></svg>' : '<svg class="bdg-ol" viewBox="0 0 100 112" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,2 92,29 92,83 50,110 8,83 8,29" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-dasharray="6 5"/></svg>';
   if (b.fam === 'myst' && !got) inner = `<span class="v" style="font-size:${Math.round(size * 0.42)}px">?</span>`;
   else if (b.tier === 'ville') {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
@@ -231,7 +233,7 @@ function badgeHTML(b, size, got, note) {
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
   else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${Math.max(11, bFit(b.unit, size * 0.15, size * 0.62, 0.5))}px">${b.unit}</span>`;
   const label = b.fam === 'myst' && !got ? 'Trophée mystère, à découvrir' : `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
-  return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
+  return `<div class="bdg t-${b.tier}${b.fam === 'myst' ? ' myst' : ''}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${ring}${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
 // après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long est retiré de l'écusson (il est déjà dessous)
 function bFitDom(root) {
