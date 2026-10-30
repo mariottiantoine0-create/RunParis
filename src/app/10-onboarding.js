@@ -18,7 +18,7 @@ function onbShow(n) {
   document.querySelectorAll('#onb .onb-back').forEach(b => b.hidden = n === 1 || (n === 2 && ONB_OLD));
   $('#onb').scrollTop = 0; track('onb-' + n, 'Onboarding · écran ' + n);
   if (n === 4) { const m = document.querySelector('#onb [data-step="4"] .onb-map'); if (!m.innerHTML) m.innerHTML = document.querySelector('#onb [data-step="1"] .onb-map').innerHTML; }
-  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY)].map(b => badgeHTML(b, 72, true)).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
+  if (n === 5 && !$('#onb-bdg').innerHTML) { const B = id => BADGES.find(b => b.id === id); $('#onb-bdg').innerHTML = [B('n1'), B('long5'), B('ville-' + CITY), B('km50'), B('sem4'), B('zone20')].map(b => badgeHTML(b, 64, true)).join(''); bFitDom($('#onb-bdg')); document.querySelectorAll('#onb-bdg-pts [data-ico]').forEach(li => li.insertAdjacentHTML('afterbegin', bIco(li.dataset.ico, 20))); } // mêmes icônes que dans les écussons
   if (n === 2) onbCityList(); if (n >= 3) onbProgress();
 }
 // écran 2 : la liste des villes, avec leur poids

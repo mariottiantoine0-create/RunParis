@@ -136,6 +136,11 @@ const B_ICO = {
   piste: '<path d="M8 6.5h8a5.5 5.5 0 0 1 0 11H8a5.5 5.5 0 0 1 0-11zM8.5 9.5h7a2.5 2.5 0 0 1 0 5h-7a2.5 2.5 0 0 1 0-5z"/>',
   dplus: '<path d="M2.5 19.5 9 8.5l4 6 2.5-3.5 6 8.5z"/>',
   longue: '<path d="M5 21V4h12l-2.5 4L17 12H5"/>',
+  leve: '<path d="M2 18h20M6 18a6 6 0 0 1 12 0M12 4v4M4.2 9.2l2.1 2.1M19.8 9.2l-2.1 2.1"/>',
+  nuit: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+  weekend: '<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4M7 14h4v4H7zM13 14h4v4h-4z"/>',
+  annee: '<path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2z"/>',
+  globe: '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9M12 3c-2.5 2.5-3.8 5.5-3.8 9s1.3 6.5 3.8 9"/>',
 };
 const bIco = (k, s) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${B_ICO[k]}</svg>`;
 // fam, icône, valeur et unité écrites dans l'écusson (null : icône seule ou nom de ville), palier, nom, compteur, objectif
@@ -151,6 +156,10 @@ const BADGES = (() => {
   add('mythique', 'defi', 'mythique', null, null, 'special', 'Parcours mythique', 'myth', 1);
   add('piste', 'defi', 'piste', null, null, 'special', 'Séance sur piste', 'piste', 1);
   add('dplus1000', 'defi', 'dplus', '1 000', 'm D+', 'special', '1 000 m de D+', 'up', 1000);
+  // trophées mystères (choix d'Antoine le 30/10) : « ? » sans indication tant qu'ils ne sont pas débloqués
+  [['leve', 'leve', 'Lève-tôt', 'early', 1, 'Une sortie commencée avant 6 h 30.'], ['nuit', 'nuit', 'Oiseau de nuit', 'night', 1, 'Une sortie commencée après 22 h.'],
+   ['weekend', 'weekend', 'Week-end complet', 'we', 1, 'Une sortie le samedi et une le dimanche du même week-end.'], ['annee', 'annee', 'Bonne année', 'ny', 1, 'Une sortie un 1er janvier.'],
+   ['globe', 'globe', 'Globe-trotter', 'ncity', 3, 'Des sorties dans 3 villes différentes.']].forEach(([id, ico, name, key, goal, desc]) => { add('myst-' + id, 'myst', ico, null, null, 'special', name, key, goal); L[L.length - 1].desc = desc; });
   return L;
 })();
 function bLoad() { try { const s = JSON.parse(localStorage.getItem(BADGE_K) || 'null'); if (s && s.v === 1) return s; } catch (e) {} return { v: 1, got: {}, seen: {}, geo: {}, km: 0, n: 0, up: 0, weeks: [], zones: [], cities: [], myth: 0, piste: 0 }; }
@@ -178,7 +187,18 @@ function bGeo(e) {
   }
   return { z, p };
 }
-function bStats(s) { return { km: s.km, best: s.best || 0, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities }; }
+function bStats(s) { return { km: s.km, best: s.best || 0, n: s.n, up: s.up, streak: bStreak(s.weeks), zones: s.zones.length, myth: s.myth, piste: s.piste, cities: s.cities, ncity: s.cities.length, early: s.early || 0, night: s.night || 0, we: s.we || 0, ny: s.ny || 0 }; }
+// trophées mystères : heure de départ (fin enregistrée moins la durée), jour, week-end ; recalculés sur toutes les sorties courues
+function bMyst(s, L) {
+  const days = new Set();
+  for (const e of L) {
+    const t = new Date(new Date(e.d).getTime() - (e.secs || 0) * 1000), m = t.getHours() * 60 + t.getMinutes();
+    if (m >= 240 && m < 390) s.early = 1; if (m >= 1320 || m < 240) s.night = 1;
+    if (t.getMonth() === 0 && t.getDate() === 1) s.ny = 1;
+    days.add(t.getFullYear() + '-' + t.getMonth() + '-' + t.getDate());
+  }
+  for (const e of L) { const t = new Date(new Date(e.d).getTime() - (e.secs || 0) * 1000); if (t.getDay() !== 6) continue; const u = new Date(t); u.setDate(u.getDate() + 1); if (days.has(u.getFullYear() + '-' + u.getMonth() + '-' + u.getDate())) s.we = 1; }
+}
 const bVal = (b, st) => b.key.startsWith('city:') ? (st.cities.includes(b.key.slice(5)) ? 1 : 0) : st[b.key] || 0;
 const bReal = e => !!e.meas && (e.km || 0) >= 0.5 && (!e.secs || e.secs / e.km >= 150);
 // met les compteurs à jour avec les sorties pas encore comptées ; renvoie les badges qui viennent d'être obtenus
@@ -191,7 +211,7 @@ function badgeSync(quiet) {
     if (!s.seen[id]) { s.seen[id] = 1; s.km += e.km || 0; s.n++; s.up += e.up || 0; const w = bWeek(e.d); if (!s.weeks.includes(w)) s.weeks.push(w); if (!s.cities.includes(c)) s.cities.push(c); if (e.race) s.myth = 1; if (e.pk) s.piste = 1; }
     if (!s.geo[id] && geo && c === CITY && e.g) { s.geo[id] = 1; const g = bGeo(e); for (const z of g.z) if (!s.zones.includes(z)) s.zones.push(z); if (g.p) s.piste = 1; }
   }
-  s.best = Math.max(s.best || 0, ...L.map(e => e.km || 0)); // plus longue sortie, sorties déjà faites comprises
+  s.best = Math.max(s.best || 0, ...L.map(e => e.km || 0)); bMyst(s, L); // plus longue sortie, sorties déjà faites comprises
   const st = bStats(s), fresh = [];
   for (const b of BADGES) if (!s.got[b.id] && bVal(b, st) >= b.goal) { s.got[b.id] = new Date().toISOString(); fresh.push(b); }
   const first = !s.init; s.init = 1; bSave(s); // première fois : les sorties déjà faites comptent, sans annonce
@@ -202,13 +222,14 @@ function badgeSync(quiet) {
 // taille de police qui fait tenir un texte dans la largeur utile de l'écusson
 const bFit = (txt, base, w, k = 0.54) => Math.floor(Math.min(base, w / (Math.max(1, txt.length) * k)));
 function badgeHTML(b, size, got, note) {
-  const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
-  if (b.tier === 'ville') {
+  const sh = Math.round(size * 1.12); let inner = '', name = b.fam === 'ville' ? '1re sortie à ' + b.name : b.fam === 'myst' && !got ? 'Trophée mystère' : b.name, sub = note || ''; // sous l'écusson : le nom en clair, plus le palier (retour d'Antoine le 29/10)
+  if (b.fam === 'myst' && !got) inner = `<span class="v" style="font-size:${Math.round(size * 0.42)}px">?</span>`;
+  else if (b.tier === 'ville') {
     const fs = bFit(b.name, size * 0.22, size * 0.68, 0.45);
     inner = bIco('ville', Math.round(size * 0.22)) + (fs >= 11 ? `<span class="v nm" style="font-size:${fs}px">${b.name}</span>` : '');
   } else if (b.val == null) inner = bIco(b.ico, Math.round(size * 0.44));
   else inner = bIco(b.ico, Math.round(size * 0.2)) + `<span class="v" style="font-size:${bFit(b.val, size * 0.34, size * 0.62)}px">${b.val}</span><span class="u" style="font-size:${bFit(b.unit, size * 0.15, size * 0.62, 0.5)}px">${b.unit}</span>`;
-  const label = `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
+  const label = b.fam === 'myst' && !got ? 'Trophée mystère, à découvrir' : `${b.fam === 'defi' ? 'Défi' : 'Trophée'} ${name}${got ? '' : ', à débloquer'}`;
   return `<div class="bdg t-${b.tier}${got ? '' : ' off'}" role="img" aria-label="${label}"><span class="bdg-s" style="width:${size}px;height:${sh}px">${inner}</span><span class="bdg-c" aria-hidden="true"><b>${name}</b>${sub ? `<span>${sub}</span>` : ''}</span></div>`;
 }
 // après affichage : on mesure le texte réel et on le réduit s'il dépasse ; un nom de ville trop long est retiré de l'écusson (il est déjà dessous)
@@ -220,17 +241,17 @@ function bFitDom(root) {
   });
 }
 // prochain palier non obtenu de la même famille (pas pour les villes ni les défis à une étape)
-function badgeNext(b, s, st) { const n = BADGES.find(x => x.fam === b.fam && x.goal > b.goal && !s.got[x.id] && x.goal > 1); if (!n) return ''; const left = n.goal - bVal(n, st); return `Prochain : ${n.name}, encore ${n.key === 'km' || n.key === 'best' ? fmt(Math.max(0.1, left), 1) + ' km' : n.key === 'up' ? Math.round(left) + ' m' : Math.ceil(left)}.`; }
+function badgeNext(b, s, st) { const n = b.fam === 'myst' ? null : BADGES.find(x => x.fam === b.fam && x.goal > b.goal && !s.got[x.id] && x.goal > 1); if (!n) return ''; const left = n.goal - bVal(n, st); return `Prochain : ${n.name}, encore ${n.key === 'km' || n.key === 'best' ? fmt(Math.max(0.1, left), 1) + ' km' : n.key === 'up' ? Math.round(left) + ' m' : Math.ceil(left)}.`; }
 const B_LEFT = (b, v) => { const l = b.goal - v; return b.key === 'km' || b.key === 'best' ? 'encore ' + fmt(Math.max(0.1, l), 1) + ' km' : b.key === 'up' ? 'encore ' + Math.round(l) + ' m' : 'encore ' + Math.ceil(l); };
 function renderBadges() {
   badgeSync(true);
   const s = bLoad(), st = bStats(s), got = BADGES.filter(b => s.got[b.id]), off = BADGES.filter(b => !s.got[b.id]);
   $('#bdg-n').textContent = got.length; $('#bdg-of').textContent = `trophée${got.length > 1 ? 's' : ''} sur ${BADGES.length}`;
-  const near = off.filter(b => b.goal > 1).map(b => ({ b, v: bVal(b, st) })).sort((x, y) => y.v / y.b.goal - x.v / x.b.goal).slice(0, 3);
+  const near = off.filter(b => b.goal > 1 && b.fam !== 'myst').map(b => ({ b, v: bVal(b, st) })).sort((x, y) => y.v / y.b.goal - x.v / x.b.goal).slice(0, 3);
   $('#bdg-near-w').hidden = !near.length;
   $('#bdg-near').innerHTML = near.map(({ b, v }) => `<div class="bdg-pl"><span class="bdg-pi">${bIco(b.ico, 18)}</span><span class="bdg-pt"><span class="bdg-pr"><b>${b.name}</b><span>${B_LEFT(b, v)}</span></span><span class="bdg-pb" role="progressbar" aria-label="Progression vers ${b.name}" aria-valuemin="0" aria-valuemax="${b.goal}" aria-valuenow="${Math.min(b.goal, Math.round(v))}"><i style="width:${Math.min(100, v / b.goal * 100).toFixed(0)}%"></i></span></span></div>`).join('');
   $('#bdg-got-w').hidden = !got.length; $('#bdg-got').innerHTML = got.map(b => badgeHTML(b, 72, true)).join('');
-  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') + (b.key === 'km' || b.key === 'best' ? ' km' : b.key === 'up' ? ' m' : '') : '')).join('');
+  $('#bdg-off').innerHTML = off.map(b => badgeHTML(b, 72, false, b.goal > 1 && b.fam !== 'myst' ? Math.min(Math.round(bVal(b, st)), b.goal).toLocaleString('fr-FR') + ' / ' + b.goal.toLocaleString('fr-FR') + (b.key === 'km' || b.key === 'best' ? ' km' : b.key === 'up' ? ' m' : '') : '')).join('');
   $('#bdg-off-w').hidden = !off.length; bFitDom($('#mine-badges'));
 }
 function mineView(v, silent) {
@@ -247,7 +268,7 @@ function badgeAnnounce(fresh) {
   $('#shx-badge-k').textContent = one ? 'Nouveau trophée' : `${fresh.length} nouveaux trophées`;
   $('#shx-badge-l').innerHTML = fresh.map(b => badgeHTML(b, one ? 104 : 72, true)).join('');
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
-  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
+  $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec Perfect Run.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
   $('#shx-badge-t').hidden = !one; // plusieurs trophées : leurs noms sont déjà sous les écussons
 }
 // « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite

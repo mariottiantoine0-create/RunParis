@@ -499,7 +499,8 @@ input[type=number]:focus,input[type=text]:focus,input[type=time]:focus,select:fo
 .onb-top .onb-dots{flex:1;justify-content:center}
 .onb-top .textbtn{color:var(--muted);font-weight:600;font-size:15px;min-height:44px}
 .onb-dots{display:flex;gap:6px;align-items:center}
-.onb-bdg{margin:24px 0}
+.onb-bdg{margin:24px 0;row-gap:12px}
+.onb-h1{font-size:clamp(30px,9.4vw,44px);white-space:nowrap}
 .onb-bdg-note{margin-top:16px;color:var(--muted)}
 #onb-bdg-pts svg{flex:none;margin-top:1px}
 .onb-dots span{display:block;width:8px;height:8px;border-radius:999px;background:var(--line)}
@@ -1272,7 +1273,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <div class="onb-in">
         <div class="onb-top"><button type="button" class="iconbtn onb-back" aria-label="Retour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="onb-dots" role="img" aria-label="Étape 4 sur 5"></div><button type="button" class="textbtn onb-exit">Plus tard</button></div>
         <div class="onb-progs"></div>
-        <h2 class="onb-h">Gagne des<br>trophées</h2>
+        <h2 class="onb-h onb-h1">Gagne des trophées</h2>
         <div class="bdg-grid onb-bdg" id="onb-bdg" aria-hidden="true"></div>
         <ul class="onb-pts" id="onb-bdg-pts">
           <li data-ico="sorties">Tes sorties : la première, puis 10, 25, 50.</li>
