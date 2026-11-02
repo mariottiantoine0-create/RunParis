@@ -18,13 +18,16 @@ function shOpen(secs, doneM) {
   const meas = typeof secs === 'number';
   const d = shareData(); if (!d) return toast("Génère d'abord un parcours.");
   if (meas && typeof doneM === 'number') d.km = doneM / 1000;
+  // ce qui a vraiment été couru (tours en plus, détours) : la trace GPS remplace le parcours prévu pour l'image et le lien (retour du 2/11)
+  const gp = meas && !d.solo && NAV.gpsT && NAV.gpsT.length > 5 ? simplifyPts(NAV.gpsT, 4) : null;
+  if (gp && gp.length > 1) { d.pts = gp; const a = gp[0], z = gp[gp.length - 1]; d.loop = Math.hypot(a[0] - z[0], a[1] - z[1]) < 150; }
   SH.data = d; SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; $('#done').setAttribute('aria-pressed', true);
   $('#shx-time').value = fmtClock(meas ? secs : d.km * pace());
   $('#shx-bravo .shx-time small').textContent = meas ? 'Mesuré pendant ta course, pauses déduites' : 'Estimé avec ton allure, modifie-le si besoin';
   $('#shx-name-l').hidden = !d.solo;
   $('#shx-lede').textContent = d.solo ? `${fmt(d.km, 1)} km ${d.loop ? 'en boucle autour de ' + d.dep : 'de ' + d.dep + ' à ' + d.arr}, mesurés pendant ta course. Ton tracé est gardé dans « Mes parcours » : tu pourras le refaire ou l’envoyer.` : `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
-  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined, pk: !d.solo && !d.race && S.vias.some(v => v.track) ? 1 : undefined };
+  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), tr: gp ? encPoly(gp.map(([x, y]) => E.toLL(x, y))) : undefined, secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined, pk: !d.solo && !d.race && S.vias.some(v => v.track) ? 1 : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
   mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true; if (d.solo) $('#shx-name').value = entry.t;
   badgeAnnounce(badgeSync());

@@ -123,6 +123,15 @@ function navVerb(m) {
 const navDistTxt = d => d >= 1000 ? fmt(d / 1000, 1) + ' km' : (d >= 100 ? Math.round(d / 50) * 50 : Math.max(10, Math.round(d / 10) * 10)) + ' m';
 const navSayDist = d => d >= 1000 ? fmt(d / 1000, 1) + ' kilomètre' + (d >= 2000 ? 's' : '') : (d >= 100 ? Math.round(d / 50) * 50 : Math.round(d / 10) * 10) + ' mètres';
 function navSay(t) { if (!NAV.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {} }
+// distance faite : parcours suivi, puis kilomètres en plus depuis le point où l'on a quitté le tracé (arrivée, ou presque arrivée)
+const navDone = () => { const t = NAV.base + (NAV.free ? (NAV.freeFrom != null ? NAV.freeFrom : NAV.n.L) + NAV.extra : NAV.prog); return NAV.solo ? t : Math.max(t, NAV.realD || 0); };
+// distance GPS réelle de toute la course (détours compris), comme Strava : pas de 5 m au moins, sauts et vitesses impossibles ignorés (retour du 2/11)
+function navReal(x, y, c, t) {
+  const l = NAV.lastR; if (!l) { NAV.lastR = [x, y, t]; return; }
+  const d = Math.hypot(x - l[0], y - l[1]); if (d < Math.max(5, c.accuracy * 0.5)) return;
+  const dt = Math.max(1, (t - l[2]) / 1000); if (d < 150 && d / dt < 7) NAV.realD = (NAV.realD || 0) + d;
+  NAV.lastR = [x, y, t];
+}
 function navElapsed() { if (!NAV.t0) return 0; return ((NAV.paused ? NAV.pauseAt : Date.now()) - NAV.t0 - NAV.pausedMs) / 1000; }
 async function navWake() { if (NATIVE) { if (NAV.on && NAV.wake) try { await NP.awake.keepAwake(); } catch (e) {} return; } if (!NAV.on || !NAV.wake || !('wakeLock' in navigator) || document.hidden) return; try { NAV.lock = await navigator.wakeLock.request('screen'); } catch (e) {} }
 function navMsg(kind, title, text, ms) {
@@ -186,7 +195,7 @@ const SOLO_N = { L: 0, pts: [[0, 0]], man: [], runs: [], idx: () => 0, at: () =>
 function runStart() {
   $('#runp').hidden = true; const solo = !!NAV.soloNext;
   Object.assign(NAV, { free: false, extra: 0, track: [], trail: [], okT: 0, streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
-    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null });
+    r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null, gpsT: [], moved: 0, p0: 0, freeFrom: null, arrT: null, realD: 0, lastR: null, realArr: null });
   if (solo) { // course libre (D-99) : pas de parcours, le chrono part tout de suite, la trace est enregistrée
     Object.assign(NAV, { n: SOLO_N, r: null, free: true, t0: Date.now(), wasPre: false, saved: { route: S.route, alts: S.alts } }); S.route = null; S.alts = [];
   }
@@ -219,7 +228,8 @@ function runStop() {
 }
 function runFinish(arrived) {
   if (NAV.solo) { const secs = navElapsed(), tr = NAV.track.slice(), dist = NAV.extra, up = NAV.up; runStop(); return soloFinish(tr, dist, secs, up); }
-  const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, base = NAV.base || 0, done = base + (free ? NAV.n.L + extra : NAV.prog);
+  if (NAV.arrT != null && (NAV.extra || 0) < 150) { NAV.extra = 0; if (NAV.realArr != null) NAV.realD = NAV.realArr; NAV.pausedMs += Math.max(0, navElapsed() - NAV.arrT) * 1000; } // arrêté à l'arrivée : ni temps ni mètres de flânerie
+  const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, base = NAV.base || 0, done = navDone();
   const streets = free ? [...NAV.streets.entries()].sort((a, b) => b[1] - a[1]).map(q => q[0]).slice(0, 3) : [];
   runStop(); $('#runa').hidden = true;
   if (!started) return;
@@ -230,13 +240,13 @@ function runFinish(arrived) {
 }
 // arrivée : on ne coupe pas d'office, le coureur choisit de terminer ou de continuer (D-80)
 function navArrive() {
-  NAV.paused = true; NAV.pauseAt = Date.now(); NAV.prog = NAV.n.L; navUI();
+  NAV.prog = NAV.n.L; NAV.arrT = navElapsed(); NAV.realArr = NAV.realD || 0;
+  Object.assign(NAV, { free: true, freeFrom: NAV.n.L, extra: 0, track: NAV.pos ? [NAV.pos.slice()] : [], streets: new Map(), offOn: false, errShown: false }); navUI();
   navSay('Parcours terminé. Tu peux terminer ou continuer.'); navBuzz('end');
   $('#ra-km').textContent = fmt(((NAV.base || 0) + NAV.n.L) / 1000, 1) + ' km'; $('#ra-time').textContent = fmtClock(navElapsed()); $('#runa').hidden = false;
 }
 function navContinue() {
-  $('#runa').hidden = true; NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false;
-  Object.assign(NAV, { free: true, extra: 0, track: NAV.pos ? [NAV.pos.slice()] : [], streets: new Map(), offOn: false, errShown: false });
+  $('#runa').hidden = true; NAV.arrT = null;
   navMsg(null); navSay('Course libre : tes kilomètres en plus sont comptés.'); navUI();
 }
 // ---------- course libre (D-99) : courir sans parcours, la trace devient un parcours ----------
@@ -328,19 +338,22 @@ function navFix(p) {
   if (NAV.free) { // course libre après l'arrivée : on compte les km et les rues en plus
     if (NAV.paused) return navUI();
     const last = NAV.track[NAV.track.length - 1], d = last ? Math.hypot(x - last[0], y - last[1]) : 0;
+    if (!NAV.solo) navReal(x, y, c, p.timestamp || Date.now());
     if (NAV.solo) soloFix(x, y, c, p.timestamp || Date.now(), last, d);
-    else if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
-    const tot = NAV.base + n.L + NAV.extra; if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
+    else if (!last || (d >= Math.max(4, c.accuracy * 0.5) && d < 150)) { if (last) { NAV.extra += d; NAV.gpsT && NAV.gpsT.push([x, y]); const nm = streetAt(x, y); if (nm) NAV.streets.set(nm, (NAV.streets.get(nm) || 0) + d); NAV.curFree = nm; } NAV.track.push([x, y]); }
+    const tot = navDone(); if (tot >= NAV.km * 1000) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; }
     return navUI();
   }
   // départ : le chrono démarre quand on arrive au point D (ou qu'on est déjà sur le début du tracé)
   if (!NAV.t0) {
     const b = navProject(x, y, 0, 150), toStart = Math.hypot(x - n.pts[0][0], y - n.pts[0][1]);
-    if (toStart <= 40 || (b && b.dd <= 25)) { NAV.t0 = Date.now(); NAV.okT = p.timestamp || NAV.t0; NAV.prog = b ? b.d : 0; NAV.proj = b; navSay('C’est parti.'); }
+    if (toStart <= 40 || (b && b.dd <= 25)) { NAV.t0 = Date.now(); NAV.okT = p.timestamp || NAV.t0; NAV.prog = b ? b.d : 0; NAV.p0 = NAV.prog; NAV.moved = 0; NAV.gpsT = [[x, y]]; NAV.realD = 0; NAV.lastR = [x, y, p.timestamp || Date.now()]; NAV.proj = b; navSay('C’est parti.'); }
     else { NAV.toStart = toStart; NAV.proj = null; }
     navUI(); return;
   }
   if (NAV.paused) { navUI(); return; }
+  navReal(x, y, c, p.timestamp || Date.now());
+  { const g = NAV.gpsT, l = g[g.length - 1], st = l ? Math.hypot(x - l[0], y - l[1]) : 0; if (!l || st >= 5) { g.push([x, y]); if (l && st < 150) NAV.moved += st; } }
   const tol = Math.max(35, Math.min(60, c.accuracy * 1.2));
   // sens de déplacement : depuis la dernière position à plus de 12 m (dans les 40 dernières secondes)
   const now = p.timestamp || Date.now(); NAV.trail = (NAV.trail || []).filter(q => now - q[2] < 40000); let mv = null;
@@ -357,6 +370,9 @@ function navFix(p) {
   if (b.dd > tol) {
     NAV.off++; NAV.proj = b;
     if (NAV.offOn && prevPos) { const st = Math.hypot(x - prevPos[0], y - prevPos[1]); if (st < 150) { NAV.offRun += st; NAV.offTrack.push([x, y]); } }
+    if (NAV.off >= 2 && !NAV.offOn && n.L - NAV.prog <= 300 && NAV.mode !== 'back') { // presque arrivé : on ne recalcule rien, la suite compte en plus (retour du 2/11)
+      Object.assign(NAV, { free: true, freeFrom: NAV.prog, extra: 0, track: [[x, y]], streets: new Map(), offOn: false, ask: false });
+      navSay('Presque arrivé. Tu continues librement : tes kilomètres en plus sont comptés.'); navMsg(null); return navUI(); }
     if (NAV.off >= 2 && !NAV.offOn) {
       NAV.offOn = true; NAV.offAt = Date.now(); NAV.offRun = 0; NAV.offTrack = [prevPos || [x, y], [x, y]]; navBuzz('off');
       if (NAV.mode === 'back' && NAV.prog < NAV.rejoinD) { NAV.ask = false; NAV.autoHere = true; } // on s'éloigne du chemin de retour : on attend ~150 m puis on recalcule depuis ici
@@ -367,7 +383,7 @@ function navFix(p) {
   } else {
     if (NAV.offOn) { navSay('Tu es de retour sur le parcours.'); }
     NAV.off = 0; NAV.offOn = false; NAV.ask = false; NAV.autoHere = false; NAV.proj = b; NAV.okT = now;
-    if (b.d > NAV.prog) NAV.prog = b.d;
+    if (b.d > NAV.prog) NAV.prog = Math.min(b.d, NAV.p0 + NAV.moved + 60); // jamais plus loin que ce qu'on a vraiment couru (retour du 2/11 : arrivée annoncée trop tôt)
     if (NAV.mode === 'back' && NAV.prog >= NAV.rejoinD) NAV.mode = null;
   }
   // annonces : virages et kilomètres
@@ -397,7 +413,7 @@ function navFix(p) {
 }
 function navUI() {
   if (!NAV.on) return;
-  const n = NAV.n, secs = navElapsed(), km = (NAV.base + (NAV.free ? n.L + NAV.extra : NAV.prog)) / 1000;
+  const n = NAV.n, secs = navElapsed(), km = navDone() / 1000;
   $('#rs-done').textContent = fmt(km, 1) + ' km'; $('#rs-rest').textContent = NAV.solo ? Math.round(NAV.up) + ' m' : NAV.free ? '+' + fmt(NAV.extra / 1000, 1) + ' km' : fmt(Math.max(0, n.L - NAV.prog) / 1000, 1) + ' km'; $('#rs-rest-l').textContent = NAV.solo ? 'D+' : NAV.free ? 'en plus' : 'restants';
   $('#rs-time').textContent = fmtClock(secs); $('#rs-pace').textContent = km > 0.2 ? fmtClock(secs / km) : '–';
   if (!NAV.solo) $('#run-bar').style.width = (100 * (NAV.base + NAV.prog) / (NAV.base + n.L)).toFixed(1) + '%';
@@ -428,7 +444,7 @@ function navUI() {
 }
 // ---------- écran verrouillé : Activité en direct (D-100), application iPhone seulement ----------
 function liveState() {
-  const n = NAV.n, secs = navElapsed(), solo = NAV.solo, km = (NAV.base + (NAV.free ? n.L + NAV.extra : NAV.prog)) / 1000;
+  const n = NAV.n, secs = navElapsed(), solo = NAV.solo, km = navDone() / 1000;
   const runHead = solo || NAV.free ? 'Course libre' : NAV.liveHead || 'Suivi du parcours', runTurn = solo || NAV.free ? 'chrono' : NAV.liveTurn || 'straight';
   const done = !$('#runa').hidden; // arrivée : le coureur choisit de terminer ou de continuer
   return { mode: solo ? 'solo' : 'route', head: done ? 'Parcours terminé' : NAV.paused ? 'En pause' : runHead, turn: NAV.paused ? 'pause' : runTurn, runHead, runTurn,
@@ -540,7 +556,7 @@ async function navReroute(kind, auto) {
   if (kind === 'here') { const rest = []; for (let i = n.idx(from); i < n.pts.length; i++) rest.push(n.pts[i]); NAV.oldRest = rest; } else NAV.oldRest = null;
   const oldRestLen = n.L - from;
   NAV.base += NAV.prog + NAV.offRun; NAV.r = st; NAV.n = navBuild(st); NAV.r_v = (NAV.r_v || 0) + 1; NAV.lastJ = null; navWrong(false);
-  Object.assign(NAV, { prog: 0, mi: 0, a1: -1, a2: -1, off: 0, offOn: false, offRun: 0, offTrack: [], proj: null, mode: kind, rejoinD: kind === 'back' ? rejoin : 0, errShown: false });
+  Object.assign(NAV, { p0: 0, moved: 0, prog: 0, mi: 0, a1: -1, a2: -1, off: 0, offOn: false, offRun: 0, offTrack: [], proj: null, mode: kind, rejoinD: kind === 'back' ? rejoin : 0, errShown: false });
   $('#run-msg').dataset.kind = ''; navMsg(null);
   if (kind === 'here') { const dl = st.len - oldRestLen, dTxt = Math.abs(dl) < 100 ? '' : `, soit ${fmt(Math.abs(dl) / 1000, 1)} km de ${dl > 0 ? 'plus' : 'moins'}`;
     navMsg('info', 'Parcours recalculé', `Depuis ta position : ${fmt(st.len / 1000, 1)} km restants${dTxt}.`, 7000); navSay(`Parcours recalculé depuis ta position. ${navSayDist(st.len)} restants.`); }
@@ -596,7 +612,7 @@ $('#run-pos').onclick = () => { // libre → suivi ; suivi → bascule nord en h
   navPosBtn(); if (NAV.pos) navCenter(); mapRotFollow(); };
 $('#run-north').onclick = () => { if (NAV.headUp) { NAV.headUp = false; try { localStorage.setItem('runparis-headup', '0'); } catch (e) {} } mapRotTo(0, true); navPosBtn(); };
 $('#run-pause').onclick = () => { if (!NAV.t0) return runFinish(false); NAV.paused = true; NAV.pauseAt = Date.now(); $('#rz-done').textContent = fmt((NAV.solo ? NAV.extra : NAV.base + NAV.prog) / 1000, 1) + ' km'; $('#rz-of').textContent = NAV.solo ? 'faits' : 'faits sur ' + fmt((NAV.base + NAV.n.L) / 1000, 1); $('#rz-time').textContent = fmtClock(navElapsed()); $('#runz').hidden = false; liveSync(true); };
-const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; NAV.segBreak = true; } $('#runz').hidden = true; navUI(); };
+const runResume = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.reacq = true; NAV.segBreak = true; NAV.lastR = null; } $('#runz').hidden = true; navUI(); };
 $('#runz-go').onclick = runResume; $('#runz-x').onclick = runResume; $('#runz-back').onclick = runResume;
 $('#runa-end').onclick = () => runFinish(true); $('#runa-go').onclick = navContinue;
 $('#runz-end').onclick = () => { if (NAV.paused) { NAV.pausedMs += Date.now() - NAV.pauseAt; NAV.paused = false; NAV.pauseAt = 0; } runFinish(false); };

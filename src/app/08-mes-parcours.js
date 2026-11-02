@@ -19,9 +19,16 @@ function decPoly(s) { const out = []; let i = 0, la = 0, lo = 0; const dec = () 
 function routeCode(r) { const P = routePts(r); if (!P || P.length < 2) return ''; return encPoly(simplifyPts(P, 4).map(([x, y]) => E.toLL(x, y))); }
 function routeFromCode(code) { const ll = decPoly(code || ''); if (ll.length < 2) return null; const st = geomRoute(ll.map(([la, lo]) => E.toXY(la, lo))); st.kind = 'shared'; return st; }
 const mineTitle = d => d.race ? d.dep : d.loop ? 'Boucle · ' + d.dep : d.dep + ' → ' + (d.arr || 'arrivée');
-function sendLink(code, title, km) {
+// lien court perfectrun.fr/r/xxxxxxx (Worker + KV) ; sans réseau ou sans liens courts, le lien long marche toujours
+async function shortLink(code, title, km) {
+  const base = NATIVE ? new URL(WEB_APP).origin : location.origin;
+  try { const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch(base + '/api/lien', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p: code, n: title || '', v: CITY, km }), signal: ctl.signal }); clearTimeout(t);
+    const d = r.ok ? await r.json() : null; return d && d.id ? base + '/r/' + d.id : null; } catch (e) { return null; }
+}
+async function sendLink(code, title, km) {
   if (!code) return toast('Ce parcours ne peut pas être envoyé.');
-  const url = (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '') + (CITY !== 'paris' ? '&ville=' + CITY : '');
+  const url = (await shortLink(code, title, km)) || (NATIVE ? WEB_APP : location.origin + location.pathname) + '?p=' + code + '&n=' + encodeURIComponent(title || '') + (CITY !== 'paris' ? '&ville=' + CITY : '');
   track('envoi', 'Parcours envoyé');
   if (NATIVE) { NP.share.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
   if (navigator.share && MOB.matches) { navigator.share({ title: 'Un parcours PerfectRun', text: `${title} · ${fmt(km, 1)} km`, url }).catch(() => {}); return; }
@@ -64,7 +71,7 @@ function renderMine() {
   L.forEach((e, i) => {
     const m = mineDate(e.d, { month: 'long', year: 'numeric' }); if (m !== month) { month = m; const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = m; items.appendChild(hh); }
     const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
-    b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
+    b.innerHTML = mineThumb(e.tr || e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
     b.querySelector('.k').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'short' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré' : ' · estimé') : '');
     b.querySelector('.t').textContent = e.t || mineTitle(e);
     b.querySelector('.s').textContent = [e.secs ? fmtClock(e.secs) : '', e.secs && e.km ? fmtClock(e.secs / e.km) + ' /km' : '', e.up != null ? e.up + ' m D+' : ''].filter(Boolean).join(' · ');
@@ -85,10 +92,10 @@ function mineOpen(i) {
   $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
   $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
   const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
-  const has = !!(e.g && decPoly(e.g).length > 1);
+  const has = !!(e.g && decPoly(e.g).length > 1), run = e.tr || e.g; // tr : ce qui a vraiment été couru
   $('#md-old').hidden = has; $('#md-old').textContent = e.solo ? 'Course faite hors de la carte : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.' : 'Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.'; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
   // la carte montre la sortie
-  if (has) { const st = routeFromCode(e.g); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
+  if (has) { const st = routeFromCode(run); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
   draw();
 }
 function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur); }
@@ -96,8 +103,8 @@ $('#tab-mine').onclick = () => setTab('mine');
 $('#mine-new').onclick = () => setTab('gen');
 $('#mine-back').onclick = () => { renderMine(); S.route = null; S.alts = []; draw(); };
 $('#md-redo').onclick = () => { const e = mineCurrent(); if (!e) return; if ((e.city || 'paris') !== CITY) { setCity(e.city || 'paris', { p: e.g, n: e.t || mineTitle(e), refaire: 1 }); return; } if (openFixed(e.g, e.t || mineTitle(e), false)) track('refaire', 'Parcours refait'); };
-$('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.g, e.t || mineTitle(e), e.km); };
-$('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.g); if (!st) return;
+$('#md-send').onclick = () => { const e = mineCurrent(); if (e) sendLink(e.tr || e.g, e.t || mineTitle(e), e.km); };
+$('#md-img').onclick = () => { const e = mineCurrent(); if (!e || !e.g) return; const st = routeFromCode(e.tr || e.g); if (!st) return;
   const P = st.geom; SH.data = { pts: P, km: e.km, up: e.up || Math.round(st.up), loop: !!e.loop, dep: e.dep || '', arr: e.arr || '', race: !!e.race, date: new Date(e.d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) };
   SH.photo = null; SH.bg = 'map'; SH.ly = 'big'; SH.extra = null; $('#shx-time').value = fmtClock(e.secs || e.km * pace()); $('#shx').hidden = false; shOut(); };
 $('#md-del').onclick = () => mineDel(S.mineCur);
@@ -194,7 +201,7 @@ function bStreak(weeks) {
 }
 // arrondissements ou quartiers traversés (au moins 150 m dans chacun) et tours de piste d'athlé : seulement pour la ville chargée
 function bGeo(e) {
-  const ll = decPoly(e.g || ''); if (ll.length < 2) return { z: [], p: 0 };
+  const ll = decPoly(e.tr || e.g || ''); if (ll.length < 2) return { z: [], p: 0 };
   const xy = ll.map(([la, lo]) => E.toXY(la, lo)), st = geomRoute(xy), per = new Map();
   for (const [qi, len] of st.quart) { const q = M.quartiers[qi - 1]; if (q && q.ar < 100) per.set(q.ar, (per.get(q.ar) || 0) + len); }
   const z = [...per].filter(([, len]) => len >= 150).map(([ar]) => CITY + ':' + ar);

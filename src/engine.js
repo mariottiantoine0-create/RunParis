@@ -209,21 +209,34 @@ const Engine = (() => {
     return edges.reverse();
   }
 
+  // chaussées ou trottoirs parallèles d'une même rue (à moins de 35 m) : remonter un boulevard puis le redescendre de l'autre côté compte comme un aller-retour (retour du 2/11, boulevard de Picpus)
+  function twins() {
+    if (G.tw) return G.tw;
+    const by = new Map(); for (let e = 0; e < G.nE; e++) if (G.en[e] && G.LEN[e] >= 8) { const l = by.get(G.en[e]); if (l) l.push(e); else by.set(G.en[e], [e]); }
+    const list = Array.from({ length: G.nE }, () => null);
+    for (const es of by.values()) { if (es.length < 2) continue;
+      const m = es.map(e => { const ax = G.NX[G.ea[e]], ay = G.NY[G.ea[e]], bx = G.NX[G.eb[e]], by2 = G.NY[G.eb[e]], l = Math.hypot(bx - ax, by2 - ay) || 1; return [(ax + bx) / 2, (ay + by2) / 2, (bx - ax) / l, (by2 - ay) / l]; });
+      for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) { const a = m[i], b = m[j];
+        if (Math.abs(a[0] - b[0]) > 35 || Math.abs(a[1] - b[1]) > 35 || Math.hypot(a[0] - b[0], a[1] - b[1]) > 35 || Math.abs(a[2] * b[2] + a[3] * b[3]) < 0.85) continue;
+        const ei = es[i], ej = es[j]; if (G.ea[ei] === G.ea[ej] || G.ea[ei] === G.eb[ej] || G.eb[ei] === G.ea[ej] || G.eb[ei] === G.eb[ej]) continue; // bouts qui se suivent : pas parallèles
+        (list[ei] = list[ei] || []).push(ej); (list[ej] = list[ej] || []).push(ei); } }
+    return (G.tw = list);
+  }
   function routeThrough(nodes) {
-    G.used.fill(0);
+    G.used.fill(0); const tw = twins();
     const all = [];
     for (let i = 1; i < nodes.length; i++) {
       if (nodes[i] === nodes[i - 1]) continue;
       const leg = astar(nodes[i - 1], nodes[i]);
       if (!leg) return null;
-      for (const [e] of leg) G.used[e] = 1;
+      for (const [e] of leg) { G.used[e] = 1; if (tw[e]) for (const t of tw[e]) G.used[t] = 1; }
       all.push(...leg);
     }
     return all.length ? all : null;
   }
 
   function stats(edges, startNode) {
-    let len = 0, up = 0, dn = 0, extraSig = 0;
+    let len = 0, up = 0, dn = 0, extraSig = 0, twinLen = 0;
     const clusters = new Set(), quart = new Map(), names = new Map(), seen = new Map();
     let v = startNode; const prof = [[0, G.NZ[v]]]; const nodes = [v];
     if (G.nc[v]) clusters.add(G.nc[v]);
@@ -235,10 +248,11 @@ const Engine = (() => {
       if (G.nc[v]) clusters.add(G.nc[v]);
       quart.set(G.nq[v], (quart.get(G.nq[v]) || 0) + L);
       if (G.en[e]) names.set(G.en[e] - 1, (names.get(G.en[e] - 1) || 0) + L);
+      if (!seen.has(e) && G.tw && G.tw[e] && G.tw[e].some(t => seen.has(t))) twinLen += L; // même rue, de l'autre côté
       seen.set(e, (seen.get(e) || 0) + 1);
       prof.push([len, G.NZ[v]]);
     }
-    let overlap = 0; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
+    let overlap = twinLen; for (const [e, n] of seen) if (n > 1) overlap += G.LEN[e] * (n - 1);
     up = smoothClimb(prof); dn = smoothClimb(prof.map(([d, z]) => [d, -z]));
     let cemLen = 0, gl = 0, dl = 0; for (const [e] of edges) { if (G.CEM[e]) cemLen += G.LEN[e]; if (G.GR) gl += G.GR[e] * G.LEN[e]; if (G.DK && G.DK[e]) dl += G.LEN[e]; }
     return { green: len ? gl / len : 0, lit: G.DK && len ? 1 - dl / len : null, cemLen, len, up, dn, feux: clusters.size + extraSig, clusterIds: [...clusters], quart, names, prof, nodes, overlap: len ? overlap / len : 0, edges };
