@@ -9,7 +9,12 @@
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "preview_urls": true,
-  "previews": {},
+  // aperçus des branches (Prochaine, staging) : ils n’héritent pas des liaisons de la production ; même espace KV pour que les liens courts y marchent aussi
+  "previews": {
+    "kv_namespaces": [
+      { "binding": "LIENS", "id": "726cdb801b6c4f2a9fd29b4ebd71dab3" }
+    ]
+  },
   "keep_vars": true,
   "assets": {
     "directory": "./site",
