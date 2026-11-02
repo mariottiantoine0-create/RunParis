@@ -15,6 +15,10 @@
   Cache-Control: public, max-age=31536000, immutable
 /*.txt
   Cache-Control: public, max-age=31536000, immutable
+# robots.txt n'est pas une donnée de ville : relu par les moteurs, il ne doit pas rester un an en cache (bilan SEO du 2/11)
+/robots.txt
+  ! Cache-Control
+  Cache-Control: public, max-age=3600
 /graph.bin
   Cache-Control: public, max-age=31536000, immutable
   Content-Type: application/octet-stream

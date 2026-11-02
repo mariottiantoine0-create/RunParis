@@ -104,4 +104,5 @@ a = a.replace("// les bornes km apparaissent", "if (matchMedia('(max-width: 760p
 assert '{{' not in a
 (root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
 import sys; sys.path.insert(0, str(root / 'src')); from pages import build_pages; build_pages(a, root)  # confidentialité et aide (D-112)
+from seo import seo_pass; seo_pass(root, STATS)  # titres, descriptions, canonique, bannière App Store, sitemap (bilan SEO du 2/11)
 print('site/app.html', len(app), '· site/index.html', len(t))
