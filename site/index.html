@@ -174,6 +174,12 @@ footer p{margin:0;max-width:62em}
 .fld.pos::before{content:"";position:absolute;left:12px;top:50%;width:20px;height:20px;margin-top:-10px;background:var(--accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='square'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}
 .ask .btn{width:100%;height:56px;font-size:17px}
 .ask-hint{margin:-6px 0 0;font-size:14px;color:var(--muted)}
+nav .btn.dl{gap:0}
+.app-line{margin:14px 0 0;font-size:15px;font-weight:600;color:var(--muted);max-width:640px}
+.app-line a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.app-line a:hover{text-decoration:underline}
+.app-line svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:square}
+@media (max-width:760px){.dl-x{display:none}nav .btn.dl{height:40px;padding:0 14px}.app-line{font-size:14px}}
 .sec-top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
 .sec-top .sec-h{margin:0}
 .more{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--accent);text-decoration:none;font-size:16px}
@@ -256,6 +262,7 @@ footer p{margin:0;max-width:62em}
     <nav aria-label="Navigation">
       <a href="#mythiques">Parcours mythiques</a>
       <a href="a-propos.html">Comment ça marche</a>
+      <a class="btn primary dl" href="https://apps.apple.com/fr/app/id6820428780" rel="noopener">Télécharger<span class="dl-x">&nbsp;l’app</span></a>
       <div class="th"><button type="button" class="th-btn" id="th-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button><div class="th-pop" id="th-pop" hidden><div class="th-links" role="navigation" aria-label="Pages"><a href="a-propos.html">Comment ça marche</a><a href="app.html#courses">Parcours mythiques</a></div><span>À propos</span><div class="th-links" role="navigation" aria-label="À propos"><a href="aide.html">Aide et contact</a><a href="confidentialite.html">Confidentialité</a><a href="app.html?about=ml">Mentions légales</a><a href="app.html?about=src">Sources et licences</a></div><span>Apparence</span><div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div></div></div>
     </nav>
   </div>
@@ -300,6 +307,7 @@ footer p{margin:0;max-width:62em}
         <button class="btn primary" type="submit">Générer mes parcours</button>
         <p class="ask-hint" id="ask-hint" hidden></p>
       </form>
+      <p class="app-line">Sur iPhone, l’app te guide pendant la course. <a href="https://apps.apple.com/fr/app/id6820428780" rel="noopener">Télécharger l’app <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></p>
     </div>
   </section>
 
