@@ -21,6 +21,10 @@
     { "name": "SIGNAL_LIMIT", "namespace_id": "1001", "simple": { "limit": 3, "period": 60 } },
     { "name": "LIEN_LIMIT", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
   ],
+  // liens courts perfectrun.fr/r/… (retour du 2/11) : parcours partagés, gardés dans Workers KV « perfectrun-liens »
+  "kv_namespaces": [
+    { "binding": "LIENS", "id": "726cdb801b6c4f2a9fd29b4ebd71dab3" }
+  ],
   "send_email": [
     { "name": "MAIL" }
   ]
