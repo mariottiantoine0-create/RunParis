@@ -299,6 +299,15 @@ function badgeAnnounce(fresh) {
   bFitDom(box); const nx = one ? badgeNext(fresh[0], s, st) : '';
   $('#shx-badge-t').textContent = one ? (fresh[0].fam === 'myst' ? `Trophée mystère découvert : ${fresh[0].desc.charAt(0).toLowerCase() + fresh[0].desc.slice(1)}` : fresh[0].fam === 'ville' ? `Ta première sortie à ${fresh[0].name}.` : fresh[0].key === 'km' ? `${fresh[0].goal} km courus avec PerfectRun.` : fresh[0].name + '.') + (nx ? ' ' + nx : '') : '';
   $('#shx-badge-t').hidden = !one; // plusieurs trophées : leurs noms sont déjà sous les écussons
+  askReview(st);
+}
+// Demande de note App Store : après un trophée, à partir de la 2e sortie courue, au plus une fois tous les 60 jours (iOS limite aussi à 3 par an)
+function askReview(st) {
+  if (!NATIVE || !NP || (st.n || 0) < 2) return;
+  let last = 0; try { last = +localStorage.getItem('pr-review') || 0; } catch (e) {}
+  if (Date.now() - last < 60 * 864e5) return;
+  try { localStorage.setItem('pr-review', String(Date.now())); } catch (e) {}
+  setTimeout(() => { NP.live.review().catch(() => {}); track('note-demande', 'Demande de note App Store'); }, 2500);
 }
 // « Voir mes trophées » met « Bravo ! » de côté : « Revenir à ma sortie » le rouvre, pour ajouter la photo ensuite
 $('#shx-badge-go').onclick = () => { S.mineView = 'badges'; S.badgeBack = true; $('#shx').hidden = true; sbSync(); setTab('mine'); };

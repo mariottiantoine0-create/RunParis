@@ -3,6 +3,7 @@
 import Foundation
 import Capacitor
 import ActivityKit
+import StoreKit
 
 @objc(LiveRunPlugin)
 public class LiveRunPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -13,11 +14,23 @@ public class LiveRunPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "update", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "end", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "watch", returnType: CAPPluginReturnCallback),
+        CAPPluginMethod(name: "review", returnType: CAPPluginReturnPromise),
     ]
     private var activity: Any?
     private var watchId: String?
     private var last: [String: Any] = [:]
     private var lastStart = Date()      // départ du chrono (pauses déduites) au dernier état
+
+    // PerfectRun (1.0.3) : demande de note App Store après une sortie qui débloque un trophée.
+    // iOS décide seul d'afficher ou non la fenêtre (3 fois par an maximum).
+    @objc func review(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                if #available(iOS 16.0, *) { AppStore.requestReview(in: scene) } else { SKStoreReviewController.requestReview(in: scene) }
+            }
+            call.resolve()
+        }
+    }
 
     override public func load() {
         NotificationCenter.default.addObserver(forName: Notification.Name("LiveRunAction"), object: nil, queue: .main) { [weak self] n in
