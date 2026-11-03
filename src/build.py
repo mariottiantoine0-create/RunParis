@@ -88,6 +88,17 @@ import base64
 STATS, ALL_RACES = city_stats()
 print('chiffres', STATS)
 
+# en-tête et menu communs à toutes les pages publiques (refonte du 3/11) : src/entete.html
+import re as _re
+_E = rd('entete.html'); _PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>'
+HD_HTML = _E[_E.index('<!--HTML-->') + 11:_E.index('<!--CSS-->')].replace('{{HD_CITIES}}', ''.join(f'<a href="courir-a-{k}">{_PIN}{n}</a>' for _, n, k in CITY_NAMES))
+HD_CSS = _E[_E.index('<!--CSS-->') + 10:_E.index('<!--JS-->')]; HD_JS = _E[_E.index('<!--JS-->') + 9:]
+def with_header(page):
+    page, n = _re.subn(r'<header>.*?</header>\n', lambda m: HD_HTML, page, count=1, flags=_re.S); assert n, 'en-tête introuvable'
+    page = page.replace('</style>', HD_CSS + '</style>', 1)
+    page, n = _re.subn(r"// thème : Auto / Clair / Sombre, même réglage que l'app\n\(\(\) => \{.*?\n\}\)\(\);\n", lambda m: HD_JS, page, count=1, flags=_re.S); assert n, 'script du thème introuvable'
+    return page
+
 # 2. page d'accueil
 h = json.loads(rd('hero.json'))
 t = rd('landing.html')
@@ -96,12 +107,14 @@ rep = {'VB': '640 118 640 400', 'GREEN': h['green'], 'WATER': h['water'], 'MINOR
 for k, v in rep.items(): t = t.replace('{{%s}}' % k, v)
 t = t.replace("// les bornes km apparaissent", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// les bornes km apparaissent")
 assert '{{' not in t
+t = with_header(t)
 (root / 'site' / 'index.html').write_text(t, encoding='utf-8')
 # ancien accueil gardé comme page explicative (D-71)
 a = rd('a-propos.html')
 for k, v in rep.items(): a = a.replace('{{%s}}' % k, v)
 a = a.replace("// les bornes km apparaissent", "if (matchMedia('(max-width: 760px)').matches) document.querySelector('.map svg').setAttribute('viewBox', '941 147 371 290');\n// les bornes km apparaissent")
 assert '{{' not in a
+a = with_header(a)
 (root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
 import sys; sys.path.insert(0, str(root / 'src')); from pages import build_pages; build_pages(a, root)  # confidentialité et aide (D-112)
 from seo import seo_pass; seo_pass(root, STATS)  # titres, descriptions, canonique, bannière App Store, sitemap (bilan SEO du 2/11)

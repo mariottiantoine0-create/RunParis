@@ -169,6 +169,45 @@ footer p{margin:0;max-width:62em}
 .th-seg button{flex:1;height:36px;border:0;background:none;border-radius:4px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
 .th-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 
+/* En-tête et menu des pages publiques (refonte du 3/11) */
+.hd{position:absolute;top:0;left:0;right:0;z-index:5}
+.hd .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.hd nav{display:flex;align-items:center;gap:6px}
+.hd-link{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 12px;border:0;background:none;border-radius:4px;font:inherit;font-weight:600;font-size:15px;color:var(--muted);text-decoration:none;cursor:pointer}
+.hd-link:hover,.hd-link[aria-expanded="true"]{color:var(--ink);background:color-mix(in srgb,var(--field) 70%,transparent)}
+.hd-link svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:square;transition:transform .15s}
+.hd-link[aria-expanded="true"] svg{transform:rotate(180deg)}
+.hd nav .btn{height:44px;font-size:15px;padding:0 16px;margin-left:6px;gap:0}
+.hd-dd{position:relative}
+.hd-v{position:absolute;left:0;top:50px;z-index:20;background:var(--panel);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.14),0 0 0 1px var(--line);padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:2px;width:300px}
+.hd-v a,.hd-cities a{display:flex;align-items:center;gap:8px;height:44px;padding:0 10px;border-radius:4px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.hd-v a:hover,.hd-cities a:hover{background:var(--field)}
+.hd-v a svg,.hd-cities a svg{flex:none;width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter}
+.hd-burger,.hd-close{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;cursor:pointer;padding:0;margin-left:6px}
+.hd-close{margin:0}
+.hd-burger:hover,.hd-close:hover{border-color:var(--ink)}
+.hd-burger svg,.hd-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:square}
+.hd-link:focus-visible,.hd-burger:focus-visible,.hd-close:focus-visible,.hd-menu a:focus-visible,.hd-v a:focus-visible{outline:none;box-shadow:var(--ring)}
+.hd-scrim{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.32)}
+.hd-menu{position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(380px,100%);background:var(--panel);box-shadow:-8px 0 24px rgba(0,0,0,.16);padding:14px 20px 28px;overflow-y:auto;display:flex;flex-direction:column}
+.hd-menu[hidden],.hd-scrim[hidden],.hd-v[hidden]{display:none}
+.hd-mtop{display:flex;align-items:center;justify-content:space-between;height:44px;margin-bottom:16px}
+.hd-mtop .logo{font-size:24px}
+.hd-ctas{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.hd-ctas .btn{width:100%;height:52px}
+.hd-h{font-weight:700;font-size:13px;color:var(--muted);margin:20px 0 6px}
+.hd-cities{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:0 -10px}
+.hd-list{display:flex;flex-direction:column;margin:0 -10px}
+.hd-list a{display:flex;align-items:center;height:44px;padding:0 10px;border-radius:4px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.hd-list a:hover{background:var(--field)}
+.hd-menu .th-seg{display:flex;background:var(--field);border-radius:4px;padding:3px;gap:3px}
+.hd-menu .th-seg button{flex:1;height:36px;border:0;background:none;border-radius:4px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
+.hd-menu .th-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+body.hd-open{overflow:hidden}
+@media (max-width:900px){.hd-dd,.hd nav > a.hd-link{display:none}}
+@media (max-width:760px){.hd .wrap{height:60px}.hd nav .btn{height:40px;padding:0 14px}.hd .dl-x{display:none}.hd-burger{width:40px;height:40px}.hd-menu{width:100%;box-shadow:none}}
+@media (prefers-reduced-motion:no-preference){.hd-menu{animation:hd-in .18s ease-out}@keyframes hd-in{from{transform:translateX(24px);opacity:0}}}
+
 .page{max-width:760px;margin:0 auto;padding:112px 24px 72px}
 .page h1{font-stretch:75%;font-weight:800;font-size:clamp(38px,5vw,52px);line-height:1;margin:0 0 10px}
 .page .lead{color:var(--muted);font-size:17px;margin:0 0 28px}
@@ -245,18 +284,33 @@ footer p{margin:0;max-width:62em}
 @media (max-width:760px){.cv{padding:84px 16px 56px}.cv .ctas .btn{width:100%}.cv h2,.cv .sec-top{margin-top:48px}.myths{grid-template-columns:1fr;gap:10px}.myth svg{width:96px;height:70px}}
 </style>
 
-<header>
+
+<header class="hd">
   <div class="wrap">
     <a class="logo" href="./" aria-label="PerfectRun, accueil">PERFECT<span>RUN</span></a>
     <nav aria-label="Navigation">
-      <a href="a-propos.html#fonctions">Ce qu'il fait</a>
-      <a href="a-propos.html#comment">Comment ça marche</a>
-      <a href="app.html#courses">Parcours mythiques</a>
-      <a class="btn primary" href="./">Générer</a>
-      <div class="th"><button type="button" class="th-btn" id="th-btn" aria-label="Menu" aria-expanded="false" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button><div class="th-pop" id="th-pop" hidden><div class="th-links" role="navigation" aria-label="Pages"><a href="./">Accueil</a><a href="app.html#courses">Parcours mythiques</a></div><span>À propos</span><div class="th-links" role="navigation" aria-label="À propos"><a href="aide.html">Aide et contact</a><a href="confidentialite.html">Confidentialité</a><a href="app.html?about=ml">Mentions légales</a><a href="app.html?about=src">Sources et licences</a></div><span>Apparence</span><div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div></div></div>
+      <div class="hd-dd"><button type="button" class="hd-link" id="hd-v-btn" aria-expanded="false" aria-controls="hd-v">Villes<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="hd-v" id="hd-v" hidden><a href="courir-a-paris"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Paris</a><a href="courir-a-lyon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Lyon</a><a href="courir-a-bordeaux"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Bordeaux</a><a href="courir-a-nantes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Nantes</a><a href="courir-a-toulouse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Toulouse</a><a href="courir-a-dijon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Dijon</a><a href="courir-a-lille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Lille</a></div></div>
+      <a class="hd-link" href="app.html#courses">Parcours mythiques</a>
+      <a class="hd-link" href="a-propos.html">Comment ça marche</a>
+      <a class="btn primary dl" href="https://apps.apple.com/fr/app/id6820428780" rel="noopener">Télécharger<span class="dl-x">&nbsp;l’app</span></a>
+      <button type="button" class="hd-burger" id="hd-burger" aria-label="Menu" aria-expanded="false" aria-controls="hd-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
     </nav>
   </div>
 </header>
+<div class="hd-scrim" id="hd-scrim" hidden></div>
+<aside class="hd-menu" id="hd-menu" aria-label="Menu" hidden>
+  <div class="hd-mtop"><a class="logo" href="./">PERFECT<span>RUN</span></a><button type="button" class="hd-close" id="hd-close" aria-label="Fermer le menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div>
+  <div class="hd-ctas"><a class="btn primary" href="app.html">Créer un parcours</a><a class="btn secondary" href="https://apps.apple.com/fr/app/id6820428780" rel="noopener">Télécharger l’app iPhone</a></div>
+  <p class="hd-h">Courir à</p>
+  <div class="hd-cities"><a href="courir-a-paris"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Paris</a><a href="courir-a-lyon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Lyon</a><a href="courir-a-bordeaux"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Bordeaux</a><a href="courir-a-nantes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Nantes</a><a href="courir-a-toulouse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Toulouse</a><a href="courir-a-dijon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Dijon</a><a href="courir-a-lille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Lille</a></div>
+  <p class="hd-h">Découvrir</p>
+  <div class="hd-list"><a href="app.html#courses">Parcours mythiques</a><a href="a-propos.html">Comment ça marche</a></div>
+  <p class="hd-h">Aide</p>
+  <div class="hd-list"><a href="aide.html">Aide et contact</a><a href="confidentialite.html">Confidentialité</a><a href="app.html?about=ml">Mentions légales</a><a href="app.html?about=src">Sources et licences</a></div>
+  <p class="hd-h">Apparence</p>
+  <div class="th-seg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Clair</button><button type="button" data-t="dark">Sombre</button></div>
+</aside>
 
 <main class="cv">
 <p class="crumb"><a href="./">PerfectRun</a> › Courir à Bordeaux</p>
@@ -293,16 +347,19 @@ footer p{margin:0;max-width:62em}
 <script>
 // mesure d'audience anonyme, sans cookie (site en production seulement)
 if (/^(www\.)?perfectrun\.fr$|^runparis\.netlify\.app$/.test(location.hostname)) { const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://runparis.goatcounter.com/count'; document.head.appendChild(sc); }
-// thème : Auto / Clair / Sombre, même réglage que l'app
+
+// en-tête : menu Villes, menu latéral et thème Auto / Clair / Sombre (même réglage que l'app)
 (() => {
-  const btn = document.getElementById('th-btn'), pop = document.getElementById('th-pop'), root = document.documentElement;
+  const $ = id => document.getElementById(id), root = document.documentElement;
+  const vb = $('hd-v-btn'), vp = $('hd-v'), bb = $('hd-burger'), menu = $('hd-menu'), scrim = $('hd-scrim');
+  const setV = o => { if (!vb) return; vp.hidden = !o; vb.setAttribute('aria-expanded', o); };
+  if (vb) { vb.onclick = e => { e.stopPropagation(); setV(vp.hidden); }; document.addEventListener('click', e => { if (!vp.hidden && !vp.contains(e.target)) setV(false); }); }
+  const setM = o => { menu.hidden = scrim.hidden = !o; bb.setAttribute('aria-expanded', o); document.body.classList.toggle('hd-open', o); if (o) $('hd-close').focus(); else bb.focus(); };
+  bb.onclick = () => setM(true); $('hd-close').onclick = () => setM(false); scrim.onclick = () => setM(false);
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setM(false)));
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!menu.hidden) setM(false); else if (vb && !vp.hidden) { setV(false); vb.focus(); } });
   let cur = 'auto'; try { cur = localStorage.getItem('runparis-theme') || 'auto'; } catch (e) {}
-  const set = t => { cur = t; if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t); try { localStorage.setItem('runparis-theme', t); } catch (e) {} pop.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t)); };
-  set(cur);
-  btn.onclick = e => { e.stopPropagation(); pop.hidden = !pop.hidden; btn.setAttribute('aria-expanded', !pop.hidden); };
-  pop.querySelectorAll('button').forEach(b => b.onclick = () => { set(b.dataset.t); pop.hidden = true; btn.setAttribute('aria-expanded', false); });
-  document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; btn.setAttribute('aria-expanded', false); } });
-  pop.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { pop.hidden = true; }));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { pop.hidden = true; btn.setAttribute('aria-expanded', false); btn.focus(); } });
+  const set = t => { cur = t; if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t); try { localStorage.setItem('runparis-theme', t); } catch (e) {} menu.querySelectorAll('.th-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t)); };
+  set(cur); menu.querySelectorAll('.th-seg button').forEach(b => b.onclick = () => set(b.dataset.t));
 })();
 </script>
