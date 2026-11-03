@@ -82,7 +82,7 @@ def city_stats():
     names = [n for _, n, _ in CITY_NAMES]
     et = ' et '.join([', '.join(names[:-1]), names[-1]]) if len(names) > 1 else names[0]
     a = ', à '.join(names)
-    line = '<b>' + ' · '.join(names) + '</b> et leurs communes voisines' + (' · ' + ' et '.join([', '.join(CITY_SOON[:-1]), CITY_SOON[-1]] if len(CITY_SOON) > 1 else CITY_SOON) + ' bientôt' if CITY_SOON else '')
+    line = '<b>' + ' · '.join(f'<a href="courir-a-{k}">{n}</a>' for _, n, k in CITY_NAMES) + '</b> et leurs communes voisines'  # liens vers les pages « Courir à » (SEO) + (' · ' + ' et '.join([', '.join(CITY_SOON[:-1]), CITY_SOON[-1]] if len(CITY_SOON) > 1 else CITY_SOON) + ' bientôt' if CITY_SOON else '')
     return dict(S_KM=nb(round(km / 100) * 100), S_FEUX=nb(feux), S_FONT=nb(font), S_ARBRES=nb(round(trees / 1000) * 1000), S_RACES=str(len(races)), CITIES_ET=et, CITIES_A=a, CITIES_LINE=line, CITY_OPTIONS=''.join(f'<option value="{k}">{n}</option>' for _, n, k in CITY_NAMES)), races
 import base64
 STATS, ALL_RACES = city_stats()
@@ -105,4 +105,5 @@ assert '{{' not in a
 (root / 'site' / 'a-propos.html').write_text(a, encoding='utf-8')
 import sys; sys.path.insert(0, str(root / 'src')); from pages import build_pages; build_pages(a, root)  # confidentialité et aide (D-112)
 from seo import seo_pass; seo_pass(root, STATS)  # titres, descriptions, canonique, bannière App Store, sitemap (bilan SEO du 2/11)
+from courir import build_city_pages; print('pages villes', build_city_pages(root, CITY_NAMES))  # « Courir à <ville> » (SEO, 3/11)
 print('site/app.html', len(app), '· site/index.html', len(t))

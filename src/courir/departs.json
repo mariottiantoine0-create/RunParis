@@ -1,0 +1,30 @@
+{
+ "paris":    {"name":"Paris","a":"à Paris","voisines":"et dans les 29 communes voisines","de":"de Paris","boucles":[
+   {"label":"Jardin du Luxembourg","lat":48.8462,"lon":2.3372,"km":5,"seed":7},
+   {"label":"Buttes-Chaumont et canal de l’Ourcq","lat":48.8809,"lon":2.3828,"km":10,"seed":8},
+   {"label":"Bois de Vincennes","lat":48.8352,"lon":2.4058,"km":15,"seed":8}]},
+ "lyon":     {"name":"Lyon","a":"à Lyon","voisines":"et dans les communes voisines","de":"de Lyon","boucles":[
+   {"label":"Parc de la Tête d’Or","lat":45.7745,"lon":4.8530,"km":5},
+   {"label":"Berges du Rhône et Tête d’Or","lat":45.7578,"lon":4.8418,"km":10},
+   {"label":"Gerland et Confluence","lat":45.7290,"lon":4.8325,"km":15}]},
+ "bordeaux": {"name":"Bordeaux","a":"à Bordeaux","voisines":"et dans les communes voisines","de":"de Bordeaux","boucles":[
+   {"label":"Jardin Public et centre","lat":44.8475,"lon":-0.5775,"km":5},
+   {"label":"Jardin Public et parc Rivière","lat":44.8413,"lon":-0.5698,"km":10},
+   {"label":"Parc Bordelais et Caudéran","lat":44.8517,"lon":-0.6025,"km":15}]},
+ "nantes":   {"name":"Nantes","a":"à Nantes","voisines":"et dans les communes voisines","de":"de Nantes","boucles":[
+   {"label":"Jardin des Plantes et quais","lat":47.2195,"lon":-1.5430,"km":5},
+   {"label":"Bords de l’Erdre","lat":47.2350,"lon":-1.5520,"km":10},
+   {"label":"De l’Île de Nantes au parc de Procé","lat":47.2080,"lon":-1.5560,"km":15}]},
+ "toulouse": {"name":"Toulouse","a":"à Toulouse","voisines":"et dans les communes voisines","de":"de Toulouse","boucles":[
+   {"label":"Jardin des Plantes et canal du Midi","lat":43.5935,"lon":1.4505,"km":5},
+   {"label":"Prairie des Filtres et Daurade","lat":43.5985,"lon":1.4370,"km":10},
+   {"label":"Bords de Garonne","lat":43.6108,"lon":1.4192,"km":15}]},
+ "dijon":    {"name":"Dijon","a":"à Dijon","voisines":"et dans les communes voisines","de":"de Dijon","boucles":[
+   {"label":"Parc de la Colombière","lat":47.3075,"lon":5.0470,"km":5},
+   {"label":"Lac Kir et la Motte-Giron","lat":47.3245,"lon":5.0105,"km":10},
+   {"label":"Promenade de l’Ouche","lat":47.3216,"lon":5.0415,"km":15}]},
+ "lille":    {"name":"Lille","a":"à Lille","voisines":"et dans les communes voisines","de":"de Lille","boucles":[
+   {"label":"Citadelle et Deûle","lat":50.6400,"lon":3.0460,"km":5},
+   {"label":"Du Vieux-Lille à la Citadelle","lat":50.6370,"lon":3.0635,"km":10},
+   {"label":"Jardin des Plantes et Lille-Sud","lat":50.6150,"lon":3.0735,"km":15}]}
+}
