@@ -3,6 +3,8 @@
 import html, json, re, datetime
 APP_ID = '6820428780'
 SITE = 'https://perfectrun.fr'
+ICONS = ('<link rel="icon" href="/favicon.ico" sizes="48x48">\n<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">\n'
+         '<link rel="apple-touch-icon" href="/apple-touch-icon.png">')
 
 def _set(h, pat, new, count=1):
     out, n = re.subn(pat, lambda m: new, h, count=count)
@@ -33,6 +35,8 @@ def seo_pass(root, stats):
         h = p.read_text(encoding='utf-8')
         e = lambda s: html.escape(s, quote=True)
         h = _set(h, r'<title>[^<]*</title>', f'<title>{e(title)}</title>')
+        # icône du site depuis l'icône de l'app : Google n'affiche pas une icône en data: dans ses résultats (5/11)
+        h = re.sub(r'<link rel="icon" href="data:[^"]*">', lambda m: ICONS, h, count=1)
         h = _set(h, r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{e(desc)}">')
         tags = [f'<link rel="canonical" href="{SITE}{path}">', f'<meta name="apple-itunes-app" content="app-id={APP_ID}">']
         if 'property="og:title"' in h:
