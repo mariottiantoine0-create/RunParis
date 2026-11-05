@@ -145,6 +145,6 @@ document.querySelectorAll('#shx-out [data-bg]').forEach(b => b.onclick = () => {
 document.querySelectorAll('#shx-out [data-ly]').forEach(b => b.onclick = () => { SH.ly = b.dataset.ly; shSync(); shDraw(); });
 $('#shx-share').onclick = shShare; $('#shx-save').onclick = () => shSave();
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#shx').hidden) shClose(); });
-$('#done').hidden = false; $('#copy-m').hidden = false;
+$('#done').hidden = false; $('#copy-m').hidden = false; $('#keep').hidden = false;
 if (document.fonts && document.fonts.load) { document.fonts.load('800 100px Archivo'); }
 

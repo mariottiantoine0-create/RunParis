@@ -53,6 +53,7 @@ function setArrival(k) {
   S.mode = k === 'back' ? 'loop' : 'ab'; S.endFree = k === 'free';
   $('#end-fixed').hidden = k !== 'place'; $('#end-free-hint').hidden = k !== 'free'; $('#end-metro-row').hidden = k !== 'free' || !METRO.st.length;
   if (k === 'place' && !S.end) { const p = M.poi.find(p => p[0] === C0.end[0]) || [C0.end[0], 'park', C0.end[1], C0.end[2]]; setPoint('end', { lat: p[2], lon: p[3], name: p[0] }); }
+  $('#u-short').hidden = !(S.mode === 'ab' && !S.endFree); if (S.short && $('#u-short').hidden) setShort(false); // « Au plus court » : seulement jusqu'à un lieu
   applyModeLabels(); if (typeof TRACKS !== 'undefined') $('#via-track').hidden = !TRACKS.length || S.mode !== 'loop' || S.vias.some(v => v.track); draw();
 }
 ['back', 'place', 'free'].forEach(k => $('#a-' + k).onclick = () => setArrival(k));
@@ -84,7 +85,14 @@ function setUnit(u) {
   S.unit = u; ['km', 'min'].forEach(k => { $('#u-' + k).setAttribute('aria-pressed', k === u); $('#num-' + k).hidden = k !== u; $('#chips-' + k).hidden = k !== u; });
   updateConv();
 }
-$('#u-km').onclick = () => setUnit('km'); $('#u-min').onclick = () => setUnit('min');
+// A → B sans distance : le chemin le plus direct jusqu'à l'arrivée (retour du 5/11, Blanche → Nation)
+function setShort(on) {
+  S.short = !!on && S.mode === 'ab' && !S.endFree;
+  $('#u-short').setAttribute('aria-pressed', S.short); ['km', 'min'].forEach(k => $('#u-' + k).setAttribute('aria-pressed', !S.short && k === S.unit));
+  document.querySelector('.stepper').hidden = S.short; $('#chips-km').hidden = S.short || S.unit !== 'km'; $('#chips-min').hidden = S.short || S.unit !== 'min';
+  if (typeof msync === 'function') msync(); if (MCUR === 'dist') $('#msheet-ok').textContent = MSH.dist.ok();
+}
+$('#u-km').onclick = () => { setShort(false); setUnit('km'); }; $('#u-min').onclick = () => { setShort(false); setUnit('min'); }; $('#u-short').onclick = () => setShort(true);
 function step(dir) {
   if (S.unit === 'km') { const v = parseFloat(String($('#km').value).replace(',', '.')) || 10; $('#km').value = clampKm(Math.round((v + dir * 0.5) * 2) / 2); }
   else { const v = parseFloat($('#dur').value) || 55; $('#dur').value = Math.max(5, Math.min(300, Math.round((v + dir * 5) / 5) * 5)); }

@@ -12,7 +12,7 @@ async function boot() {
     if (mt) { METRO.lines = mt.lines; METRO.st = mt.stations.map(([n, la, lo, ls]) => { const [x, y] = E.toXY(la, lo); return { n, lat: la, lon: lo, ls, x, y, tram: ls.every(isTram) }; }); transitTexts(); }
     else { $('#ly-metro').disabled = true; $('#end-metro').checked = false; }
     FONT = (ft || []).map(([la, lo, t]) => { const [x, y] = E.toXY(la, lo); return { lat: la, lon: lo, t, x, y }; }); if (!FONT.length) $('#ly-font').disabled = true;
-    PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; }
+    PARKS = pk || []; if (!PARKS.length) { $('#dep-hint').hidden = true; } else E.setParkEdges(PARKS.flatMap(p => p.e)); // allées de parc : jamais prises pour un trottoir (retour du 5/11)
     // pistes d'athlétisme (OSM, anneaux de 200 m et plus, hors écoles) : calque et « Passer par » (D-116)
     TRACKS = (tk || []).map(([n, lap, g]) => { const ring = g.map(([la, lo]) => E.toXY(la, lo)); let x = 0, y = 0; for (const q of ring) { x += q[0]; y += q[1]; } return { n, lap, ring, x: x / ring.length, y: y / ring.length }; })
       .filter(t => { const [la, lo] = E.toLL(t.x, t.y), v = E.nearest(t.x, t.y); return M.quartiers.some(q => q.rings.some(r => pip([la, lo], r))) && v >= 0 && Math.hypot(G.NX[v] - t.x, G.NY[v] - t.y) < 250; }); // seulement là où l'app peut t'emmener (D-116)

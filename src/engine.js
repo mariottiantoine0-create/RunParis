@@ -49,7 +49,31 @@ const Engine = (() => {
     G.bad = new Uint8Array(nE); G.blocked = new Uint8Array(nE); G.nodeOk = new Uint8Array(nN).fill(1);
     G.dist = new Float64Array(nN); G.stamp = new Uint32Array(nN); G.prev = new Int32Array(nN); G.run = new Float32Array(nN); G.done = new Uint32Array(nN); G.cur = 0;
     G.used = new Uint8Array(nE);
+    G.SW = sidewalks();
     return G;
+  }
+  // trottoirs et contre-allées dessinés à part dans OSM : un chemin sans nom (ou du nom de la rue) qui longe une rue à moins de 20 m.
+  // On court la rue, pas son trottoir : sinon le tracé fait des zigzags rue / trottoir (retour du 5/11, avenues Mac-Mahon, Friedland).
+  function sidewalks() {
+    const { nE, ea, eb, NX, NY, P, en } = G, CELL = 30, grid = new Map(), key = (x, y) => Math.floor(x / CELL) + ',' + Math.floor(y / CELL);
+    for (let e = 0; e < nE; e++) if (P[e] === 0) { const p = edgePts(e); for (let i = 1; i < p.length; i++) { const k = key((p[i - 1][0] + p[i][0]) / 2, (p[i - 1][1] + p[i][1]) / 2); let l = grid.get(k); if (!l) grid.set(k, l = []); l.push(e, i); } }
+    const near = (x, y, dx, dy, name) => { // une rue parallèle à moins de 20 m de (x, y)
+      const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+      for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) { const l = grid.get(gx + ',' + gy); if (!l) continue;
+        for (let k = 0; k < l.length; k += 2) { const r = l[k]; if (name && en[r] && en[r] !== name) continue; const p = edgePts(r), i = l[k + 1], ax = p[i - 1][0], ay = p[i - 1][1], vx = p[i][0] - ax, vy = p[i][1] - ay, L = Math.hypot(vx, vy) || 1;
+          if (Math.abs((vx * dx + vy * dy) / L) < 0.85) continue;
+          const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (L * L))); if (Math.hypot(x - ax - vx * t, y - ay - vy * t) <= 20) return 1 + G.C[r]; } }
+      return 0; };
+    const sw = new Uint8Array(nE);
+    for (let e = 0; e < nE; e++) { if (P[e] !== 1 || G.LEN[e] < 4) continue;
+      const p = edgePts(e), n = p.length; let ok = true, pts = [p[0], p[n - 1]];
+      if (n > 2) pts.push(p[n >> 1]); else pts.push([(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2]);
+      let cls = 0;
+      for (const [x, y] of pts) { // direction locale du chemin autour du point
+        let best = 1; for (let i = 1; i < n; i++) { const d = Math.hypot((p[i - 1][0] + p[i][0]) / 2 - x, (p[i - 1][1] + p[i][1]) / 2 - y); if (d < best || i === 1) { best = d; var dx = p[i][0] - p[i - 1][0], dy = p[i][1] - p[i - 1][1]; } }
+        const l = Math.hypot(dx, dy) || 1, c = near(x, y, dx / l, dy / l, en[e]); if (!c) { ok = false; break; } cls = Math.max(cls, c); }
+      if (ok) sw[e] = cls; } // classe de la rue longée + 1
+    return sw;
   }
 
   const toXY = (lat, lon) => [(lon - G.lo0) * G.kx, (G.la1 - lat) * G.ky];
@@ -128,7 +152,7 @@ const Engine = (() => {
           const i = cellNodes[k]; if (!nodeOk[i]) continue;
           const d = Math.hypot(NX[i] - x, NY[i] - y);
           if (hill) { if (d > hill) continue; const sc = -NZ[i] * 12 + d * 0.02; if (sc < bd) { bd = sc; best = i; } }
-          else if (greenR) { if (d > greenR) continue; let g = 0; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) g = Math.max(g, G.GR[G.adjE[k]]); const sc = -g * greenR + d * 0.5; if (sc < bd) { bd = sc; best = i; } }
+          else if (greenR) { if (d > greenR) continue; let g = 0; for (let k = G.deg[i]; k < G.deg[i + 1]; k++) { const e = G.adjE[k]; g = Math.max(g, G.GR[e] * (G.SW && G.SW[e] ? 0.5 : G.P[e] === 1 ? 1.3 : 1)); } const sc = -g * greenR + d * 0.5; if (sc < bd) { bd = sc; best = i; } }
           else if (d < bd) { bd = d; best = i; }
         }
       }
@@ -148,13 +172,16 @@ const Engine = (() => {
   const CROWD = [0, 0.25, 0.6, 1.2];
   function setGreen(u8) { G.GR = new Float32Array(G.nE); for (let e = 0; e < G.nE; e++) G.GR[e] = u8[e] / 255; }
   function setWeights(w) { W = Object.assign({}, W, w); }
+  // allées des parcs (parks.json) : jamais traitées comme un trottoir, même le long de la grille
+  function setParkEdges(list) { if (G.SW) for (const e of list) G.SW[e] = 0; }
 
   function stepCost(e, fromA) {
     if (G.blocked[e]) return Infinity;
     const L = G.LEN[e];
     let m = 1 + W.road[G.C[e]];
-    const p = G.P[e]; if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
-    if (W.green && G.GR) m -= W.green * G.GR[e];
+    const p = G.P[e], sw = G.SW && G.SW[e];
+    if (sw) m += W.road[sw - 1] + 0.1; else if (p === 1) m += W.path; else if (p === 2) m += (W.climb < 0 ? -0.2 : W.steps);
+    if (W.green && G.GR && !sw) m -= W.green * G.GR[e];
     if (W.dark && G.DK && G.DK[e]) m += W.dark; // de nuit, rester sur les rues éclairées
     if (W.crowd && G.CR && G.CR[e]) m += W.crowd * CROWD[G.CR[e]]; // commerces, terrasses, sites touristiques, selon l'heure
     let cost = L * m;
@@ -198,7 +225,8 @@ const Engine = (() => {
         let run = G.LEN[e];
         if (W.turn && prev[u] >= 0) { const pe = prev[u]; if (G.en[pe] !== G.en[e]) { // on change de rue : virage ?
           const w = ea[pe] === u ? eb[pe] : ea[pe], ax = NX[u] - NX[w], ay = NY[u] - NY[w], bx = NX[v] - NX[u], by = NY[v] - NY[u];
-          if (ax * bx + ay * by < 0.82 * Math.hypot(ax, ay) * Math.hypot(bx, by)) c += G.run[u] < W.turnRun ? W.turn : W.turn * W.turnFar; } else run += G.run[u]; }
+          if (ax * bx + ay * by < 0.82 * Math.hypot(ax, ay) * Math.hypot(bx, by)) c += G.run[u] < W.turnRun ? W.turn : W.turn * W.turnFar; }
+          else { run += G.run[u]; const w = ea[pe] === u ? eb[pe] : ea[pe], ax = NX[u] - NX[w], ay = NY[u] - NY[w], bx = NX[v] - NX[u], by = NY[v] - NY[u]; if (W.turn && ax * bx + ay * by < 0.6 * Math.hypot(ax, ay) * Math.hypot(bx, by)) c += W.turn * 0.5; } } // même rue mais virage net (passer d'une chaussée à l'autre) : compte à moitié
         const nd = du + c;
         if (stamp[v] !== cur || nd < dist[v]) { stamp[v] = cur; dist[v] = nd; prev[v] = e; G.run[v] = run; hpush(v, nd + hk * Math.hypot(NX[v] - tx, NY[v] - ty)); }
       }
@@ -232,7 +260,7 @@ const Engine = (() => {
       for (const [e] of leg) { G.used[e] = 1; if (tw[e]) for (const t of tw[e]) G.used[t] = 1; }
       all.push(...leg);
     }
-    return all.length ? all : null;
+    return all.length ? unzig(all) : null; // lissé à la source : distances et choix faits sur le tracé final
   }
 
   function stats(edges, startNode) {
@@ -337,6 +365,40 @@ const Engine = (() => {
     return { i, k, j, cx, cy, br: out, ex, a: ex.a, lat, complex, straight, ord: straight ? 0 : side.indexOf(ex) + 1, nSide: side.length, nodes: C };
   }
   // virages, carrefours compliqués et zigzags d'un parcours (pour le choix entre parcours)
+  // ---------- lissage : plus de zigzags (retour du 5/11) ----------
+  // Un bout de parcours qui tourne plus que nécessaire (décrochements, crochets, petits allers-retours) est remplacé
+  // par le chemin le plus simple entre ses deux bouts, s'il n'est pas plus long et compte au moins deux virages de moins.
+  function turnsIn(edges, i0, i1) { let n = 0; for (let i = i0; i < i1; i++) { const v = endOf(edges[i]), a = angDev(hdgDeg(edgeFrom(edges[i][0], v, 15), [G.NX[v], G.NY[v]]), hdgDeg([G.NX[v], G.NY[v]], edgeFrom(edges[i + 1][0], v, 15))); if (Math.abs(a) >= 35) n++; } return n; }
+  function unzig(edges) {
+    if (!edges || edges.length < 4) return edges;
+    const W0 = W; W = Object.assign({}, W, { road: [0, 0.05, 0.1, 0.15], path: 0, green: 0, climb: 0, sig: 60, reuse: 1, turn: 60, turnRun: 0, turnFar: 1, dark: 0, crowd: 0 });
+    const saved = G.used; G.used = new Uint8Array(G.nE);
+    let out = edges.slice(), changed = 0;
+    try {
+      let pre = null; const mk = () => { pre = [0]; for (let k = 0; k < out.length - 1; k++) pre.push(pre[k] + (turnsIn(out, k, k + 1) ? 1 : 0)); }; mk(); // virages cumulés
+      for (let i = 0; i < out.length - 2; i++) {
+        if (pre[i + 1] - pre[i] === 0 || pre[Math.min(pre.length - 1, i + 40)] - pre[i] < 3) continue; // fenêtre qui commence à un virage, avec au moins 3 virages
+        const cum = [0]; for (let k = i; k < out.length && cum[cum.length - 1] < 400; k++) cum.push(cum[cum.length - 1] + G.LEN[out[k][0]]);
+        for (let jj = cum.length - 1; jj >= 3; jj--) { const j = i + jj - 1; if (j >= out.length) continue;
+          const segLen = cum[jj], a = startOf(out[i]), b = endOf(out[j]);
+          if (a === b) { if (segLen < 150) { out.splice(i, jj); changed++; mk(); i = Math.max(-1, i - 2); break; } continue; } // petit aller-retour en cul-de-sac
+          const tSeg = pre[j] - pre[i]; if (tSeg < 3) continue;
+          const alt = astar(a, b); if (!alt) continue;
+          let altLen = 0; for (const [e] of alt) altLen += G.LEN[e];
+          const tAlt = turnsIn(alt, 0, alt.length - 1);
+          if (altLen < segLen * 0.8 || tAlt > tSeg - 2 || altLen > segLen + (tAlt <= tSeg - 3 ? 60 : 25)) continue; // 3 virages de moins : jusqu'à 60 m de plus
+          out.splice(i, jj, ...alt); changed++; mk(); break;
+        }
+      }
+    } finally { W = W0; G.used = saved; }
+    // demi-tours sur place (aller et retour sur le même tronçon) : supprimés
+    for (let k = 0; k < out.length - 1; k++) if (out.length > 4 && out[k][0] === out[k + 1][0] && out[k][1] !== out[k + 1][1]) { out.splice(k, 2); changed++; k = Math.max(-1, k - 2); }
+    return changed ? out : edges;
+  }
+  function smoothRoute(st, start) { // parcours retenu : lissé, statistiques recalculées
+    const ed = unzig(st.edges); if (ed === st.edges) return st;
+    const ns = stats(ed, start); for (const k of Object.keys(st)) if (!(k in ns) && k !== '_set' && k !== '_ts') ns[k] = st[k]; return ns;
+  }
   function turnStats(edges) {
     const mans = []; let d = 0, skipTo = -1, cx = 0;
     for (let i = 0; i < edges.length - 1; i++) {
@@ -665,6 +727,6 @@ const Engine = (() => {
   }
   function statsOf(edges, start) { return stats(edges, start); }
 
-  return { init, setDark, setCrowd, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
+  return { init, unzig, setParkEdges, setDark, setCrowd, setPrivate, setConstraints, nearest, setWeights, setGreen, loop, aToB, oneWay, viaRoute, discover, sightsOn, statsOf, routeThrough, smoothClimb, similarity, toXY, toLL, edgePts, junctionAt, turnStats, get G() { return G; }, get M() { return M; } };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

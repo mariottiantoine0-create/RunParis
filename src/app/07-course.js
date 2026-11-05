@@ -91,11 +91,26 @@ function navBuild(r) {
   for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (!m.jog || !q.jog || q.d - m.d > 60) continue;
     const net = m.lat + q.lat; if (Math.abs(net) < 8) { man.splice(i, 2); i--; } else { man.splice(i, 2, Object.assign({}, m, { a: net > 0 ? 1 : -1, jog: Math.abs(net), lat: net, name: q.name })); } }
   for (let i = 0; i < man.length - 1; i++) { const m = man[i], q = man[i + 1]; if (!m.second && !m.keep && !q.keep && !m.jog && !q.jog && !m.cx && !q.cx && Math.abs(m.a) < 160 && Math.abs(q.a) < 160 && q.d - m.d < 60) { m.pair = q; q.second = true; } }
+  // la rue change de nom en ligne droite : « Tout droit, rue X », pour savoir qu'on est toujours bon (retour du 5/11)
+  { const R = runs.filter(q => q.d1 - q.d0 >= 40);
+    for (let k = 1; k < R.length; k++) { const p = R[k - 1], q = R[k];
+      if (p.name === q.name || q.d1 - q.d0 < 120 || q.d0 < 30 || q.d0 > L - 60 || /^(Place|Rond-Point|Carrefour|Square|Pont)\b/i.test(q.name)) continue;
+      if (man.some(m => Math.abs(m.d - q.d0) < 60)) continue;
+      man.push({ d: q.d0, a: 0, cont: true, name: q.name }); }
+    man.sort((x, y) => x.d - y.d); }
   man.push({ d: L, a: 0, arrive: true, name: '' });
-  return { pts, cum, L, idx, at, man, runs };
+  // places (République, Nation, Étoile…) : on peut les traverser ou en faire le tour dans les deux sens sans être « hors parcours » (retour du 5/11)
+  const zones = [];
+  for (const q of runs) { if (!/^(Place|Rond-Point|Carrefour)\b/i.test(q.name) || q.d1 - q.d0 < 15) continue;
+    const P = []; for (let d = q.d0; d <= q.d1; d += 5) P.push(at(d));
+    const cx = P.reduce((s, p) => s + p[0], 0) / P.length, cy = P.reduce((s, p) => s + p[1], 0) / P.length;
+    const r = Math.min(170, Math.max(35, Math.max(...P.map(p => Math.hypot(p[0] - cx, p[1] - cy))) + 20));
+    zones.push({ d0: q.d0, d1: q.d1, cx, cy, r, name: q.name }); }
+  return { pts, cum, L, idx, at, man, runs, zones };
 }
 function navDir(m) {
   if (m.arrive) return ['flag', 'Arrivée'];
+  if (m.cont) return ['straight', 'Tout droit'];
   const a = m.a, s = a > 0 ? 'droite' : 'gauche', k = a > 0 ? 'right' : 'left';
   if (m.jog) return ['jog' + (a > 0 ? 'r' : 'l'), 'Traverse puis en face'];
   if (m.cx) return ['jx', m.straight ? 'Tout droit' : navOrd(m)];
@@ -113,6 +128,7 @@ function navOrd(m, spoken) { const j = m.jx, s = m.a > 0 ? 'droite' : 'gauche';
 // consigne parlée d'un virage (sans la distance)
 function navVerb(m) {
   const [k] = navDir(m), s = m.a > 0 ? 'droite' : 'gauche';
+  if (m.cont) return 'continue tout droit' + (m.name ? ', ' + navArt(m.name) : '');
   if (m.jog) return `traverse${m.cross ? ' ' + navArt(m.cross) : ''}, ${m.name ? m.name + ' reprend' : 'la rue reprend'} en face, un peu à ${s}`;
   if (m.cx) return 'au carrefour, ' + (m.straight ? 'continue tout droit' : navOrd(m, true)) + (m.name ? ', ' + m.name : '');
   let v = k === 'uturn' ? 'fais demi-tour' : m.keep ? 'garde la ' + s : 'tourne à ' + s;
@@ -365,24 +381,31 @@ function navFix(p) {
   if (b && b.dd > tol && NAV.off >= 2 && mv) { const w = navProject(x, y, NAV.prog - 200, NAV.prog + 3000, mv, true); if (w && w.dd < b.dd && (w.d - NAV.prog <= ahead || NAV.off >= 3)) b = w; } // on a pu couper ou sauter un bout
   NAV.reacq = false;
   if (!b) return;
+  const zone = (n.zones || []).find(z => NAV.prog >= z.d0 - 150 && NAV.prog <= z.d1 + 20 && Math.hypot(x - z.cx, y - z.cy) <= z.r);
   // trottoir d'en face ou autre chaussée du même boulevard : parallèle au tracé, dans le même sens, à moins de 65 m (retour du 30/10)
   if (b.dd > tol && b.dd <= 65 && mv) { const p0 = n.at(b.d - 8), p1 = n.at(b.d + 8), l = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) || 1; if (((p1[0] - p0[0]) * mv[0] + (p1[1] - p0[1]) * mv[1]) / l > 0.95) b = Object.assign({}, b, { dd: Math.min(b.dd, 10), side: true }); }
-  if (b.dd > tol) {
-    NAV.off++; NAV.proj = b;
+  if (zone && b.dd > tol) { NAV.off = 0; NAV.backN = 0; if (NAV.offOn) Object.assign(NAV, { offOn: false, ask: false, autoHere: false }); NAV.proj = Object.assign({}, b, { dd: 0, zone: true }); } // sur la place : on te retrouve à la sortie, quel que soit ton chemin
+  else if (b.dd > (NAV.offOn ? tol * 0.8 : tol) || NAV.offOn && (NAV.backN = (NAV.backN || 0) + 1) < 2) { // pour revenir : deux positions de suite bien sur le tracé
+    if (b.dd > (NAV.offOn ? tol * 0.8 : tol)) NAV.backN = 0;
+    if (!NAV.off) NAV.offT0 = now; NAV.off++; NAV.proj = b;
+    // vraiment écarté : 10 s hors du tracé (ou très loin), pas un trottoir traversé ou un passage piéton (retour du 5/11)
+    const offReady = NAV.off >= 3 && (now - NAV.offT0 >= 10000 || b.dd > 80);
     if (NAV.offOn && prevPos) { const st = Math.hypot(x - prevPos[0], y - prevPos[1]); if (st < 150) { NAV.offRun += st; NAV.offTrack.push([x, y]); } }
-    if (NAV.off >= 2 && !NAV.offOn && n.L - NAV.prog <= 300 && NAV.mode !== 'back') { // presque arrivé : on ne recalcule rien, la suite compte en plus (retour du 2/11)
+    if (offReady && !NAV.offOn && n.L - NAV.prog <= 300 && NAV.mode !== 'back') { // presque arrivé : on ne recalcule rien, la suite compte en plus (retour du 2/11)
       Object.assign(NAV, { free: true, freeFrom: NAV.prog, extra: 0, track: [[x, y]], streets: new Map(), offOn: false, ask: false });
       navSay('Presque arrivé. Tu continues librement : tes kilomètres en plus sont comptés.'); navMsg(null); return navUI(); }
-    if (NAV.off >= 2 && !NAV.offOn) {
-      NAV.offOn = true; NAV.offAt = Date.now(); NAV.offRun = 0; NAV.offTrack = [prevPos || [x, y], [x, y]]; navBuzz('off');
+    if (offReady && !NAV.offOn) {
+      NAV.offOn = true; NAV.backN = 0; NAV.offAt = Date.now(); NAV.offRun = 0; NAV.offTrack = [prevPos || [x, y], [x, y]];
+      const say = Date.now() - (NAV.offSaid || 0) > 45000; // pas la même alerte en boucle
+      if (say) { NAV.offSaid = Date.now(); navBuzz('off'); }
       if (NAV.mode === 'back' && NAV.prog < NAV.rejoinD) { NAV.ask = false; NAV.autoHere = true; } // on s'éloigne du chemin de retour : on attend ~150 m puis on recalcule depuis ici
-      else { NAV.ask = true; navSay('Tu t’es écarté du parcours. Ouvre l’écran pour choisir, sinon je te ramène au parcours.'); }
+      else { NAV.ask = true; if (say) navSay('Tu t’es écarté du parcours. Ouvre l’écran pour choisir, sinon je te ramène au parcours.'); }
     }
-    if (NAV.offOn && NAV.autoHere && (NAV.offRun > 150 || b.dd > 150) && !NAV.busy) { NAV.autoHere = false; navReroute('here', true); }
-    else if (NAV.offOn && NAV.ask && Date.now() - NAV.offAt > 20000 && !NAV.busy) navReroute('back', true);
+    if (NAV.offOn && !NAV.backN && NAV.autoHere && (NAV.offRun > 150 || b.dd > 150) && !NAV.busy) { NAV.autoHere = false; navReroute('here', true); }
+    else if (NAV.offOn && !NAV.backN && NAV.ask && Date.now() - NAV.offAt > 20000 && !NAV.busy) navReroute('back', true);
   } else {
-    if (NAV.offOn) { navSay('Tu es de retour sur le parcours.'); }
-    NAV.off = 0; NAV.offOn = false; NAV.ask = false; NAV.autoHere = false; NAV.proj = b; NAV.okT = now;
+    if (NAV.offOn && Date.now() - NAV.offAt > 15000) navSay('Tu es de retour sur le parcours.'); // écart très court : rien à dire
+    NAV.off = 0; NAV.backN = 0; NAV.offOn = false; NAV.ask = false; NAV.autoHere = false; NAV.proj = b; NAV.okT = now;
     if (b.d > NAV.prog) NAV.prog = Math.min(b.d, NAV.p0 + NAV.moved + 60); // jamais plus loin que ce qu'on a vraiment couru (retour du 2/11 : arrivée annoncée trop tôt)
     if (NAV.mode === 'back' && NAV.prog >= NAV.rejoinD) NAV.mode = null;
   }
@@ -390,7 +413,7 @@ function navFix(p) {
   while (NAV.mi < n.man.length - 1 && n.man[NAV.mi].d < NAV.prog + 5) { const pm = n.man[NAV.mi]; if (pm.jx) NAV.lastJ = { m: pm, t: Date.now() }; NAV.mi++; }
   // mauvaise rue au carrefour qu'on vient de passer : alerte dans les 30 premiers mètres (D-93)
   { const cj = n.man[NAV.mi], J = cj && cj.jx && cj.d - NAV.prog < 20 ? { m: cj, t: Date.now() } : NAV.lastJ, j = J && J.m.jx;
-    if (j && !NAV.offOn) { const dj = Math.hypot(x - j.cx, y - j.cy), fresh = Date.now() - J.t < 60000 && NAV.prog - J.m.d < 70;
+    if (j && !NAV.offOn && !zone) { const dj = Math.hypot(x - j.cx, y - j.cy), fresh = Date.now() - J.t < 60000 && NAV.prog - J.m.d < 70;
       let wrongB = null; if (fresh && dj > 12 && dj < 70 && b.dd > Math.max(14, c.accuracy * 0.6)) { let best = null; for (const q of j.br) { const vx = q.px - j.cx, vy = q.py - j.cy, l2 = vx * vx + vy * vy || 1, t = Math.max(0, ((x - j.cx) * vx + (y - j.cy) * vy) / l2), dd = Math.hypot(x - j.cx - vx * t, y - j.cy - vy * t); if (!best || dd < best.dd) best = { q, dd }; } if (best && !best.q.out) wrongB = best.q; }
       if (wrongB) { NAV.wrongN = (NAV.wrongN || 0) + 1; if (NAV.wrongN >= 2 && !NAV.wrongOn) navWrong(true, J.m, wrongB); }
       else { NAV.wrongN = 0; if (NAV.wrongOn && (b.dd < 12 || !fresh)) navWrong(false); } }
@@ -402,9 +425,9 @@ function navFix(p) {
   const m = n.man[NAV.mi], dm = m.d - NAV.prog;
   if (!m.arrive && !NAV.offOn) {
     const s = m.a > 0 ? 'droite' : 'gauche', p = man => { const prev = n.man[NAV.mi - 1]; return man.second && prev && prev.pair === man; };
-    const short = m.jog ? 'Traverse, puis en face' + (m.name ? ', ' + m.name : '') : m.cx ? (m.straight ? 'Tout droit' : navOrd(m)) + (m.name ? ', ' + m.name : '') : p(m) ? ((m.a > 0) === (n.man[NAV.mi - 1].a > 0) ? 'Encore à ' + s : 'Tourne à ' + s) : (m.keep ? 'Garde la ' + s : navDir(m)[0] === 'uturn' ? 'Fais demi-tour' : 'Tourne à ' + s) + (m.pair ? `, puis ${(m.pair.a > 0) === (m.a > 0) ? 'encore ' : ''}à ${m.pair.a > 0 ? 'droite' : 'gauche'}` : '');
-    if (dm <= 120 && dm > 40 && NAV.a1 !== NAV.mi && !p(m)) { NAV.a1 = NAV.mi; navSay(`Dans ${navSayDist(dm)}, ${navVerb(m)}.`); }
-    else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; navBuzz('turn'); navSay(short + '.'); }
+    const short = m.cont ? 'Tout droit' + (m.name ? ', ' + m.name : '') : m.jog ? 'Traverse, puis en face' + (m.name ? ', ' + m.name : '') : m.cx ? (m.straight ? 'Tout droit' : navOrd(m)) + (m.name ? ', ' + m.name : '') : p(m) ? ((m.a > 0) === (n.man[NAV.mi - 1].a > 0) ? 'Encore à ' + s : 'Tourne à ' + s) : (m.keep ? 'Garde la ' + s : navDir(m)[0] === 'uturn' ? 'Fais demi-tour' : 'Tourne à ' + s) + (m.pair ? `, puis ${(m.pair.a > 0) === (m.a > 0) ? 'encore ' : ''}à ${m.pair.a > 0 ? 'droite' : 'gauche'}` : '');
+    if (dm <= 120 && dm > 40 && NAV.a1 !== NAV.mi && !p(m) && !m.cont) { NAV.a1 = NAV.mi; navSay(`Dans ${navSayDist(dm)}, ${navVerb(m)}.`); }
+    else if (dm <= 25 && NAV.a2 !== NAV.mi) { NAV.a2 = NAV.mi; if (m.cont) navSay('Tout droit' + (m.name ? ', sur ' + navArt(m.name) : '') + '.'); else { navBuzz('turn'); navSay(short + '.'); } }
   }
   { const tot = NAV.base + NAV.prog; if (tot >= NAV.km * 1000 && NAV.km * 1000 < NAV.base + n.L - 200) { const pc = navElapsed() / (tot / 1000); navBuzz('km'); navSay(`${NAV.km} kilomètre${NAV.km > 1 ? 's' : ''}. Allure ${Math.floor(pc / 60)} minutes ${Math.round(pc % 60)}.`); NAV.km = Math.floor(tot / 1000) + 1; } }
   // arrivée

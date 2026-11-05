@@ -35,7 +35,7 @@ async function sendLink(code, title, km) {
   (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Lien du parcours copié : colle-le dans un message.', 3500), () => { prompt('Copie ce lien :', url); });
 }
 // ouvrir un parcours précis (lien reçu ou « Refaire ce parcours ») : affiché tel quel, prêt à suivre, exporter ou faire
-function openFixed(code, title, received) {
+function openFixed(code, title, received, kept) {
   const st = routeFromCode(code); if (!st) { if (!received) toast('Ce lien de parcours est incomplet.', 3500); return false; }
   if (S.tab !== 'gen') setTab('gen');
   const P = st.geom, a = P[0], b = P[P.length - 1], loop = Math.hypot(a[0] - b[0], a[1] - b[1]) < 150, ll = p => { const [la, lo] = E.toLL(p[0], p[1]); return { lat: la, lon: lo }; };
@@ -47,9 +47,9 @@ function openFixed(code, title, received) {
   const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
   const from = near(a), km = `${fmt(st.len / 1000)} km${loop ? ' en boucle' : ''}${from !== 'Point sur la carte' ? ' depuis ' + from : ''}`;
   S.recv = received ? st : null; if (received) linkErr(false);
-  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : kept ? { info: true, t: `${t} : ton parcours gardé, ${fmt(st.len / 1000)} km.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
   renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
-  if ($('#done')) $('#done').setAttribute('aria-pressed', false);
+  if ($('#done')) $('#done').setAttribute('aria-pressed', false); keepMark(!!kept);
   return true;
 }
 function mineThumb(code) {
@@ -59,11 +59,41 @@ function mineThumb(code) {
   return `<span class="mine-th" aria-hidden="true"><svg viewBox="0 0 56 56" width="56" height="56"><path d="${d}" fill="none" stroke="var(--route-casing)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="var(--route)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>`;
 }
 const mineDate = (iso, o) => new Date(iso).toLocaleDateString('fr-FR', o || { weekday: 'long', day: 'numeric', month: 'short' }).replace(/^./, c => c.toUpperCase());
+// parcours gardés pour plus tard (retour du 5/11) : générés mais pas encore courus, à part des sorties (ni km ni trophées)
+const TODO_K = 'runparis-todo';
+function todoLoad() { try { const L = JSON.parse(localStorage.getItem(TODO_K) || '[]'); return Array.isArray(L) ? L : []; } catch (e) { return []; } }
+function todoSave(L) { try { localStorage.setItem(TODO_K, JSON.stringify(L.slice(0, 50))); } catch (e) {} }
+function keepMark(on) { const b = $('#keep'); if (!b) return; b.setAttribute('aria-pressed', !!on); b.lastChild.textContent = on ? 'Gardé dans Mes parcours' : 'Garder pour plus tard'; }
+function todoDel(id) { todoSave(todoLoad().filter(x => x.id !== id)); renderMine(); toast('Parcours retiré de « À courir ».'); }
+$('#keep').onclick = () => {
+  if (!S.route) return; const code = routeCode(S.route); if (!code) return toast('Ce parcours ne peut pas être gardé.');
+  const L = todoLoad(); if (L.some(x => x.g === code)) { keepMark(true); return toast('Déjà dans Mes parcours, à courir.'); }
+  const d = shareData(); L.unshift({ id: Date.now().toString(36), d: new Date().toISOString(), city: CITY, g: code, t: d ? mineTitle(d) : 'Parcours', km: Math.round(S.route.len / 100) / 10, up: Math.round(S.route.up || 0) }); todoSave(L);
+  keepMark(true); toast('Gardé dans Mes parcours, rubrique « À courir ».', 3000); track('garder', 'Parcours gardé pour plus tard');
+};
+function renderTodo(items) {
+  const T = todoLoad(); if (!T.length) return 0;
+  const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = 'À courir'; items.appendChild(hh);
+  for (const e of T) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
+    b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
+    const other = (e.city || 'paris') !== CITY && CITIES[e.city];
+    b.querySelector('.k').textContent = 'Gardé le ' + mineDate(e.d, { day: 'numeric', month: 'short' }) + (other ? ' · ' + CITIES[e.city].name : '');
+    b.querySelector('.t').textContent = e.t || 'Parcours';
+    b.querySelector('.s').textContent = [e.up ? e.up + ' m D+' : '', 'pas encore couru'].filter(Boolean).join(' · ');
+    b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
+    b.onclick = () => { if (b.dataset.sw) return; const r = b.parentNode; if (r.classList.contains('open')) { r.classList.remove('open'); b.style.transition = 'transform .18s ease'; b.style.transform = ''; return; }
+      track('a-courir', 'Parcours gardé ouvert'); if (other) { setCity(e.city, { p: e.g, n: e.t || '', refaire: 1 }); return; } openFixed(e.g, e.t || 'Parcours', false, true); };
+    const row = document.createElement('div'); row.className = 'mine-row'; row.innerHTML = '<button type="button" class="mine-del" tabindex="-1">Retirer</button>'; row.prepend(b);
+    mineSwipe(row, b, e.id, todoDel); items.appendChild(row);
+  }
+  return T.length;
+}
 function renderMine() {
   const L = mineLoad(), items = $('#mine-items'); items.innerHTML = '';
   $('#mine-detail').hidden = true; $('#mine-list').hidden = false; $('#mine-seg').hidden = false; $('#mine-badges').hidden = true;
   mineView(S.mineView || 'runs', true);
-  $('#mine-empty').hidden = !!L.length; $('#mine-tot').hidden = !L.length;
+  const nT = renderTodo(items); $('#mine-empty').hidden = !!L.length || !!nT; $('#mine-tot').hidden = !L.length;
   const km = L.reduce((t, e) => t + (e.km || 0), 0), secs = L.reduce((t, e) => t + (e.secs || 0), 0);
   const h = Math.floor(secs / 3600), mn = Math.round(secs % 3600 / 60);
   $('#mine-tot').innerHTML = `<div><b>${L.length}</b><span>sortie${L.length > 1 ? 's' : ''}</span></div><div><b>${fmt(km, 1)} km</b><span>au total</span></div>` + (secs ? `<div><b>${h ? h + ' h ' + String(mn).padStart(2, '0') : mn + ' min'}</b><span>de course</span></div>` : '');

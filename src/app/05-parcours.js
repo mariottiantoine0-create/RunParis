@@ -137,7 +137,7 @@ $('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($
 
 // résumé des réglages utilisés pour les résultats affichés
 function renderSummary() {
-  const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
+  const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.short && S.mode === 'ab' && !S.endFree ? 'Au plus court' : S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
   const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
   const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'l’arrivée'}`);
   $('#sum-t').textContent = `${mode} · ${kmTxt} · ${where}`;
@@ -145,7 +145,7 @@ function renderSummary() {
   const f = PRIO[S.prio || 'eq'].txt;
   const n = S.exclQ.size ? `${S.exclQ.size} quartier${S.exclQ.size > 1 ? 's' : ''} évité${S.exclQ.size > 1 ? 's' : ''}` : '';
   const pl = S.places.length ? `${S.places.length} lieu${S.places.length > 1 ? 'x' : ''} évité${S.places.length > 1 ? 's' : ''}` : '';
-  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : '', S.depNow === false && S.lastDep ? 'départ ' + hhmm(S.lastDep.dep) : ''].filter(Boolean).join(' · ');
+  $('#sum-s').textContent = [d, f, $('#prefer-paths').checked && !(S.short && S.mode === 'ab' && !S.endFree) ? 'parcs et quais' : '', n, pl, $('#allow-repeat').checked ? 'allers-retours permis' : '', S.vias.length ? 'par ' + S.vias.map(v => v.name.replace(/^Point · /, '')).join(', ') : '', S.mode === 'ab' && S.endFree && $('#end-metro').checked && !S.vias.length && S.kind !== 'discover' ? 'arrivée à un métro' : '', $('#water-on').checked ? 'points d’eau' : '', S.depNow === false && S.lastDep ? 'départ ' + hhmm(S.lastDep.dep) : ''].filter(Boolean).join(' · ');
 }
 new ResizeObserver(resize).observe(cv);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
@@ -189,12 +189,12 @@ function readDplus() {
 // ---------- générer ----------
 function fail(msgs) { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, msgs); showView('res'); draw(); }
 async function generate(isAgain) {
-  if ($('#done')) $('#done').setAttribute('aria-pressed', false);
+  if ($('#done')) $('#done').setAttribute('aria-pressed', false); keepMark(false);
   if (!G || busy) return; mClose();
   const notes = [], errs = [];
   if (!S.start) { showView('set'); openStart(true); toast('Choisis d’abord ton départ : un lieu, une rue ou un point sur la carte.'); return; }
   if (S.tab !== 'race') lastSave();
-  const k = readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
+  const short = S.short && S.mode === 'ab' && !S.endFree, k = short ? { km: 0 } : readKm(); if (k.err) { fail([{ t: k.err, err: true }]); return; }
   if (k.info) notes.push(k.info);
   const km = k.km, target = km * 1000;
   if (!parsePace($('#pace').value)) notes.push('Allure non reconnue (exemple : 5:30) : le temps est estimé à 5:30 /km.');
@@ -265,9 +265,13 @@ async function generate(isAgain) {
         {
           const snapB = Math.hypot(G.NX[t] - ex, G.NY[t] - ey);
           if (snapB > 250) notes.push(`B est dans une zone évitée : l'arrivée est déplacée à la rue autorisée la plus proche (${Math.round(snapB)} m).`);
-          r = await E.aToB(s, t, target, opt, prog);
+          if (short) { // au plus court : distance seule, sans détour pour les parcs ni les feux
+            E.setWeights({ road: [0, 0.05, 0.1, 0.15], path: 0, green: 0, climb: 0, sig: 40, turn: 60, turnRun: 0, turnFar: 1, reuse: 1, dark: 0, crowd: 0 });
+            const ed = E.routeThrough([s, t]); E.setWeights(Object.assign({ road: S.prio === 'turn' ? PRIO.turn.w.road : [0, 0.15, 0.35, 0.6], path: 0, green: 0, dark: 0, crowd: 0 }, PRIO[S.prio || 'eq'].w));
+            if (ed) { r = E.statsOf(ed, s); r.edges = ed; r.kind = 'a-b'; r.shortest = true; r.alts = [r]; }
+          } else r = await E.aToB(s, t, target, opt, prog);
           if (!r) errs.push("Impossible de relier A et B sans traverser une zone évitée. Réautorise un quartier entre les deux.");
-          else if (r.shortest && r.len > target * 1.03) notes.push(`Le plus court chemin de A à B fait déjà ${fmt(r.len / 1000)} km : c'est lui qui est proposé.`);
+          else if (!short && r.shortest && r.len > target * 1.03) notes.push(`Le plus court chemin de A à B fait déjà ${fmt(r.len / 1000)} km : c'est lui qui est proposé.`);
         }
       }
       // la 3e proposition montre l'autre côté du compromis : « Le plus simple » ou « Le moins de feux » (D-95)
@@ -290,9 +294,9 @@ async function generate(isAgain) {
   }
   S.lastKm = km; $('#stale').hidden = true;
   if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
-  if (r) track(isAgain ? 'autres' : 'generer', (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : 'A-B') + ' ' + Math.round(target / 1000) + ' km' + (S.depNow === false ? ' (heure choisie)' : ''));
+  if (r) track(isAgain ? 'autres' : 'generer', (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : 'A-B') + ' ' + (short ? 'au plus court' : Math.round(target / 1000) + ' km') + (S.depNow === false ? ' (heure choisie)' : ''));
   if (r && !errs.length) {
-    S.alts = r.alts || [r]; S.baseNotes = notes; S.lastTarget = target; S.lastD = dplus;
+    S.alts = r.alts || [r]; S.baseNotes = notes; S.lastTarget = short ? r.len : target; S.lastD = dplus;
     renderSummary(); showView('res'); selectAlt(0);
     if (!isAgain) fitRoute();
   } else { S.route = null; S.alts = []; renderAlts(); renderSummary(); showRoute(null, errs.map(t => ({ t, err: true })).concat(notes)); showView('res'); }
