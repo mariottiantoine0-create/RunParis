@@ -47,7 +47,7 @@ function openFixed(code, title, received, kept) {
   const t = title || mineTitle({ loop, dep: 'ce départ', arr: '' });
   const from = near(a), km = `${fmt(st.len / 1000)} km${loop ? ' en boucle' : ''}${from !== 'Point sur la carte' ? ' depuis ' + from : ''}`;
   S.recv = received ? st : null; if (received) linkErr(false);
-  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : kept ? { info: true, t: `${t} : ton parcours gardé, ${fmt(st.len / 1000)} km.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
+  S.baseNotes = [received ? { info: true, b: 'Parcours reçu · ' + t, t: APPF ? `${km}. Suis-le, exporte-le, ou touche « Modifier » pour créer le tien.` : `${km}. Exporte-le vers ta montre, ou touche « Modifier » pour créer le tien.` } : kept ? { info: true, t: `${t} : ton parcours mis de côté pour plus tard, ${fmt(st.len / 1000)} km.` } : { info: true, t: `${t} : le même tracé que ta sortie, ${fmt(st.len / 1000)} km.` }];
   renderAlts(); renderSummary(); showRoute(st, S.baseNotes.concat(routeNotes(st))); showView('res'); fitRoute();
   if ($('#done')) $('#done').setAttribute('aria-pressed', false); keepMark(!!kept);
   return true;
@@ -63,22 +63,22 @@ const mineDate = (iso, o) => new Date(iso).toLocaleDateString('fr-FR', o || { we
 const TODO_K = 'runparis-todo';
 function todoLoad() { try { const L = JSON.parse(localStorage.getItem(TODO_K) || '[]'); return Array.isArray(L) ? L : []; } catch (e) { return []; } }
 function todoSave(L) { try { localStorage.setItem(TODO_K, JSON.stringify(L.slice(0, 50))); } catch (e) {} }
-function keepMark(on) { const b = $('#keep'); if (!b) return; b.setAttribute('aria-pressed', !!on); b.lastChild.textContent = on ? 'Gardé dans Mes parcours' : 'Garder pour plus tard'; }
-function todoDel(id) { todoSave(todoLoad().filter(x => x.id !== id)); renderMine(); toast('Parcours retiré de « À courir ».'); }
+function keepMark(on) { const b = $('#keep'); if (!b) return; b.setAttribute('aria-pressed', !!on); b.lastChild.textContent = on ? 'Ajouté à Pour plus tard' : 'Pour plus tard'; }
+function todoDel(id) { todoSave(todoLoad().filter(x => x.id !== id)); renderMine(); toast('Parcours retiré de « Pour plus tard ».'); }
 $('#keep').onclick = () => {
   if (!S.route) return; const code = routeCode(S.route); if (!code) return toast('Ce parcours ne peut pas être gardé.');
-  const L = todoLoad(); if (L.some(x => x.g === code)) { keepMark(true); return toast('Déjà dans Mes parcours, à courir.'); }
+  const L = todoLoad(); if (L.some(x => x.g === code)) { keepMark(true); return toast('Déjà dans « Pour plus tard », dans Mes parcours.'); }
   const d = shareData(); L.unshift({ id: Date.now().toString(36), d: new Date().toISOString(), city: CITY, g: code, t: d ? mineTitle(d) : 'Parcours', km: Math.round(S.route.len / 100) / 10, up: Math.round(S.route.up || 0) }); todoSave(L);
-  keepMark(true); toast('Gardé dans Mes parcours, rubrique « À courir ».', 3000); track('garder', 'Parcours gardé pour plus tard');
+  keepMark(true); toast('Ajouté à « Pour plus tard », dans Mes parcours.', 3000); track('garder', 'Parcours gardé pour plus tard');
 };
 function renderTodo(items) {
   const T = todoLoad(); if (!T.length) return 0;
-  const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = 'À courir'; items.appendChild(hh);
+  const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = 'Pour plus tard'; items.appendChild(hh);
   for (const e of T) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
     b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
     const other = (e.city || 'paris') !== CITY && CITIES[e.city];
-    b.querySelector('.k').textContent = 'Gardé le ' + mineDate(e.d, { day: 'numeric', month: 'short' }) + (other ? ' · ' + CITIES[e.city].name : '');
+    b.querySelector('.k').textContent = 'Ajouté le ' + mineDate(e.d, { day: 'numeric', month: 'short' }) + (other ? ' · ' + CITIES[e.city].name : '');
     b.querySelector('.t').textContent = e.t || 'Parcours';
     b.querySelector('.s').textContent = [e.up ? e.up + ' m D+' : '', 'pas encore couru'].filter(Boolean).join(' · ');
     b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;

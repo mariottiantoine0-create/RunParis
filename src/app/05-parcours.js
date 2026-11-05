@@ -137,7 +137,7 @@ $('#p-apply').onclick = () => { if (S.race) showRace(S.race, parseFloat(String($
 
 // résumé des réglages utilisés pour les résultats affichés
 function renderSummary() {
-  const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.short && S.mode === 'ab' && !S.endFree ? 'Au plus court' : S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
+  const kf = v => fmt(v, v % 1 ? 1 : 0); const kmTxt = S.short && S.mode === 'ab' && !S.endFree ? 'Au plus direct' : S.unit === 'min' ? `${$('#dur').value} min (${fmt(S.lastKm || 0)} km)` : `${kf(S.lastKm || parseFloat($('#km').value) || 0)} km`;
   const where = !S.start ? '—' : /^Chez moi/.test(S.start.name) ? 'Chez moi' : S.start.name.replace(/^Point sur la carte · /, '');
   const mode = (S.kind === 'green' ? 'Vert · ' : S.kind === 'discover' ? 'Découverte · ' : '') + (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : `Jusqu'à ${S.end ? S.end.name : 'l’arrivée'}`);
   $('#sum-t').textContent = `${mode} · ${kmTxt} · ${where}`;
@@ -294,7 +294,7 @@ async function generate(isAgain) {
   }
   S.lastKm = km; $('#stale').hidden = true;
   if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
-  if (r) track(isAgain ? 'autres' : 'generer', (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : 'A-B') + ' ' + (short ? 'au plus court' : Math.round(target / 1000) + ' km') + (S.depNow === false ? ' (heure choisie)' : ''));
+  if (r) track(isAgain ? 'autres' : 'generer', (S.mode === 'loop' ? 'Boucle' : S.endFree ? 'Aller simple' : 'A-B') + ' ' + (short ? 'direct' : Math.round(target / 1000) + ' km') + (S.depNow === false ? ' (heure choisie)' : ''));
   if (r && !errs.length) {
     S.alts = r.alts || [r]; S.baseNotes = notes; S.lastTarget = short ? r.len : target; S.lastD = dplus;
     renderSummary(); showView('res'); selectAlt(0);

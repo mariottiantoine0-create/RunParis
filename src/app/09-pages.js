@@ -126,7 +126,7 @@ const mShort = n => { if (!n) return ''; if (/^Chez moi/.test(n)) return 'chez m
 function msync() {
   if (!MPHR) return;
   const km = parseFloat(String($('#km').value).replace(',', '.')), mn = parseFloat($('#dur').value);
-  $('#mf-dist').textContent = S.short && S.mode === 'ab' && !S.endFree ? 'au plus court' : S.unit === 'min' ? (mn >= 60 ? `${Math.floor(mn / 60)} h${mn % 60 ? ' ' + String(Math.round(mn % 60)).padStart(2, '0') : ''}` : `${Math.round(mn || 0)} min`) : `${fmt(km || 0, km % 1 ? 1 : 0)} km`;
+  $('#mf-dist').textContent = S.short && S.mode === 'ab' && !S.endFree ? 'au plus direct' : S.unit === 'min' ? (mn >= 60 ? `${Math.floor(mn / 60)} h${mn % 60 ? ' ' + String(Math.round(mn % 60)).padStart(2, '0') : ''}` : `${Math.round(mn || 0)} min`) : `${fmt(km || 0, km % 1 ? 1 : 0)} km`;
   $('#mf-arr').textContent = S.mode === 'loop' ? 'en boucle' : S.endFree ? 'n’importe où' : S.end ? 'jusqu’à ' + mShort(S.end.name) : 'jusqu’à un lieu';
   $('#mf-dep').textContent = S.start ? mShort(S.start.name) : 'choisis ton départ';
   const kind = { classic: 'Classique', green: 'Vert', discover: 'Découverte' }[S.kind] || 'Classique';

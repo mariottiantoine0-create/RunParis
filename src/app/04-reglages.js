@@ -90,6 +90,7 @@ function setShort(on) {
   S.short = !!on && S.mode === 'ab' && !S.endFree;
   $('#u-short').setAttribute('aria-pressed', S.short); ['km', 'min'].forEach(k => $('#u-' + k).setAttribute('aria-pressed', !S.short && k === S.unit));
   document.querySelector('.stepper').hidden = S.short; $('#chips-km').hidden = S.short || S.unit !== 'km'; $('#chips-min').hidden = S.short || S.unit !== 'min';
+  $('#conv').hidden = S.short; // durée estimée : sans objet tant que la distance n'est pas connue
   if (typeof msync === 'function') msync(); if (MCUR === 'dist') $('#msheet-ok').textContent = MSH.dist.ok();
 }
 $('#u-km').onclick = () => { setShort(false); setUnit('km'); }; $('#u-min').onclick = () => { setShort(false); setUnit('min'); }; $('#u-short').onclick = () => setShort(true);
