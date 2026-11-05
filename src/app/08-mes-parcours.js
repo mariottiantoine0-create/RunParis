@@ -69,16 +69,19 @@ $('#keep').onclick = () => {
   if (!S.route) return; const code = routeCode(S.route); if (!code) return toast('Ce parcours ne peut pas être gardé.');
   const L = todoLoad(); if (L.some(x => x.g === code)) { keepMark(true); return toast('Déjà dans « Pour plus tard », dans Mes parcours.'); }
   const d = shareData(); L.unshift({ id: Date.now().toString(36), d: new Date().toISOString(), city: CITY, g: code, t: d ? mineTitle(d) : 'Parcours', km: Math.round(S.route.len / 100) / 10, up: Math.round(S.route.up || 0) }); todoSave(L);
-  keepMark(true); toast('Ajouté à « Pour plus tard », dans Mes parcours.', 3000); track('garder', 'Parcours gardé pour plus tard');
+  keepMark(true); // message avec un lien vers la rubrique (retour du 5/11)
+  const t = $('#toast'); t.innerHTML = ''; t.append('Ajouté à « Pour plus tard ».'); const v = document.createElement('button'); v.type = 'button'; v.className = 'undo'; v.textContent = 'Voir';
+  v.onclick = () => { t.hidden = true; S.mineView = 'runs'; setTab('mine'); setTimeout(() => { const h = $('#mine-later'); if (h) h.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); };
+  t.appendChild(v); t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 5000); track('garder', 'Parcours gardé pour plus tard');
 };
 function renderTodo(items) {
   const T = todoLoad(); if (!T.length) return 0;
-  const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.textContent = 'Pour plus tard'; items.appendChild(hh);
+  const hh = document.createElement('div'); hh.className = 'lbl mine-m'; hh.id = 'mine-later'; hh.textContent = 'Pour plus tard'; items.appendChild(hh);
   for (const e of T) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'race mine-card';
     b.innerHTML = mineThumb(e.g) + '<span class="mine-tx"><span class="k"></span><span class="t"></span><span class="s"></span></span><span class="n"></span>';
     const other = (e.city || 'paris') !== CITY && CITIES[e.city];
-    b.querySelector('.k').textContent = 'Ajouté le ' + mineDate(e.d, { day: 'numeric', month: 'short' }) + (other ? ' · ' + CITIES[e.city].name : '');
+    b.querySelector('.k').textContent = 'Créé le ' + mineDate(e.d, { day: 'numeric', month: 'short' }) + (other ? ' · ' + CITIES[e.city].name : '');
     b.querySelector('.t').textContent = e.t || 'Parcours';
     b.querySelector('.s').textContent = [e.up ? e.up + ' m D+' : '', 'pas encore couru'].filter(Boolean).join(' · ');
     b.querySelector('.n').innerHTML = `${fmt(e.km || 0, 1)}<small> km</small>`;
