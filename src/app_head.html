@@ -952,6 +952,21 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
 #city-note{margin:12px 16px 0}
 #city-note .run-choice{margin-top:10px}
 @media (min-width:861px){#citysheet{position:fixed;right:auto;bottom:auto;width:320px;max-height:none;border-radius:8px;box-shadow:var(--shadow-pop);padding:0 0 4px}#citysheet .msheet-grab{display:none}#citysheet .msheet-h{padding:12px 12px 8px 16px}#citysheet .msheet-h h2{font-size:22px}#citysheet .msheet-b{padding:4px 12px 12px}}
+
+/* choix des parcours allégé (retour de Jeanne, 10/11, design system 2.27) : propositions en onglets, détails repliés, barre d'actions */
+.alts-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+#again2{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--accent);min-height:36px;padding:0 2px}#again2 .ico{width:16px;height:16px}#again2[hidden]{display:none}
+#alts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+#alts .alt{padding:8px 10px;gap:2px;border-radius:8px}#alts .alt[aria-pressed="true"]{padding:7px 9px}
+#alts .alt .t,#alts .alt .s,#alts .alt .v{display:none}
+#alts .alt .k{line-height:1.2}
+#alts .alt .d{font-stretch:75%;font-weight:800;font-size:22px;line-height:1.05;color:var(--ink);font-variant-numeric:tabular-nums}
+.passe{margin:10px 0 0;font-size:15px;line-height:1.35}.passe span{color:var(--muted)}
+#more{margin-top:8px}#more>summary{min-height:40px;display:flex;align-items:center;white-space:pre} /* repli « details.more » du design system (▾ / ▴) */
+.acts{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;margin-top:6px}
+.acts .act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;border:0;background:none;border-radius:4px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;padding:4px 2px}
+.acts .act:hover{background:var(--field)}.acts .act .ico{width:24px;height:24px}.acts .act[aria-pressed="true"]{color:var(--accent)}.acts .act[hidden]{display:none}
+html:not(.appf) #acts{display:none}html.appf #foot-res .btnrow,html.appf #foot-res .foot-links{display:none!important}
 </style>
 
 <div class="app">
@@ -1151,7 +1166,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <button class="editbtn" id="edit" aria-label="Modifier les réglages"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Modifier</button>
       </div>
       <div class="stale" id="stale" hidden><span>Réglages modifiés sur la carte.</span><button id="recalc">Recalculer</button></div>
-      <span class="lbl" id="alts-h" hidden></span>
+      <div class="alts-top"><span class="lbl" id="alts-h" hidden></span><button type="button" class="textbtn" id="again2" hidden>Voir d’autres<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button></div>
       <div class="alts" id="alts" role="group" aria-label="Propositions"></div>
       <div class="notes" id="notes"></div>
       <div class="detail" id="detail">
@@ -1161,9 +1176,12 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
           <div class="stat sig"><b id="st-sig">–</b><span>Feux</span></div>
           <div class="stat"><b id="st-time">–</b><span>Temps</span></div>
         </div>
+        <p class="passe" id="passe" hidden></p>
+        <details class="more" id="more"><summary>Détails du parcours</summary>
         <div class="profile"><canvas id="prof" aria-label="Profil altimétrique"></canvas></div>
         <p class="via" id="via"></p>
         <button type="button" class="fb-link" id="fb-open" hidden>Un souci sur ce parcours ? Signaler un problème ou donner un avis</button>
+        </details>
       </div>
     </div>
 
@@ -1190,6 +1208,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
       <button type="button" class="btn primary" id="run-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Suivre le parcours</button>
       <div class="btnrow"><button class="btn primary" id="gpx">Exporter GPX</button><button class="btn ghost" id="copy">Copier</button><button class="btn ghost" id="done" hidden><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Je l’ai fait</button></div>
       <div class="foot-links"><button class="textbtn" id="send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer le parcours</button><button class="textbtn" id="keep" hidden aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Pour plus tard</button><button class="textbtn" id="again" title="Autres propositions avec les mêmes réglages"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Voir 3 autres parcours</button><button class="textbtn" id="copy-m" hidden>Copier le GPX</button></div>
+      <div class="acts" id="acts" role="group" aria-label="Autres actions"><button type="button" class="act" id="a-send"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l4-4"/><path d="M8.5 11.5l-2 2a3.5 3.5 0 0 0 5 5l2-2"/><path d="M15.5 12.5l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>Envoyer</button><button type="button" class="act" id="a-keep" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg><span>Plus tard</span></button><button type="button" class="act" id="a-gpx"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>GPX</button><button type="button" class="act" id="a-done" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Je l’ai fait</button></div>
     </div>
   </aside>
 

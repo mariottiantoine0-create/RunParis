@@ -348,16 +348,18 @@ function altLabels(alts) {
   }
   return L.map((l, i) => l || (i === 0 ? 'Recommandé' : 'Autre itinéraire'));
 }
+// libellés courts des onglets de propositions : « Le moins de feux » → « Moins de feux »
+const shortLabel = l => (l || '').replace(/^Le plus proche de la distance$/, 'Distance juste').replace(/^Le (plus|moins) /, (m, w) => w === 'plus' ? 'Plus ' : 'Moins ');
 function renderAlts() {
   const box = $('#alts'); box.innerHTML = '';
   const n = S.alts ? S.alts.length : 0;
-  $('#alts-h').hidden = !n; $('#alts-h').textContent = n > 1 ? `${n} parcours trouvés` : '1 parcours trouvé';
+  $('#alts-h').hidden = !n; $('#alts-h').textContent = n > 1 ? `${n} parcours trouvés` : '1 parcours trouvé'; $('#again2').hidden = !n;
   if (!n) return;
   const labels = altLabels(S.alts);
   S.alts.forEach((a, i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'alt'; b.setAttribute('aria-pressed', a === S.route);
-    b.innerHTML = `<span class="k"></span><span class="t"></span><span class="s"></span><span class="v"></span>`;
-    b.querySelector('.k').textContent = `${String(i + 1).padStart(2, '0')} · ${labels[i]}${a.kind === 'aller-retour' ? ' · aller-retour' : ''}`;
+    b.innerHTML = `<span class="k"></span><span class="d"></span><span class="t"></span><span class="s"></span><span class="v"></span>`;
+    b.querySelector('.k').textContent = shortLabel(labels[i]) + (a.kind === 'aller-retour' ? ' · aller-retour' : ''); b.querySelector('.d').textContent = `${fmt(a.len / 1000, 1)} km`; b.setAttribute('aria-label', `${labels[i]}, ${fmt(a.len / 1000, 1)} km`);
     b.querySelector('.t').textContent = altNames(a);
     if (a.turns == null) a.turns = a.edges && a.edges.length ? E.turnStats(a.edges).turns : null;
     b.querySelector('.s').innerHTML = [`${fmt(a.len / 1000)} km`, `${Math.round(a.up)} m D+`, `${a.feux} feux`, ...(a.turns != null ? [`${a.turns} virages`] : []), fmtDur(a.len / 1000 * pace()), ...(S.kind === 'green' ? [`${Math.round(a.green * 100)} % vert`] : [])].map(t => `<span class="i">${t}</span>`).join(' · '); // retour à la ligne seulement entre deux infos
@@ -379,7 +381,7 @@ function fitRoute(onlyStart) {
 function showRoute(r, notes) {
   S.lastNotes = notes; const n = $('#notes'); n.innerHTML = ''; for (const x of notes) { const d = document.createElement('div'); d.className = 'note' + (x && x.err ? ' err' : x && x.info ? ' info' : ''); d.setAttribute('role', x && x.err ? 'alert' : 'status'); if (x && x.b) { const b = document.createElement('b'); b.className = 'nt'; b.textContent = x.b; d.appendChild(b); d.appendChild(document.createTextNode(x.t)); } else d.textContent = typeof x === 'string' ? x : x.t; n.appendChild(d); }
   $('#detail').hidden = !r; const rcv = !!r && r === S.recv; $('#view-res').classList.toggle('recv', rcv); /* parcours reçu : une seule proposition, pas de liste */ if (r) linkErr(false);
-  if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; drawProfile(null); return; }
+  if (!r) { ['#st-km', '#st-up', '#st-sig', '#st-time'].forEach(s => $(s).textContent = '–'); $('#via').textContent = ''; $('#passe').hidden = true; drawProfile(null); return; }
   $('#st-km').innerHTML = `${fmt(r.len / 1000, 1)}<small>km</small>`;
   $('#st-up').innerHTML = `${Math.round(r.up)}<small>m</small>`;
   $('#st-sig').textContent = r.feux;
@@ -398,6 +400,8 @@ function showRoute(r, notes) {
   if (r.lit != null && S.lastDep && S.lastDep.night && S.tab !== 'race') sp.appendChild(document.createTextNode(` · ${Math.round(r.lit * 100)} % éclairé`));
   const rt = routeTrees(r); if (rt) sp.appendChild(document.createTextNode(` · ${rt.length.toLocaleString('fr-FR')} arbres le long du parcours`));
   $('#via').appendChild(sp);
+  { const ps = $('#passe'); ps.innerHTML = ''; const lab = document.createElement('span'); const what = r.sightsN ? r.sights.slice(0, 3).join(', ') : top.slice(0, 2).map(shortStreet).join(', ');
+    lab.textContent = r.sightsN ? 'Passe par ' : 'Par '; ps.append(lab, what); ps.hidden = !what; }
   // points d'eau sur le parcours
   const rf = routeFountains(r);
   if (rf) { const box = document.createElement('div'); box.className = 'water-box';
@@ -472,6 +476,11 @@ $('#gpx').onclick = async () => {
     toast('GPX enregistré : renomme-le en .gpx pour ta montre ou Strava.', 4500);
   } catch (e) { if (e && e.code === 'declined') return; toast('Export impossible ici : utilise « Copier ».'); }
 };
+// barre d'actions de l'app : mêmes actions que les boutons d'origine (gardés pour le site)
+$('#a-send').onclick = () => $('#send').click(); $('#a-keep').onclick = () => $('#keep').click(); $('#a-gpx').onclick = () => $('#gpx').click(); $('#a-done').onclick = () => $('#done').click(); $('#again2').onclick = () => $('#again').click();
+{ const mirror = (src, dst, txt) => new MutationObserver(() => { const on = $(src).getAttribute('aria-pressed') === 'true'; $(dst).setAttribute('aria-pressed', on); if (txt) $(dst).querySelector('span').textContent = on ? txt[1] : txt[0]; }).observe($(src), { attributes: true, attributeFilter: ['aria-pressed'] });
+  mirror('#keep', '#a-keep', ['Plus tard', 'Gardé']); mirror('#done', '#a-done'); }
+$('#more').addEventListener('toggle', () => { if ($('#more').open && S.route) drawProfile(S.route); });
 $('#copy').onclick = async () => {
   const g = gpx(); if (!g) return toast("Génère d'abord un parcours.");
   try { await navigator.clipboard.writeText(g); toast('GPX copié : colle-le dans un fichier .gpx.'); track('copier', 'Copier GPX'); } catch { toast('Copie refusée par le navigateur.'); }
