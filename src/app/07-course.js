@@ -141,6 +141,20 @@ const navSayDist = d => d >= 1000 ? fmt(d / 1000, 1) + ' kilomètre' + (d >= 200
 function navSay(t) { if (!NAV.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {} }
 // distance faite : parcours suivi, puis kilomètres en plus depuis le point où l'on a quitté le tracé (arrivée, ou presque arrivée)
 const navDone = () => { const t = NAV.base + (NAV.free ? (NAV.freeFrom != null ? NAV.freeFrom : NAV.n.L) + NAV.extra : NAV.prog); return NAV.solo ? t : Math.max(t, NAV.realD || 0); };
+// temps et dénivelé de chaque kilomètre (retour de Nolan, 10/11) : relevés au passage de chaque km, pauses déduites
+function navEle(x, y) { const v = E.nearest(x, y); return v >= 0 && Math.hypot(G.NX[v] - x, G.NY[v] - y) < 60 ? G.NZ[v] : null; }
+function navSplit(x, y) {
+  if (!NAV.t0 || NAV.paused || !NAV.splits) return;
+  const d = navDone(), z = navEle(x, y), T = navElapsed(), s = NAV.splits; if (NAV.spZ0 == null && z != null) NAV.spZ0 = z;
+  while (d >= (s.length + 1) * 1000) { const p = s[s.length - 1], pT = p ? p.T : 0, pZ = p ? p.Z : NAV.spZ0; s.push({ T, Z: z, secs: Math.round(T - pT), dz: z != null && pZ != null ? Math.round(z - pZ) : null }); }
+  NAV.spLast = { d, T, z };
+}
+function navSplitsOut() { // [secondes, dénivelé, (mètres si km incomplet)]
+  const s = NAV.splits || [], l = NAV.spLast, out = s.map(q => q.dz == null ? [q.secs] : [q.secs, q.dz]);
+  if (l) { const p = s[s.length - 1], rest = l.d - s.length * 1000; if (rest >= 100) out.push([Math.round(l.T - (p ? p.T : 0)), l.z != null && (p ? p.Z : NAV.spZ0) != null ? Math.round(l.z - (p ? p.Z : NAV.spZ0)) : 0, Math.round(rest)]); }
+  return out.length ? out : null;
+}
+function navMove() { const t = NAV.trail || [], l = t[t.length - 1]; if (!l) return null; for (let k = t.length - 2; k >= 0; k--) { const dx = l[0] - t[k][0], dy = l[1] - t[k][1], d = Math.hypot(dx, dy); if (d >= 12) return [dx / d, dy / d]; } return null; }
 // distance GPS réelle de toute la course (détours compris), comme Strava : pas de 5 m au moins, sauts et vitesses impossibles ignorés (retour du 2/11)
 function navReal(x, y, c, t) {
   const l = NAV.lastR; if (!l) { NAV.lastR = [x, y, t]; return; }
@@ -210,6 +224,7 @@ function runPrep() {
 const SOLO_N = { L: 0, pts: [[0, 0]], man: [], runs: [], idx: () => 0, at: () => [0, 0] };
 function runStart() {
   $('#runp').hidden = true; const solo = !!NAV.soloNext;
+  NAV.splits = []; NAV.spZ0 = null; NAV.spLast = null; SH.splits = null; // temps de chaque kilomètre
   Object.assign(NAV, { free: false, extra: 0, track: [], trail: [], okT: 0, streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
     r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null, gpsT: [], moved: 0, p0: 0, freeFrom: null, arrT: null, realD: 0, lastR: null, realArr: null });
   if (solo) { // course libre (D-99) : pas de parcours, le chrono part tout de suite, la trace est enregistrée
@@ -243,6 +258,7 @@ function runStop() {
   setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
 }
 function runFinish(arrived) {
+  SH.splits = navSplitsOut();
   if (NAV.solo) { const secs = navElapsed(), tr = NAV.track.slice(), dist = NAV.extra, up = NAV.up; runStop(); return soloFinish(tr, dist, secs, up); }
   if (NAV.arrT != null && (NAV.extra || 0) < 150) { NAV.extra = 0; if (NAV.realArr != null) NAV.realD = NAV.realArr; NAV.pausedMs += Math.max(0, navElapsed() - NAV.arrT) * 1000; } // arrêté à l'arrivée : ni temps ni mètres de flânerie
   const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, base = NAV.base || 0, done = navDone();
@@ -350,6 +366,7 @@ function navFix(p) {
   const c = p.coords; if (c.accuracy > 60) return; // trop imprécis : on attend la suivante
   const [x, y] = E.toXY(c.latitude, c.longitude), n = NAV.n;
   const prevPos = NAV.pos; NAV.pos = [x, y];
+  navSplit(x, y);
   NAV.head = c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.8 ? c.heading : null;
   if (NAV.free) { // course libre après l'arrivée : on compte les km et les rues en plus
     if (NAV.paused) return navUI();
@@ -559,9 +576,17 @@ async function navReroute(kind, auto) {
   try {
     if (kind === 'back') { // rejoindre le parcours un peu plus loin (pas de demi-tour)
       const dT = Math.min(n.L - 20, from + 100);
-      if (R.edges && R.edges.length) { let c = 0, k = 0; while (k < R.edges.length - 1 && c + G.LEN[R.edges[k][0]] <= dT) { c += G.LEN[R.edges[k][0]]; k++; }
-        const [e0, f0] = R.edges[k], T = f0 ? G.ea[e0] : G.eb[e0], leg = E.routeThrough([A, T]);
-        if (leg) { st = E.statsOf(leg.concat(R.edges.slice(k)), A); rejoin = leg.reduce((s, [e]) => s + G.LEN[e], 0); } }
+      if (R.edges && R.edges.length) { // point de retour le plus rentable devant toi, sans demi-tour quand c'est possible (retour de Jeanne, 10/11)
+        const mv = navMove(); let best = null, c = 0, k = 0;
+        for (const ahead of [60, 150, 300, 500, 800, 1200]) { const dA = Math.min(n.L - 20, from + ahead);
+          while (k < R.edges.length - 1 && c + G.LEN[R.edges[k][0]] <= dA) { c += G.LEN[R.edges[k][0]]; k++; }
+          const [e0, f0] = R.edges[k], T = f0 ? G.ea[e0] : G.eb[e0], leg = T === A ? [] : E.routeThrough([A, T]); if (!leg) continue;
+          const len = leg.reduce((s, [e]) => s + G.LEN[e], 0); let pen = 0;
+          if (mv && leg.length) { const p = E.edgePts(leg[0][0]); if (!leg[0][1]) p.reverse(); const q = p[1] || p[0], dx = q[0] - p[0][0], dy = q[1] - p[0][1], l = Math.hypot(dx, dy) || 1; if ((dx * mv[0] + dy * mv[1]) / l < -0.5) pen = 400; } // il faudrait faire demi-tour
+          const sc = len + pen + 0.35 * Math.max(0, (c - from) - len); // sauter beaucoup de parcours compte aussi
+          if (!best || sc < best.sc) best = { sc, leg, k, len };
+          if (dA >= n.L - 20) break; }
+        if (best) { st = E.statsOf(best.leg.concat(R.edges.slice(best.k)), A); rejoin = best.len; } }
       else { const [tx, ty] = n.at(dT), T = E.nearest(tx, ty), leg = T >= 0 ? E.routeThrough([A, T]) : null;
         if (leg) { const pts = []; for (const [e, fa] of leg) { const q = E.edgePts(e); if (!fa) q.reverse(); q.forEach((p, i) => (i || !pts.length) && pts.push(p)); } rejoin = leg.reduce((s, [e]) => s + G.LEN[e], 0); for (let i = n.idx(dT) + 1; i < n.pts.length; i++) pts.push(n.pts[i]); st = geomRoute(pts); } }
     } else { // continuer par ici : fin du parcours recalculée jusqu'à l'arrivée, à distance égale

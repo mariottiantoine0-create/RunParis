@@ -124,12 +124,22 @@ function mineOpen(i) {
   $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
   $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
   $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
+  $('#md-splits').innerHTML = e.sp && e.sp.length ? splitsHTML(e.sp) : ''; $('#md-splits').hidden = !(e.sp && e.sp.length);
   const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
   const has = !!(e.g && decPoly(e.g).length > 1), run = e.tr || e.g; // tr : ce qui a vraiment été couru
   $('#md-old').hidden = has; $('#md-old').textContent = e.solo ? 'Course faite hors de la carte : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.' : 'Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.'; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
   // la carte montre la sortie
   if (has) { const st = routeFromCode(run); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
   draw();
+}
+// tableau des kilomètres : allure de chaque km (barre plus longue = plus rapide), le plus rapide en couleur, dénivelé du km
+function splitsHTML(sp) {
+  const rows = sp.map((q, i) => { const m = q[2] || 1000; return { km: q[2] ? fmt(q[2] / 1000, 2) : String(i + 1), pace: q[0] / (m / 1000), dz: q[1], full: !q[2] }; });
+  const P = rows.map(r => r.pace), lo = Math.min(...P), hi = Math.max(...P), fast = rows.filter(r => r.full).reduce((b, r) => !b || r.pace < b.pace ? r : b, null);
+  const w = p => hi > lo ? 45 + 55 * (hi - p) / (hi - lo) : 100;
+  return '<div class="lbl">Par kilomètre</div><div class="spl-h"><span>Km</span><span>Allure /km</span><span>Dénivelé</span></div>' + rows.map(r =>
+    `<div class="spl-r${r === fast && rows.length > 1 ? ' best' : ''}"><span>${r.km}</span><span class="spl-b"><i style="width:${w(r.pace).toFixed(0)}%"></i><b>${fmtClock(r.pace)}</b></span><span>${r.dz == null ? '–' : (r.dz > 0 ? '+' : '') + r.dz + ' m'}</span></div>`).join('')
+    + (fast && rows.length > 1 ? `<p class="spl-note">Km le plus rapide : le ${fast.km === '1' ? '1er' : fast.km + 'e'}, en ${fmtClock(fast.pace)}.</p>` : '');
 }
 function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur); }
 $('#tab-mine').onclick = () => setTab('mine');

@@ -93,6 +93,20 @@ a.logo{color:inherit;text-decoration:none}
 .lbl{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center}
 .seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+/* temps par kilomètre d'une sortie (retour de Nolan, 10/11) : km, barre d'allure (plus longue = plus rapide), dénivelé */
+.mine-splits{margin:18px 0 4px}
+.mine-splits .lbl{margin-bottom:8px}
+.spl-h,.spl-r{display:grid;grid-template-columns:44px 1fr 58px;align-items:center;gap:10px}
+.spl-h{font-size:12px;font-weight:700;color:var(--muted);padding:0 0 6px;border-bottom:1px solid var(--line)}
+.spl-h span:last-child,.spl-r span:last-child{text-align:right}
+.spl-r{min-height:36px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.spl-r>span:first-child{font-weight:700}
+.spl-b{position:relative;height:26px;display:flex;align-items:center}
+.spl-b i{position:absolute;left:0;top:0;bottom:0;background:var(--accent-fill);border-radius:3px}
+.spl-b b{position:relative;padding-left:8px;font-weight:800;font-stretch:75%;font-size:17px}
+.spl-r.best .spl-b i{background:var(--accent)}.spl-r.best .spl-b b{color:var(--accent-ink)}
+.spl-r>span:last-child{color:var(--muted);font-size:14px}
+.spl-note{font-size:13px;color:var(--muted);margin:8px 0 0}
 .seg button{flex:1;border:0;background:transparent;padding:9px 4px;border-radius:9px;font-weight:600;font-size:14px;white-space:nowrap;color:var(--muted);min-height:40px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
 .seg.sm button{padding:6px 4px;font-size:13px;min-height:34px}
@@ -1008,6 +1022,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
         <p class="mine-sub" id="md-sub"></p>
         <div class="mine-hero" id="md-km"></div>
         <div class="mine-stats" id="md-stats"></div>
+        <div class="mine-splits" id="md-splits" hidden></div>
         <p class="mine-extra" id="md-extra" hidden></p>
         <div class="note info" id="md-old" hidden>Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.</div>
         <div class="mine-acts">
@@ -1187,7 +1202,7 @@ html.native .lnk-err{top:calc(env(safe-area-inset-top) + 8px)}
     </div>
 
     <div class="pfoot" id="foot-set">
-      <button class="btn primary" id="gen">Générer 3 parcours</button>
+      <button class="btn primary" id="gen">Trouver mon parcours</button>
     </div>
     <div class="pfoot" id="foot-res" hidden>
       <button type="button" class="btn primary" id="run-go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Suivre le parcours</button>
@@ -3766,7 +3781,7 @@ async function generate(isAgain) {
     console.error(e); r = null; errs.push('Le calcul a échoué de façon inattendue. Réessaie ; si ça se reproduit, change un réglage.');
   } finally {
     bar.style.width = '100%'; setTimeout(() => bar.style.width = '0', 300);
-    busy = false; $('#gen').disabled = false; $('#again').disabled = false; $('#recalc').disabled = false; $('#gen').textContent = 'Générer 3 parcours'; $('#again').innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Voir 3 autres parcours';
+    busy = false; $('#gen').disabled = false; $('#again').disabled = false; $('#recalc').disabled = false; $('#gen').textContent = 'Trouver mon parcours'; $('#again').innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>Voir 3 autres parcours';
   }
   S.lastKm = km; $('#stale').hidden = true;
   if (r && r.alts) for (const a of r.alts) E.sightsOn(a, SIGHTS);
@@ -3970,7 +3985,7 @@ function shareData() {
   return { pts, km, up: Math.round(r.up || 0), loop, dep, arr, race: !r.solo && S.tab === 'race' && !!S.race, date, solo: !!r.solo };
 }
 function shOpen(secs, doneM) {
-  const meas = typeof secs === 'number';
+  const meas = typeof secs === 'number', sp = meas && SH.splits && SH.splits.length ? SH.splits : undefined; SH.splits = null;
   const d = shareData(); if (!d) return toast("Génère d'abord un parcours.");
   if (meas && typeof doneM === 'number') d.km = doneM / 1000;
   // ce qui a vraiment été couru (tours en plus, détours) : la trace GPS remplace le parcours prévu pour l'image et le lien (retour du 2/11)
@@ -3982,7 +3997,7 @@ function shOpen(secs, doneM) {
   $('#shx-name-l').hidden = !d.solo;
   $('#shx-lede').textContent = d.solo ? `${fmt(d.km, 1)} km ${d.loop ? 'en boucle autour de ' + d.dep : 'de ' + d.dep + ' à ' + d.arr}, mesurés pendant ta course. Ton tracé est gardé dans « Mes parcours » : tu pourras le refaire ou l’envoyer.` : `${fmt(d.km, 1)} km ${d.race ? 'sur « ' + d.dep + ' »' : d.loop ? 'autour de ' + d.dep : 'depuis ' + d.dep}${meas ? ', mesurés pendant ta course' : ''}${meas && SH.extra ? ', dont ' + fmt(SH.extra.km, 1) + ' km en plus' + (SH.extra.streets.length ? ' (' + SH.extra.streets.join(', ') + ')' : '') : ''}. Immortalise ta sortie et partage-la.`;
   $('#shx').hidden = false; $('#shx-bravo').hidden = false; $('#shx-out').hidden = true; sbSync();
-  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), tr: gp ? encPoly(gp.map(([x, y]) => E.toLL(x, y))) : undefined, secs: Math.round(meas ? secs : d.km * pace()), meas, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined, pk: !d.solo && !d.race && S.vias.some(v => v.track) ? 1 : undefined };
+  const entry = { id: Date.now(), city: CITY, d: new Date().toISOString(), km: Math.round(d.km * 10) / 10, up: d.up, dep: d.dep, arr: d.arr, loop: d.loop, race: d.race, t: mineTitle(d), g: routeCode(S.route), tr: gp ? encPoly(gp.map(([x, y]) => E.toLL(x, y))) : undefined, secs: Math.round(meas ? secs : d.km * pace()), meas, sp, extra: meas && SH.extra ? SH.extra : undefined, solo: d.solo ? 1 : undefined, pk: !d.solo && !d.race && S.vias.some(v => v.track) ? 1 : undefined };
   const L = mineLoad(); if (SH.entryRoute === S.route && SH.entryId && L.some(x => x.id === SH.entryId)) { const i = L.findIndex(x => x.id === SH.entryId); entry.id = SH.entryId; L[i] = entry; } else L.unshift(entry);
   mineSave(L); SH.entryId = entry.id; SH.entryRoute = S.route; SH.fresh = true; if (d.solo) $('#shx-name').value = entry.t;
   badgeAnnounce(badgeSync());
@@ -4246,6 +4261,20 @@ const navSayDist = d => d >= 1000 ? fmt(d / 1000, 1) + ' kilomètre' + (d >= 200
 function navSay(t) { if (!NAV.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {} }
 // distance faite : parcours suivi, puis kilomètres en plus depuis le point où l'on a quitté le tracé (arrivée, ou presque arrivée)
 const navDone = () => { const t = NAV.base + (NAV.free ? (NAV.freeFrom != null ? NAV.freeFrom : NAV.n.L) + NAV.extra : NAV.prog); return NAV.solo ? t : Math.max(t, NAV.realD || 0); };
+// temps et dénivelé de chaque kilomètre (retour de Nolan, 10/11) : relevés au passage de chaque km, pauses déduites
+function navEle(x, y) { const v = E.nearest(x, y); return v >= 0 && Math.hypot(G.NX[v] - x, G.NY[v] - y) < 60 ? G.NZ[v] : null; }
+function navSplit(x, y) {
+  if (!NAV.t0 || NAV.paused || !NAV.splits) return;
+  const d = navDone(), z = navEle(x, y), T = navElapsed(), s = NAV.splits; if (NAV.spZ0 == null && z != null) NAV.spZ0 = z;
+  while (d >= (s.length + 1) * 1000) { const p = s[s.length - 1], pT = p ? p.T : 0, pZ = p ? p.Z : NAV.spZ0; s.push({ T, Z: z, secs: Math.round(T - pT), dz: z != null && pZ != null ? Math.round(z - pZ) : null }); }
+  NAV.spLast = { d, T, z };
+}
+function navSplitsOut() { // [secondes, dénivelé, (mètres si km incomplet)]
+  const s = NAV.splits || [], l = NAV.spLast, out = s.map(q => q.dz == null ? [q.secs] : [q.secs, q.dz]);
+  if (l) { const p = s[s.length - 1], rest = l.d - s.length * 1000; if (rest >= 100) out.push([Math.round(l.T - (p ? p.T : 0)), l.z != null && (p ? p.Z : NAV.spZ0) != null ? Math.round(l.z - (p ? p.Z : NAV.spZ0)) : 0, Math.round(rest)]); }
+  return out.length ? out : null;
+}
+function navMove() { const t = NAV.trail || [], l = t[t.length - 1]; if (!l) return null; for (let k = t.length - 2; k >= 0; k--) { const dx = l[0] - t[k][0], dy = l[1] - t[k][1], d = Math.hypot(dx, dy); if (d >= 12) return [dx / d, dy / d]; } return null; }
 // distance GPS réelle de toute la course (détours compris), comme Strava : pas de 5 m au moins, sauts et vitesses impossibles ignorés (retour du 2/11)
 function navReal(x, y, c, t) {
   const l = NAV.lastR; if (!l) { NAV.lastR = [x, y, t]; return; }
@@ -4315,6 +4344,7 @@ function runPrep() {
 const SOLO_N = { L: 0, pts: [[0, 0]], man: [], runs: [], idx: () => 0, at: () => [0, 0] };
 function runStart() {
   $('#runp').hidden = true; const solo = !!NAV.soloNext;
+  NAV.splits = []; NAV.spZ0 = null; NAV.spLast = null; SH.splits = null; // temps de chaque kilomètre
   Object.assign(NAV, { free: false, extra: 0, track: [], trail: [], okT: 0, streets: new Map(), curFree: '', on: true, voice: $('#run-voice').checked, wake: $('#run-wake').checked, buzz: NATIVE && $('#run-buzz').checked, t0: 0, wasPre: true, pausedMs: 0, paused: false, prog: 0, pos: null, off: 0, offOn: false, mi: 0, a1: -1, a2: -1, km: 1, follow: true, reacq: false, hiddenAt: 0,
     r: S.route, base: 0, doneSegs: [], oldRest: null, offRun: 0, offTrack: [], ask: false, offAt: 0, mode: null, rejoinD: 0, busy: false, headUp: navHeadPref(), lastJ: null, wrongOn: false, wrongN: 0, jz: null, solo, up: 0, prof: [], curZone: '', segBreak: false, saved: null, gpsT: [], moved: 0, p0: 0, freeFrom: null, arrT: null, realD: 0, lastR: null, realArr: null });
   if (solo) { // course libre (D-99) : pas de parcours, le chrono part tout de suite, la trace est enregistrée
@@ -4348,6 +4378,7 @@ function runStop() {
   setTimeout(() => { resize(); setSheet(sheet); fitRoute(); }, 30);
 }
 function runFinish(arrived) {
+  SH.splits = navSplitsOut();
   if (NAV.solo) { const secs = navElapsed(), tr = NAV.track.slice(), dist = NAV.extra, up = NAV.up; runStop(); return soloFinish(tr, dist, secs, up); }
   if (NAV.arrT != null && (NAV.extra || 0) < 150) { NAV.extra = 0; if (NAV.realArr != null) NAV.realD = NAV.realArr; NAV.pausedMs += Math.max(0, navElapsed() - NAV.arrT) * 1000; } // arrêté à l'arrivée : ni temps ni mètres de flânerie
   const secs = navElapsed(), started = !!NAV.t0, free = !!NAV.free, extra = NAV.extra || 0, base = NAV.base || 0, done = navDone();
@@ -4455,6 +4486,7 @@ function navFix(p) {
   const c = p.coords; if (c.accuracy > 60) return; // trop imprécis : on attend la suivante
   const [x, y] = E.toXY(c.latitude, c.longitude), n = NAV.n;
   const prevPos = NAV.pos; NAV.pos = [x, y];
+  navSplit(x, y);
   NAV.head = c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.8 ? c.heading : null;
   if (NAV.free) { // course libre après l'arrivée : on compte les km et les rues en plus
     if (NAV.paused) return navUI();
@@ -4664,9 +4696,17 @@ async function navReroute(kind, auto) {
   try {
     if (kind === 'back') { // rejoindre le parcours un peu plus loin (pas de demi-tour)
       const dT = Math.min(n.L - 20, from + 100);
-      if (R.edges && R.edges.length) { let c = 0, k = 0; while (k < R.edges.length - 1 && c + G.LEN[R.edges[k][0]] <= dT) { c += G.LEN[R.edges[k][0]]; k++; }
-        const [e0, f0] = R.edges[k], T = f0 ? G.ea[e0] : G.eb[e0], leg = E.routeThrough([A, T]);
-        if (leg) { st = E.statsOf(leg.concat(R.edges.slice(k)), A); rejoin = leg.reduce((s, [e]) => s + G.LEN[e], 0); } }
+      if (R.edges && R.edges.length) { // point de retour le plus rentable devant toi, sans demi-tour quand c'est possible (retour de Jeanne, 10/11)
+        const mv = navMove(); let best = null, c = 0, k = 0;
+        for (const ahead of [60, 150, 300, 500, 800, 1200]) { const dA = Math.min(n.L - 20, from + ahead);
+          while (k < R.edges.length - 1 && c + G.LEN[R.edges[k][0]] <= dA) { c += G.LEN[R.edges[k][0]]; k++; }
+          const [e0, f0] = R.edges[k], T = f0 ? G.ea[e0] : G.eb[e0], leg = T === A ? [] : E.routeThrough([A, T]); if (!leg) continue;
+          const len = leg.reduce((s, [e]) => s + G.LEN[e], 0); let pen = 0;
+          if (mv && leg.length) { const p = E.edgePts(leg[0][0]); if (!leg[0][1]) p.reverse(); const q = p[1] || p[0], dx = q[0] - p[0][0], dy = q[1] - p[0][1], l = Math.hypot(dx, dy) || 1; if ((dx * mv[0] + dy * mv[1]) / l < -0.5) pen = 400; } // il faudrait faire demi-tour
+          const sc = len + pen + 0.35 * Math.max(0, (c - from) - len); // sauter beaucoup de parcours compte aussi
+          if (!best || sc < best.sc) best = { sc, leg, k, len };
+          if (dA >= n.L - 20) break; }
+        if (best) { st = E.statsOf(best.leg.concat(R.edges.slice(best.k)), A); rejoin = best.len; } }
       else { const [tx, ty] = n.at(dT), T = E.nearest(tx, ty), leg = T >= 0 ? E.routeThrough([A, T]) : null;
         if (leg) { const pts = []; for (const [e, fa] of leg) { const q = E.edgePts(e); if (!fa) q.reverse(); q.forEach((p, i) => (i || !pts.length) && pts.push(p)); } rejoin = leg.reduce((s, [e]) => s + G.LEN[e], 0); for (let i = n.idx(dT) + 1; i < n.pts.length; i++) pts.push(n.pts[i]); st = geomRoute(pts); } }
     } else { // continuer par ici : fin du parcours recalculée jusqu'à l'arrivée, à distance égale
@@ -4878,12 +4918,22 @@ function mineOpen(i) {
   $('#md-sub').textContent = mineDate(e.d, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + new Date(e.d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (e.solo ? ' · course libre' : e.secs ? (e.meas ? ' · mesuré pendant ta course' : ' · temps estimé ou saisi') : '');
   $('#md-km').innerHTML = `${fmt(e.km || 0, 1)}<small>km</small>`;
   $('#md-stats').innerHTML = (e.secs ? `<div><b>${fmtClock(e.secs)}</b><span>temps</span></div><div><b>${fmtClock(e.secs / (e.km || 1))}</b><span>allure /km</span></div>` : '') + (e.up != null ? `<div><b>${e.up} m</b><span>D+</span></div>` : '');
+  $('#md-splits').innerHTML = e.sp && e.sp.length ? splitsHTML(e.sp) : ''; $('#md-splits').hidden = !(e.sp && e.sp.length);
   const x = e.extra; $('#md-extra').hidden = !(x && x.km); if (x && x.km) $('#md-extra').textContent = `Dont ${fmt(x.km, 1)} km en plus après l’arrivée${x.streets && x.streets.length ? ' (' + x.streets.join(', ') + ')' : ''}.`;
   const has = !!(e.g && decPoly(e.g).length > 1), run = e.tr || e.g; // tr : ce qui a vraiment été couru
   $('#md-old').hidden = has; $('#md-old').textContent = e.solo ? 'Course faite hors de la carte : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.' : 'Sortie enregistrée avant « Mes parcours » : son tracé n’a pas été gardé, on ne peut pas la refaire ni l’envoyer.'; $('#md-redo').hidden = !has; $('#md-row').hidden = !has;
   // la carte montre la sortie
   if (has) { const st = routeFromCode(run); S.route = st; S.alts = [st]; fitRoute(); } else { S.route = null; S.alts = []; }
   draw();
+}
+// tableau des kilomètres : allure de chaque km (barre plus longue = plus rapide), le plus rapide en couleur, dénivelé du km
+function splitsHTML(sp) {
+  const rows = sp.map((q, i) => { const m = q[2] || 1000; return { km: q[2] ? fmt(q[2] / 1000, 2) : String(i + 1), pace: q[0] / (m / 1000), dz: q[1], full: !q[2] }; });
+  const P = rows.map(r => r.pace), lo = Math.min(...P), hi = Math.max(...P), fast = rows.filter(r => r.full).reduce((b, r) => !b || r.pace < b.pace ? r : b, null);
+  const w = p => hi > lo ? 45 + 55 * (hi - p) / (hi - lo) : 100;
+  return '<div class="lbl">Par kilomètre</div><div class="spl-h"><span>Km</span><span>Allure /km</span><span>Dénivelé</span></div>' + rows.map(r =>
+    `<div class="spl-r${r === fast && rows.length > 1 ? ' best' : ''}"><span>${r.km}</span><span class="spl-b"><i style="width:${w(r.pace).toFixed(0)}%"></i><b>${fmtClock(r.pace)}</b></span><span>${r.dz == null ? '–' : (r.dz > 0 ? '+' : '') + r.dz + ' m'}</span></div>`).join('')
+    + (fast && rows.length > 1 ? `<p class="spl-note">Km le plus rapide : le ${fast.km === '1' ? '1er' : fast.km + 'e'}, en ${fmtClock(fast.pace)}.</p>` : '');
 }
 function mineCurrent() { return mineLoad().find(x => (x.id || x.d) === S.mineCur); }
 $('#tab-mine').onclick = () => setTab('mine');
